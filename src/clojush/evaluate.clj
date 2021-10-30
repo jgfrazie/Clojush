@@ -68,58 +68,49 @@
     {:keys [reuse-errors print-history total-error-method normalization max-error
             parent-selection]
      :as argmap}]
-   (random/with-rng rand-gen
-     (let [p (:program i)
-           evaluated-i (cond
-                         (and reuse-errors (not (nil? (:errors i))))
-                         i
+    (random/with-rng rand-gen
+      (let [p (:program i)
+            ;x (println "1:" @program-executions-count)
+            evaluated-i (cond
+                          (and reuse-errors (not (nil? (:errors i))))
+                          i
                           ;;
                          (= parent-selection :downsampled-lexicase)
                          (error-function i (:sub-training-cases argmap))
                           ;;
-                         :else
-                         (error-function i))
-           raw-errors (:errors evaluated-i)
-           e (vec (if (and reuse-errors (not (nil? (:errors i))))
-                    (:errors i)
-                    (do
-                      (swap! evaluations-count inc)
-                      (normalize-errors raw-errors normalization max-error))))
-           te (if (and reuse-errors (not (nil? (:total-error i))))
-                (:total-error i)
-                (compute-total-error raw-errors))
-           ne (if (and reuse-errors (not (nil? (:normalized-error i))))
-                (:normalized-error i)
-                (compute-total-error e))
-           we (case total-error-method
-                :sum nil
-                :ifs nil ; calculated later
-                :eliteness nil ; calculated later
-                :hah (compute-hah-error e)
-                :rmse (compute-root-mean-square-error e)
-                nil)
-           mm (if (:calculate-mod-metrics argmap)
-                (let [i (auto-simplify i error-function (:simplification-steps-for-mod-metrics argmap) false 0 argmap)
-                      rand-inp (first (rand-nth (:training-cases argmap)))
-                      final-state (if (not (sequential? rand-inp))
-                                    (run-push (:program i) (push-item rand-inp :input (assoc (make-push-state) :calculate-mod-metrics true))) ; input is a single element (numbers, string , etc)
-                                    (if (apply = (map #(count (first %)) (:training-cases argmap))) ; multiple inputs, e.g., three strings
-                                      (loop [inp rand-inp
-                                             state (assoc (make-push-state) :calculate-mod-metrics true)]
-                                        (if (empty? inp)
-                                          (run-push (:program i) state)
-                                          (recur (rest inp) (push-item (first inp) :input state))))
-                                      (run-push (:program i) (push-item rand-inp :input (assoc (make-push-state) :calculate-mod-metrics true))) ; input is a vector of varying length
-                                      ))]
-                  (reuse (reverse (remove-ids (:trace final-state) :instr) ) (reverse (remove-ids (:trace final-state) :id)))
-                  ))
-           new-ind (assoc evaluated-i ; Assign errors and history to i
-                          :errors e
-                          :total-error te
-                          :weighted-error we
-                          :normalized-error ne
-                          :history (if print-history (cons e (:history i)) (:history i))
-                          :reuse-info (first mm)
-                          :repetition-info (last mm)
-                          )]
-       new-ind))))
+                          :else
+                          (error-function i))
+            ;y (println "2:" @program-executions-count)
+            raw-errors (:errors evaluated-i)
+            ;y (println "3:" @program-executions-count)
+            ;; e (vec (if (and reuse-errors (not (nil? (:errors i))))
+            ;;          (:errors i)
+            ;;          (do
+            ;;            (swap! evaluations-count inc)
+            ;;            (normalize-errors raw-errors normalization max-error))))
+            ;y (println "4:" @program-executions-count)
+            ;; te (if (and reuse-errors (not (nil? (:total-error i))))
+            ;;      (:total-error i)
+            ;;      (compute-total-error raw-errors))
+            ;; ne (if (and reuse-errors (not (nil? (:normalized-error i))))
+            ;;      (:normalized-error i)
+            ;;      (compute-total-error e))
+            ;; we (case total-error-method
+            ;;      :sum nil
+            ;;      :ifs nil ; calculated later
+            ;;      :eliteness nil ; calculated later
+            ;;      :hah (compute-hah-error e)
+            ;;      :rmse (compute-root-mean-square-error e)
+            ;;      nil)
+            new-ind (assoc evaluated-i ; Assign errors and history to i
+                           :errors raw-errors
+                           ;; :total-error te
+                           ;; :weighted-error we
+                           ;; :normalized-error ne
+                           )
+            ;y (println "5:" @program-executions-count)
+            ]
+        ;(println "6:" @program-executions-count)
+        
+        new-ind))))
+
