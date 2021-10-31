@@ -8,7 +8,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; utilities
 
-(defn unchunk [s]
+(defn unchunk
+  "Used to make data cases unchunked, for only evaluating one at a time.
+   Taken from https://stackoverflow.com/a/3409568/2023312"
+  [s]
   (when (seq s)
     (lazy-seq
       (cons (first s)
