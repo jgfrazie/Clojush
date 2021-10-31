@@ -83,24 +83,23 @@
      (the-actual-error-function individual data-cases false))
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
-           errors (doall
-                   (for [[input1 correct-output] (case data-cases
-                                                   :train train-cases
-                                                   :test test-cases
-                                                   data-cases)]
-                     (let [final-state (run-push (:program individual)
-                                                 (->> (make-push-state)
-                                                      (push-item input1 :input)))
-                           result (top-item :integer final-state)]
-                       (when print-outputs
-                         (println (format "Correct output: %s | Program output: %s" correct-output result)))
+           errors (for [[input1 correct-output] (unchunk (case data-cases
+                                                           :train train-cases
+                                                           :test test-cases
+                                                           data-cases))]
+                    (let [final-state (run-push (:program individual)
+                                                (->> (make-push-state)
+                                                     (push-item input1 :input)))
+                          result (top-item :integer final-state)]
+                      (when print-outputs
+                        (println (format "Correct output: %s | Program output: %s" correct-output result)))
                          ; Record the behavior
-                       (swap! behavior conj result)
+                      (swap! behavior conj result)
                          ; Error is integer difference
-                       (if (number? result)
-                         (abs (- result correct-output)) ; distance from correct integer
-                         1000000) ; penalty for no return value
-                       )))]
+                      (if (number? result)
+                        (abs (- result correct-output)) ; distance from correct integer
+                        1000000) ; penalty for no return value
+                      ))]
        (if (= data-cases :test)
          (assoc individual :test-errors errors)
          (assoc individual

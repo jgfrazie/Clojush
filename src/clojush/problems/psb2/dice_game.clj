@@ -80,29 +80,28 @@
      (the-actual-dice-game-error-function individual data-cases false))
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
-           errors (doall
-                   (for [[[input1 input2] correct-output] (case data-cases
-                                                            :train train-cases
-                                                            :test test-cases
-                                                            data-cases)]
-                     (let [final-state (run-push (:program individual)
-                                                 (->> (make-push-state)
-                                                      (push-item input2 :input)
-                                                      (push-item input1 :input)))
-                           result (stack-ref :float 0 final-state)]
-                       (when print-outputs
-                         (let [result-str (if (float? result)
-                                            (format "%.3f" result)
-                                            (str result))]
-                           (println (format "Correct output: %.3f | Program output: %s" correct-output result-str))))
+           errors (for [[[input1 input2] correct-output] (unchunk (case data-cases
+                                                                    :train train-cases
+                                                                    :test test-cases
+                                                                    data-cases))]
+                    (let [final-state (run-push (:program individual)
+                                                (->> (make-push-state)
+                                                     (push-item input2 :input)
+                                                     (push-item input1 :input)))
+                          result (stack-ref :float 0 final-state)]
+                      (when print-outputs
+                        (let [result-str (if (float? result)
+                                           (format "%.3f" result)
+                                           (str result))]
+                          (println (format "Correct output: %.3f | Program output: %s" correct-output result-str))))
                          ; Record the behavior
-                       (swap! behavior conj result)
+                      (swap! behavior conj result)
                          ; Error is float error rounded to 3 decimal places
-                       (round-to-n-decimal-places
-                        (if (number? result)
-                          (abs (- result correct-output)) ; distance from correct float
-                          1000000.0) ; penalty for no return value
-                        3))))]
+                      (round-to-n-decimal-places
+                       (if (number? result)
+                         (abs (- result correct-output)) ; distance from correct float
+                         1000000.0) ; penalty for no return value
+                       3)))]
        (if (= data-cases :test)
          (assoc individual :test-errors errors)
          (assoc individual

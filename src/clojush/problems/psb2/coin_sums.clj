@@ -101,45 +101,44 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors
-           (flatten
-            (doall
-             (for [[input [correct-pennies correct-nickles correct-dimes correct-quarters]]
-                   (case data-cases
-                     :train train-cases
-                     :test test-cases
-                     data-cases)]
-               (let [final-state (run-push (:program individual)
-                                           (->> (make-push-state)
-                                                (push-item :no-output :output)
-                                                (push-item :no-output :output)
-                                                (push-item :no-output :output)
-                                                (push-item :no-output :output)
-                                                (push-item input :input)))
-                     result-pennies (stack-ref :output 0 final-state)
-                     result-nickles (stack-ref :output 1 final-state)
-                     result-dimes (stack-ref :output 2 final-state)
-                     result-quarters (stack-ref :output 3 final-state)]
-                 (when print-outputs
-                   (println (format "Correct output: %s %s %s %s \nProgram output: %s %s %s %s\n"
-                                    (str correct-pennies) (str correct-nickles) (str correct-dimes) (str correct-quarters)
-                                    (str result-pennies) (str result-nickles) (str result-dimes) (str result-quarters))))
+           (lazy-flatten-single-nesting
+            (for [[input [correct-pennies correct-nickles correct-dimes correct-quarters]]
+                  (unchunk (case data-cases
+                             :train train-cases
+                             :test test-cases
+                             data-cases))]
+              (let [final-state (run-push (:program individual)
+                                          (->> (make-push-state)
+                                               (push-item :no-output :output)
+                                               (push-item :no-output :output)
+                                               (push-item :no-output :output)
+                                               (push-item :no-output :output)
+                                               (push-item input :input)))
+                    result-pennies (stack-ref :output 0 final-state)
+                    result-nickles (stack-ref :output 1 final-state)
+                    result-dimes (stack-ref :output 2 final-state)
+                    result-quarters (stack-ref :output 3 final-state)]
+                (when print-outputs
+                  (println (format "Correct output: %s %s %s %s \nProgram output: %s %s %s %s\n"
+                                   (str correct-pennies) (str correct-nickles) (str correct-dimes) (str correct-quarters)
+                                   (str result-pennies) (str result-nickles) (str result-dimes) (str result-quarters))))
                            ; Record the behavior
-                 (swap! behavior conj result-pennies result-nickles result-dimes result-quarters)
+                (swap! behavior conj result-pennies result-nickles result-dimes result-quarters)
                            ; Error is integer difference for each integer
-                 (vector
-                  (if (number? result-pennies)
-                    (abs (- result-pennies correct-pennies)) ; distance from correct integer
-                    100000) ; penalty for no return value
-                  (if (number? result-nickles)
-                    (abs (- result-nickles correct-nickles)) ; distance from correct integer
-                    100000) ; penalty for no return value
-                  (if (number? result-dimes)
-                    (abs (- result-dimes correct-dimes)) ; distance from correct integer
-                    100000) ; penalty for no return value
-                  (if (number? result-quarters)
-                    (abs (- result-quarters correct-quarters)) ; distance from correct integer
-                    100000) ; penalty for no return value
-                  )))))] 
+                (vector
+                 (if (number? result-pennies)
+                   (abs (- result-pennies correct-pennies)) ; distance from correct integer
+                   100000) ; penalty for no return value
+                 (if (number? result-nickles)
+                   (abs (- result-nickles correct-nickles)) ; distance from correct integer
+                   100000) ; penalty for no return value
+                 (if (number? result-dimes)
+                   (abs (- result-dimes correct-dimes)) ; distance from correct integer
+                   100000) ; penalty for no return value
+                 (if (number? result-quarters)
+                   (abs (- result-quarters correct-quarters)) ; distance from correct integer
+                   100000) ; penalty for no return value
+                 ))))] 
        (if (= data-cases :test)
          (assoc individual :test-errors errors)
          (assoc individual

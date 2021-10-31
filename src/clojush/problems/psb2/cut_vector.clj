@@ -93,40 +93,39 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors
-           (flatten
-            (doall
-             (for [[input1 [correct-output1 correct-output2]] (case data-cases
-                                                                :train train-cases
-                                                                :test test-cases
-                                                                data-cases)]
-               (let [final-state (run-push (:program individual)
-                                           (->> (make-push-state)
-                                                (push-item :no-output :output)
-                                                (push-item :no-output :output)
-                                                (push-item input1 :input)))
-                     result1 (stack-ref :output 0 final-state)
-                     result2 (stack-ref :output 1 final-state)]
-                 (when print-outputs
-                   (println (format "Correct output: %s %s\n| Program output: %s %s\n" (str correct-output1) (str correct-output2) (str result1) (str result2))))
+           (lazy-flatten-single-nesting
+            (for [[input1 [correct-output1 correct-output2]] (unchunk (case data-cases
+                                                                        :train train-cases
+                                                                        :test test-cases
+                                                                        data-cases))]
+              (let [final-state (run-push (:program individual)
+                                          (->> (make-push-state)
+                                               (push-item :no-output :output)
+                                               (push-item :no-output :output)
+                                               (push-item input1 :input)))
+                    result1 (stack-ref :output 0 final-state)
+                    result2 (stack-ref :output 1 final-state)]
+                (when print-outputs
+                  (println (format "Correct output: %s %s\n| Program output: %s %s\n" (str correct-output1) (str correct-output2) (str result1) (str result2))))
                        ; Record the behavior
-                 (swap! behavior conj result1 result2)
+                (swap! behavior conj result1 result2)
                        ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
-                 (vector
-                  (if (vector? result1)
-                    (+' (apply +' (map (fn [cor res]
-                                         (abs (- cor res)))
-                                       correct-output1
-                                       result1))
-                        (*' 10000 (abs (- (count correct-output1) (count result1))))) ; penalty of 10000 times difference in sizes of vectors
-                    1000000) ; penalty for no return value
-                  (if (vector? result2)
-                    (+' (apply +' (map (fn [cor res]
-                                         (abs (- cor res)))
-                                       correct-output2
-                                       result2))
-                        (*' 10000 (abs (- (count correct-output2) (count result2))))) ; penalty of 10000 times difference in sizes of vectors
-                    1000000) ; penalty for no return value
-                  )))))]
+                (vector
+                 (if (vector? result1)
+                   (+' (apply +' (map (fn [cor res]
+                                        (abs (- cor res)))
+                                      correct-output1
+                                      result1))
+                       (*' 10000 (abs (- (count correct-output1) (count result1))))) ; penalty of 10000 times difference in sizes of vectors
+                   1000000) ; penalty for no return value
+                 (if (vector? result2)
+                   (+' (apply +' (map (fn [cor res]
+                                        (abs (- cor res)))
+                                      correct-output2
+                                      result2))
+                       (*' 10000 (abs (- (count correct-output2) (count result2))))) ; penalty of 10000 times difference in sizes of vectors
+                   1000000) ; penalty for no return value
+                 ))))]
        (if (= data-cases :test)
          (assoc individual :test-errors errors)
          (assoc individual
