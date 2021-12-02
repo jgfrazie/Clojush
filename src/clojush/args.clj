@@ -22,6 +22,9 @@
           ;;----------------------------------------
           ;; Standard GP arguments
           ;;----------------------------------------
+         
+         :random-data nil
+          ;; Used for some experiments for generalization
 
          :error-function (fn [p] '(0))
           ;; Function that takes a program and returns a list of errors.

@@ -203,6 +203,7 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :random-data (generate-random-data "basement")
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
@@ -217,3 +218,20 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1000000})
+
+
+(comment
+  
+  (reset! global-evalpush-limit 2000)
+  
+  ; Evolved simplified solution
+  (def my-solution
+    {:program
+     '(in1 2 exec_do*vector_integer (integer_add [] integer_dup integer_inc exec_shove ((vector_integer_first vector_integer_emptyvector exec_y (vector_integer_stackdepth)))))
+     })
+
+
+  (apply +' (:errors ((:error-function argmap) my-solution)))
+  
+  
+  )

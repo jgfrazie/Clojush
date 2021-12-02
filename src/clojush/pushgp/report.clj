@@ -10,6 +10,115 @@
             [clojush.pushgp.record :as r]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Tracking solutions for generalization experiment similar to Sobania paper
+
+(def behavior-map (atom {}))
+
+;; NOTES TO SELF
+;; Going to need to use problem-specific error functions, passing in
+;; correctly formatted input/output data, but ignoring errors and just
+;; using behaviors.
+
+(defn change-nested-map
+  "Takes the nested map associated with a behavior in behavior-map
+   and updates it given this solution program and its hash."
+  [{:keys [number smallest smallest-points largest largest-points structs]
+    :as nested-map} prog prog-hash]
+  ;; (println number smallest smallest-points largest largest-points structs)
+  (let [prog-points (count-points prog)]
+    (assoc nested-map
+           :number (inc number)
+           :last prog
+           :smallest (if (< smallest-points prog-points)
+                       smallest
+                       prog)
+           :smallest-points (if (< smallest-points prog-points)
+                              smallest-points
+                              prog-points)
+           :largest (if (> largest-points prog-points)
+                      largest
+                      prog)
+           :largest-points (if (> largest-points prog-points)
+                             largest-points
+                             prog-points)
+           :structs (if (contains? structs prog-hash)
+                      (update structs prog-hash inc)
+                      (assoc structs prog-hash 1)))))
+
+(defn track-solutions
+  "Tracks all solutions in behavior-map
+   behavior-map is formatted as follows: ... TODO"
+  [{:keys [error-function random-data]} population]
+  (let [solutions (filter #(zero? (:total-error %)) population)]
+    (loop [solutions solutions]
+      (if (empty? solutions)
+        nil ; finish
+        (let [ind (first solutions)
+              push-prog (:program ind)
+              prog-hash (hash push-prog)
+              behavior (:behaviors (error-function ind random-data))
+              map-for-behavior (get @behavior-map behavior)
+              prog-points (count-points push-prog)]
+          (if (nil? map-for-behavior)
+            (swap! behavior-map
+                   assoc
+                   behavior
+                   {:number 1
+                    :smallest push-prog
+                    :smallest-points prog-points
+                    :largest push-prog
+                    :largest-points prog-points
+                    :first push-prog
+                    :last push-prog
+                    :structs {prog-hash 1}})
+            (swap! behavior-map
+                   update
+                   behavior
+                   change-nested-map
+                   push-prog
+                   prog-hash))
+          (recur (rest solutions)))))))
+
+
+(comment
+  ;; TMH testing
+  (change-nested-map {:number 7
+                      :smallest (range 5)
+                      :smallest-points 5
+                      :largest (range 20)
+                      :largest-points 20
+                      :first '(:A :B :C)
+                      :last '(:Z :Y :X)
+                      :structs {123 4
+                                456 2
+                                789 9}}
+                     (range 3)
+                     456)
+
+  (reset! behavior-map {[1 2 3] {:number 7
+                                 :smallest (range 5)
+                                 :smallest-points 5
+                                 :largest (range 20)
+                                 :largest-points 20
+                                 :first '(:A :B :C)
+                                 :last '(:Z :Y :X)
+                                 :structs {123 4
+                                           456 2
+                                           789 9}}
+                        [4 5 6] {:map :notfinished}})
+
+  (swap! behavior-map
+         update
+         [1 2 3]
+         change-nested-map
+         (list :T :M :H (range 30))
+         123)
+
+  @behavior-map
+  )
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; helper functions
 
 (defn default-problem-specific-initial-report
@@ -386,11 +495,12 @@
                            (assoc err-fn-best
                                   :total-error
                                   (apply +' (:errors err-fn-best))))
-        psr-best (problem-specific-report total-error-best
-                                          population
-                                          generation
-                                          error-function
-                                          report-simplifications)
+        ;;; Set to nil to avoid running best on test cases each generation
+        psr-best nil #_(problem-specific-report total-error-best
+                                                population
+                                                generation
+                                                error-function
+                                                report-simplifications)
         best (if (= (type psr-best) clojush.individual.individual)
                psr-best
                total-error-best)
@@ -420,7 +530,7 @@
                 #{:lexicase :elitegroup-lexicase :leaky-lexicase :epsilon-lexicase
                   :random-threshold-lexicase :random-toggle-lexicase
                   :randomly-truncated-lexicase})
-          (lexicase-report population argmap))
+      (lexicase-report population argmap))
     (when (= total-error-method :ifs) (implicit-fitness-sharing-report population argmap))
     (println (format "--- Best Program (%s) Statistics ---" (str "based on " (name err-fn))))
     (r/generation-data! [:best :individual] (dissoc best :program))
@@ -462,8 +572,8 @@
     (println "Size:" (r/generation-data! [:best :program-size] (count-points (:program best))))
     (printf "Percent parens: %.3f\n"
             (r/generation-data! [:best :percent-parens]
-              (double (/ (count-parens (:program best))
-                         (count-points (:program best)))))) ;Number of (open) parens / points
+                                (double (/ (count-parens (:program best))
+                                           (count-points (:program best)))))) ;Number of (open) parens / points
     (println "Age:" (:age best))
     (println "--- Population Statistics ---")
     (when print-cosmos-data
@@ -472,11 +582,11 @@
                                         (map #(:total-error (nth (sort-by :total-error population) %))
                                              quants)))))
     (println "Average total errors in population:"
-          (r/generation-data! [:population-report :mean-total-error]
-             (*' 1.0 (mean (map :total-error sorted)))))
+             (r/generation-data! [:population-report :mean-total-error]
+                                 (*' 1.0 (mean (map :total-error sorted)))))
     (println "Median total errors in population:"
-          (r/generation-data! [:population-report :median-total-error]
-             (median (map :total-error sorted))))
+             (r/generation-data! [:population-report :median-total-error]
+                                 (median (map :total-error sorted))))
     (when print-errors (println "Error averages by case:"
                                 (apply map (fn [& args] (*' 1.0 (mean args)))
                                        (map :errors population))))
@@ -494,11 +604,11 @@
              (r/generation-data! [:population-report :mean-genome-size]
                                  (*' 1.0 (mean (map count (map :genome sorted))))))
     (println "Average program size in population (points):"
-          (r/generation-data! [:population-report :mean-program-size]
-             (*' 1.0 (mean (map count-points (map :program sorted))))))
+             (r/generation-data! [:population-report :mean-program-size]
+                                 (*' 1.0 (mean (map count-points (map :program sorted))))))
     (printf "Average percent parens in population: %.3f\n"
-          (r/generation-data! [:population-report :mean-program-percent-params]
-            (mean (map #(double (/ (count-parens (:program %)) (count-points (:program %)))) sorted))))
+            (r/generation-data! [:population-report :mean-program-percent-params]
+                                (mean (map #(double (/ (count-parens (:program %)) (count-points (:program %)))) sorted))))
     (let [ages (map :age population)]
       (when use-ALPS
         (println "Population ages:" ages))
@@ -536,11 +646,11 @@
                (r/generation-data! [:population-report :median-genome-frequency]
                                    (median (vals genome-frequency-map))))
       (println "Max copy number of one genome:"
-        (r/generation-data! [:population-report :max-genome-frequency]
-          (apply max (vals genome-frequency-map))))
+               (r/generation-data! [:population-report :max-genome-frequency]
+                                   (apply max (vals genome-frequency-map))))
       (println "Genome diversity (% unique genomes):\t"
-        (r/generation-data! [:population-report :percent-genomes-unique]
-               (float (/ (count genome-frequency-map) (count population))))))
+               (r/generation-data! [:population-report :percent-genomes-unique]
+                                   (float (/ (count genome-frequency-map) (count population))))))
     (let [frequency-map (frequencies (map :program population))]
       (println "Min copy number of one Push program:"
                (r/generation-data! [:population-report :min-program-frequency]
@@ -549,17 +659,17 @@
                (r/generation-data! [:population-report :median-program-frequency]
                                    (median (vals frequency-map))))
       (println "Max copy number of one Push program:"
-        (r/generation-data! [:population-report :max-program-frequency]
-          (apply max (vals frequency-map))))
+               (r/generation-data! [:population-report :max-program-frequency]
+                                   (apply max (vals frequency-map))))
       (println "Syntactic diversity (% unique Push programs):\t"
-        (r/generation-data! [:population-report :percent-programs-unique]
-               (float (/ (count frequency-map) (count population))))))
+               (r/generation-data! [:population-report :percent-programs-unique]
+                                   (float (/ (count frequency-map) (count population))))))
     (println "Total error diversity:\t\t\t\t"
-        (r/generation-data! [:population-report :percent-total-error-unique]
-             (float (/ (count (distinct (map :total-error population))) (count population)))))
+             (r/generation-data! [:population-report :percent-total-error-unique]
+                                 (float (/ (count (distinct (map :total-error population))) (count population)))))
     (println "Error (vector) diversity:\t\t\t"
-        (r/generation-data! [:population-report :percent-errors-unique]
-             (float (/ (count (distinct (map :errors population))) (count population)))))
+             (r/generation-data! [:population-report :percent-errors-unique]
+                                 (float (/ (count (distinct (map :errors population))) (count population)))))
     (when (not (nil? (:behaviors (first population))))
       (println "Behavioral diversity:\t\t\t\t" (behavioral-diversity population)))
     (when print-homology-data
@@ -585,8 +695,8 @@
       (reset! preselection-counts []))
     (when autoconstructive
       (println "Number of random replacements for non-diversifying individuals:"
-        (r/generation-data! [:population-report :number-random-replacements]
-               (count (filter :is-random-replacement population)))))
+               (r/generation-data! [:population-report :number-random-replacements]
+                                   (count (filter :is-random-replacement population)))))
     (println "--- Run Statistics ---")
     (println "Number of individuals evaluated (running on all training cases counts as 1 evaluation):" @evaluations-count)
     (println "Number of program executions (running on a single case counts as 1 execution):" program-executions-before-report)
@@ -615,6 +725,36 @@
                 (/ report-time 1000.0) (* 100.0 (/ report-time total-time)))
         (printf "Other:           %8.1f seconds, %4.1f%%\n"
                 (/ other 1000.0) (* 100.0 (/ other total-time)))))
+    (println ";;;;;;;;;;;;;;;;;;")
+    (println "Total:" (:total-error best))
+    (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+    (println ";; -*- Generalization experiment info:") ; TMH working here
+    (track-solutions argmap sorted)
+    ;; (println @behavior-map) ;; Don't print whole thing, just sumarize data
+    ;; Calculate current values of L, n_struct, and b. These are for run so far.
+    (let [vals-of-behavior-map (vals @behavior-map)
+          modal-behavior (apply max-key
+                                #(count (get-in @behavior-map [% :structs]))
+                                (keys @behavior-map))
+          L (count (get-in @behavior-map [modal-behavior :structs]))
+          n_struct_per_behavior_sorted (sort (map #(count (:structs %))
+                                                  vals-of-behavior-map))
+          n_struct (apply + (map #(count (:structs %)) vals-of-behavior-map))
+          b (- 2.0 (/ n_struct L))]
+      (println "Number of solutions entire run:" (apply + (map :number vals-of-behavior-map)))
+      (let [solutions (filter #(zero? (:total-error %)) population)]
+        (println "Number of solutions this generation:" (count solutions)))
+
+      (println "n_struct for run after current generation:" n_struct)
+      (println "n_behaviors for run after current generation:" (count @behavior-map))
+      (println "L for run after current generation:" L)
+      (println "b for run after current generation:" b)
+      (println "Number of solutions for each behavior:" (reverse (sort (map :number vals-of-behavior-map))))
+      (println "Number of structural solutions for each behavior:" (reverse n_struct_per_behavior_sorted))
+      
+      )
+
+    ;;; end section on generalization
     (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
     (println ";; -*- End of report for generation" generation)
     (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")

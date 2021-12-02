@@ -18,6 +18,7 @@
                  [prismatic/plumbing "0.5.5"]
                  [criterium "0.4.4"]
                  [net.totakke/libra "0.1.1"]
+                 [net.clojars.schneau/psb2 "1.1.0"]
                  [quil "2.8.0"]]
   :plugins [[lein-codox "0.10.6"]
             [lein-shell "0.5.0"]

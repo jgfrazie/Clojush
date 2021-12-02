@@ -3,7 +3,8 @@
   (:require [clojure.math.numeric-tower :as math]
             [clojure.zip :as zip]
             [clojure.walk :as walk]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [psb2.core :as psb2]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; utilities
@@ -466,3 +467,26 @@
         inputs-final (concatenate-until-threshold inputs number-inputs)
         constants-final (concatenate-until-threshold constants number-constants)]
     (concat one-each-instructions inputs-final constants-final)))
+
+
+;;; For generalization experiment
+
+(defn generate-random-data
+  "For experiment on generalization"
+  [problem-name]
+  (let [map-formatted (:test (psb2/fetch-examples "data/PSB2/" problem-name 0 500))
+        io-keys (map name (keys (first map-formatted)))
+        number-inputs (count (filter #(= "inp" (subs % 0 3))
+                                     io-keys))
+        number-outputs (count (filter #(= "out" (subs % 0 3))
+                                      io-keys))]
+    (for [io-map map-formatted]
+      (let [inputs (if (= number-inputs 1)
+                     (:input1 io-map)
+                     (vec (map #(get io-map (keyword (str "input" %)))
+                               (map inc (range number-inputs)))))
+            outputs (if (= number-outputs 1)
+                      (:output1 io-map)
+                      (vec (map #(get io-map (keyword (str "output" %)))
+                                (map inc (range number-outputs )))))]
+        [inputs outputs]))))

@@ -141,6 +141,7 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                            (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :random-data (generate-random-data "leaders")
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
