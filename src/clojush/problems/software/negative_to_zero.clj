@@ -59,9 +59,9 @@
           [-90 -6]
           [-16 33]
           [412 111]) 6 0] ;; Length 2 vectors
-   [(fn [] (negative-to-zero-input (inc (lrand-int 50)) 1.0)) 9 100] ;; Random length, all negative
-   [(fn [] (negative-to-zero-input (inc (lrand-int 50)) 0.0)) 9 100] ;; Random length, all positive
-   [(fn [] (negative-to-zero-input (inc (lrand-int 50)) (lrand))) 165 1800] ;; Random length, random prob of negative
+   [(fn [] (negative-to-zero-input (inc (lrand-int 50)) 1.0)) 9 100 25] ;; Random length, all negative
+   [(fn [] (negative-to-zero-input (inc (lrand-int 50)) 0.0)) 9 100 25] ;; Random length, all positive
+   [(fn [] (negative-to-zero-input (inc (lrand-int 50)) (lrand))) 165 1800 450] ;; Random length, random prob of negative
    ])
 
 ;;Can make Negative To Zero test data like this:
@@ -155,9 +155,10 @@
 ; Define the argmap
 (def argmap
   {:error-function (make-negative-to-zero-error-function-from-cases (first negative-to-zero-train-and-test-cases)
-                                                            (second negative-to-zero-train-and-test-cases))
+                                                                    (second negative-to-zero-train-and-test-cases))
    :training-cases (first negative-to-zero-train-and-test-cases)
    :sub-training-cases '()
+   :random-data (nth negative-to-zero-train-and-test-cases 2)
    :atom-generators negative-to-zero-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

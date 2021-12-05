@@ -319,10 +319,13 @@
     (apply 
       mapv 
       concat 
-      (map (fn [[input-set n-train n-test]]
+      (map (fn [[input-set n-train n-test n-random]]
              (if (fn? input-set)
                (vector (repeatedly n-train input-set)
-                       (repeatedly n-test input-set))
+                       (repeatedly n-test input-set)
+                       (if (not (nil? n-random))
+                         (repeatedly n-random input-set)
+                         '()))
                (let [shuffled-inputs (shuffle input-set)
                      train-inputs (if (= n-train (count input-set))
                                     input-set ; NOTE: input-set is not shuffled if the same size as n-train
@@ -332,7 +335,7 @@
                                    (drop n-train shuffled-inputs))]
                  (assert (= (+ n-train n-test) (count input-set)) 
                          "Sizes of train and test sets don't add up to the size of the input set.")
-                 (vector train-inputs test-inputs))))
+                 (vector train-inputs test-inputs '()))))
            domains))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -62,7 +62,7 @@
    ^{:domain-label "permutations of a 4 item vector with three zeros"}
    [(map vec (permutations [0 0 0 9])) 4 0]
    ^{:domain-label "random cases"}
-   [(fn [] (random-sequence-with-at-least-one-zero 5 44)) 78 974]
+   [(fn [] (random-sequence-with-at-least-one-zero 5 44)) 78 974 500]
    ])
 
 ;;Can make Last Index of Zero test data like this:
@@ -158,6 +158,7 @@
                                                                       (second last-index-of-zero-train-and-test-cases))
    :training-cases (first last-index-of-zero-train-and-test-cases)
    :sub-training-cases '()
+   :random-data (nth last-index-of-zero-train-and-test-cases 2)
    :atom-generators last-index-of-zero-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150

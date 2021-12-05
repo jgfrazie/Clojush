@@ -41,11 +41,11 @@
   [[(concat (list -10000 0 980) (range 995 1005) (list 1020 1980)
             (range 1995 2005) (list 2020 10000)) 27 0] ;; "Special" inputs covering most base cases.
    [(concat (range 980 1020) (range 1980 2020)) 0 80] ;; Some cases to test generality.
-   [(fn [] (- (lrand-int 20001) 10000)) 73 920] ;; Inputs between -10,000 and 10,000
+   [(fn [] (- (lrand-int 20001) 10000)) 73 920 500] ;; Inputs between -10,000 and 10,000
    ])
 
 ;;Can make Small Or Large test data like this:
-;(test-and-train-data-from-domains small-or-large-data-domains)
+;; (map count (test-and-train-data-from-domains small-or-large-data-domains))
 
 ; Helper function for error function
 (defn small-or-large-test-cases
@@ -137,6 +137,7 @@
                                                                   (second small-or-large-train-and-test-cases))
    :training-cases (first small-or-large-train-and-test-cases)
    :sub-training-cases '()
+   :random-data (nth small-or-large-train-and-test-cases 2)
    :atom-generators small-or-large-atom-generators
    :max-points 800
    :max-genome-size-in-initial-program 100

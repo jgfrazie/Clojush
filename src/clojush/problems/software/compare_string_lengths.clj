@@ -50,9 +50,9 @@
    [(permutations ["" "a" "bc"]) 6 0] ;; Permutations of three small strings
    [(apply concat (repeatedly 2 #(permutations ["" "" (csl-input (inc (lrand-int 49)))]))) 6 0] ;; Cases with 2 empties and a non-empty
    [(apply concat (repeatedly 3 #(permutations (conj (repeat 2 (csl-input (inc (lrand-int 49)))) (csl-input (inc (lrand-int 49))))))) 9 0] ;; Cases with 2 strings repeated
-   [(fn [] (repeat 3 (csl-input (lrand-int 50)))) 3 100] ;; Cases where all are the same
-   [(fn [] (sort-by count (repeatedly 3 #(csl-input (lrand-int 50))))) 25 200] ;; Cases forced to be in order (as long as two aren't same size randomly, will be true)
-   [(fn [] (repeatedly 3 #(csl-input (lrand-int 50)))) 50 700] ;; Cases in random order
+   [(fn [] (repeat 3 (csl-input (lrand-int 50)))) 3 100 50] ;; Cases where all are the same
+   [(fn [] (sort-by count (repeatedly 3 #(csl-input (lrand-int 50))))) 25 200 100] ;; Cases forced to be in order (as long as two aren't same size randomly, will be true)
+   [(fn [] (repeatedly 3 #(csl-input (lrand-int 50)))) 50 700 350] ;; Cases in random order
    ])
 
 ;;Can make Compare String Lengths test data like this:
@@ -148,6 +148,7 @@
                                                                           (second compare-string-lengths-train-and-test-cases))
    :training-cases (first compare-string-lengths-train-and-test-cases)
    :sub-training-cases '()
+   :random-data (nth compare-string-lengths-train-and-test-cases 2)
    :atom-generators csl-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200

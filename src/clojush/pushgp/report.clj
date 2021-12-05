@@ -47,37 +47,41 @@
 
 (defn track-solutions
   "Tracks all solutions in behavior-map
-   behavior-map is formatted as follows: ... TODO"
+   behavior-map is formatted as follows: ... TODO
+   Returns false if no solutions, or true otherwise."
   [{:keys [error-function random-data]} population]
   (let [solutions (filter #(zero? (:total-error %)) population)]
-    (loop [solutions solutions]
-      (if (empty? solutions)
-        nil ; finish
-        (let [ind (first solutions)
-              push-prog (:program ind)
-              prog-hash (hash push-prog)
-              behavior (:behaviors (error-function ind random-data))
-              map-for-behavior (get @behavior-map behavior)
-              prog-points (count-points push-prog)]
-          (if (nil? map-for-behavior)
-            (swap! behavior-map
-                   assoc
-                   behavior
-                   {:number 1
-                    :smallest push-prog
-                    :smallest-points prog-points
-                    :largest push-prog
-                    :largest-points prog-points
-                    :first push-prog
-                    :last push-prog
-                    :structs {prog-hash 1}})
-            (swap! behavior-map
-                   update
-                   behavior
-                   change-nested-map
-                   push-prog
-                   prog-hash))
-          (recur (rest solutions)))))))
+    (if (empty? solutions)
+      false
+      (loop [solutions solutions]
+        (if (empty? solutions)
+          true ; finish
+          (let [ind (first solutions)
+                push-prog (:program ind)
+                prog-hash (hash push-prog)
+                behavior (:behaviors (error-function ind random-data))
+                map-for-behavior (get @behavior-map behavior)
+                prog-points (count-points push-prog)]
+            (println (count random-data))
+            (if (nil? map-for-behavior)
+              (swap! behavior-map
+                     assoc
+                     behavior
+                     {:number 1
+                      :smallest push-prog
+                      :smallest-points prog-points
+                      :largest push-prog
+                      :largest-points prog-points
+                      :first push-prog
+                      :last push-prog
+                      :structs {prog-hash 1}})
+              (swap! behavior-map
+                     update
+                     behavior
+                     change-nested-map
+                     push-prog
+                     prog-hash))
+            (recur (rest solutions))))))))
 
 
 (comment
@@ -726,33 +730,34 @@
         (printf "Other:           %8.1f seconds, %4.1f%%\n"
                 (/ other 1000.0) (* 100.0 (/ other total-time)))))
     (println ";;;;;;;;;;;;;;;;;;")
-    (println "Total:" (:total-error best))
+    (println "TotalErrorAgain:" (:total-error best))
     (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
     (println ";; -*- Generalization experiment info:") ; TMH working here
-    (track-solutions argmap sorted)
+    
     ;; (println @behavior-map) ;; Don't print whole thing, just sumarize data
     ;; Calculate current values of L, n_struct, and b. These are for run so far.
-    (let [vals-of-behavior-map (vals @behavior-map)
-          modal-behavior (apply max-key
-                                #(count (get-in @behavior-map [% :structs]))
-                                (keys @behavior-map))
-          L (count (get-in @behavior-map [modal-behavior :structs]))
-          n_struct_per_behavior_sorted (sort (map #(count (:structs %))
-                                                  vals-of-behavior-map))
-          n_struct (apply + (map #(count (:structs %)) vals-of-behavior-map))
-          b (- 2.0 (/ n_struct L))]
-      (println "Number of solutions entire run:" (apply + (map :number vals-of-behavior-map)))
-      (let [solutions (filter #(zero? (:total-error %)) population)]
-        (println "Number of solutions this generation:" (count solutions)))
+    (when (track-solutions argmap sorted)
+      (let [vals-of-behavior-map (vals @behavior-map)
+            modal-behavior (apply max-key
+                                  #(count (get-in @behavior-map [% :structs]))
+                                  (keys @behavior-map))
+            L (count (get-in @behavior-map [modal-behavior :structs]))
+            n_struct_per_behavior_sorted (sort (map #(count (:structs %))
+                                                    vals-of-behavior-map))
+            n_struct (apply + (map #(count (:structs %)) vals-of-behavior-map))
+            b (- 2.0 (/ n_struct L))]
+        (println "Number of solutions entire run:" (apply + (map :number vals-of-behavior-map)))
+        (let [solutions (filter #(zero? (:total-error %)) population)]
+          (println "Number of solutions this generation:" (count solutions)))
 
-      (println "n_struct for run after current generation:" n_struct)
-      (println "n_behaviors for run after current generation:" (count @behavior-map))
-      (println "L for run after current generation:" L)
-      (println "b for run after current generation:" b)
-      (println "Number of solutions for each behavior:" (reverse (sort (map :number vals-of-behavior-map))))
-      (println "Number of structural solutions for each behavior:" (reverse n_struct_per_behavior_sorted))
-      
-      )
+        (println "n_struct for run after current generation:" n_struct)
+        (println "n_behaviors for run after current generation:" (count @behavior-map))
+        (println "L for run after current generation:" L)
+        (println "b for run after current generation:" b)
+        (println "Number of solutions for each behavior (may or may not be different than below:"
+                 (reverse (sort (map :number vals-of-behavior-map))))
+        (println "Number of structural solutions for each behavior:                             "
+                 (reverse n_struct_per_behavior_sorted))))
 
     ;;; end section on generalization
     (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")

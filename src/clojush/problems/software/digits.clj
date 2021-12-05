@@ -51,7 +51,7 @@
             start (expt 10 (dec digs))
             end (expt 10 digs)]
         ((if (< (lrand) 0.5) - +)
-          (+ (my-rand-long (- end start)) start)))) 85 1000] ;; Random cases such that each number of digits between 1 and 10 will be represented evenly, as will negatives and positives
+          (+ (my-rand-long (- end start)) start)))) 85 1000 500] ;; Random cases such that each number of digits between 1 and 10 will be represented evenly, as will negatives and positives
    ])
 
 ;;Can make Digits test data like this:
@@ -143,6 +143,7 @@
   {:error-function (make-digits-error-function-from-cases (first digits-train-and-test-cases)
                                                           (second digits-train-and-test-cases))
    :training-cases (first digits-train-and-test-cases)
+   :random-data (nth digits-train-and-test-cases 2)
    :atom-generators digits-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150
