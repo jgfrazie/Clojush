@@ -482,24 +482,38 @@
   (let [point-evaluations-before-report @point-evaluations-count
         program-executions-before-report @program-executions-count
         err-fn (if (= total-error-method :rmse) :weighted-error :total-error)
-        sorted (sort-by err-fn < population)
-        err-fn-best (if (not= parent-selection :downsampled-lexicase)
-                      (first sorted)
+
+        population-with-solutions-fully-evaluated (map #(if (> (:total-error %) error-threshold)
+                                                          %
+                                                          (let [evaluated (error-function % :train)
+                                                                total-error (apply + (:errors evaluated))]
+                                                            (assoc evaluated :total-error total-error)))
+                                                       population)
+        ;; TMH
+        ;; Instead of the below, which evaluates solutions on training data until
+        ;; it finds one that passes it and returns it as err-fn-best, instead,
+        ;; do the above, which evaluates every subsample train solution on all
+        ;; training cases and associates their error vector accordingly.
+        #_err-fn-best #_(if (not= parent-selection :downsampled-lexicase)
+                          (first sorted)
                       ; This tests each individual that passes current generation's subsampled training
                       ; cases on all training cases, and only treats it as winner if it
                       ; passes all of those as well. Otherwise, just returns first individual
                       ; if none pass all subsampled cases, or random individual that passes
                       ; all subsampled cases but not all training cases.
-                      (error-function
-                       (loop [sorted-individuals sorted]
-                         (if (empty? (rest sorted-individuals))
-                           (first sorted-individuals)
-                           (if (and (<= (:total-error (first sorted-individuals)) error-threshold)
-                                    (> (apply + (:errors (error-function (first sorted-individuals) :train))) error-threshold)
-                                    (<= (:total-error (second sorted-individuals)) error-threshold))
-                             (recur (rest sorted-individuals))
-                             (first sorted-individuals))))
-                       :train))
+                          (error-function
+                           (loop [sorted-individuals sorted]
+                             (if (empty? (rest sorted-individuals))
+                               (first sorted-individuals)
+                               (if (and (<= (:total-error (first sorted-individuals)) error-threshold)
+                                        (> (apply + (:errors (error-function (first sorted-individuals) :train))) error-threshold)
+                                        (<= (:total-error (second sorted-individuals)) error-threshold))
+                                 (recur (rest sorted-individuals))
+                                 (first sorted-individuals))))
+                           :train))
+
+        sorted (sort-by err-fn < population-with-solutions-fully-evaluated) ;; note: used to be population
+        err-fn-best (first sorted)
         total-error-best (if (not= parent-selection :downsampled-lexicase)
                            err-fn-best
                            (assoc err-fn-best
@@ -593,10 +607,10 @@
                                              quants)))))
     (println "Average total errors in population:"
              (r/generation-data! [:population-report :mean-total-error]
-                                 (*' 1.0 (mean (map :total-error sorted)))))
+                                 (*' 1.0 (mean (map :total-error population)))))
     (println "Median total errors in population:"
              (r/generation-data! [:population-report :median-total-error]
-                                 (median (map :total-error sorted))))
+                                 (median (map :total-error population))))
     (when print-errors (println "Error averages by case:"
                                 (apply map (fn [& args] (*' 1.0 (mean args)))
                                        (map :errors population))))
@@ -742,7 +756,7 @@
     
     ;; (println @behavior-map) ;; Don't print whole thing, just sumarize data
     ;; Calculate current values of L, n_struct, and b. These are for run so far.
-    (when (track-solutions argmap sorted)
+    (if (track-solutions argmap sorted)
       (let [vals-of-behavior-map (vals @behavior-map)
             modal-behavior (find-modal-behavior)
             L (count (get-in @behavior-map [modal-behavior :structs]))
@@ -751,7 +765,7 @@
             n_struct (apply + (map #(count (:structs %)) vals-of-behavior-map))
             b (- 2.0 (/ n_struct L))]
         (println "Number of solutions entire run:" (apply + (map :number vals-of-behavior-map)))
-        (let [solutions (filter #(zero? (:total-error %)) population)]
+        (let [solutions (filter #(zero? (:total-error %)) sorted)]
           (println "Number of solutions this generation:" (count solutions)))
 
         (println "n_struct for run after current generation:" n_struct)
@@ -761,7 +775,8 @@
         (println "Number of solutions for each behavior (may or may not be different than below:"
                  (reverse (sort (map :number vals-of-behavior-map))))
         (println "Number of structural solutions for each behavior:                             "
-                 (reverse n_struct_per_behavior_sorted))))
+                 (reverse n_struct_per_behavior_sorted)))
+      (println "NO SOLUTIONS SO FAR."))
 
     ;;; end section on generalization
     (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
