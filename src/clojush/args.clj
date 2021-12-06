@@ -614,6 +614,9 @@
          :exit-on-success true
           ;; When true, will exit the run when there is an individual with a zero-error vector
 
+         :generations-after-success 50
+          ;; When :exit-on-success is false, this is the number of generations to run after success.
+
          :visualize false
           ;; When true, graphics will be displayed to indicate system progress.
           ;; See the comments in src/clojush/pushgp/visualize.clj

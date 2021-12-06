@@ -14,6 +14,8 @@
 
 (def behavior-map (atom {}))
 
+(def success-generation (atom nil))
+
 ;; NOTES TO SELF
 ;; Going to need to use problem-specific error functions, passing in
 ;; correctly formatted input/output data, but ignoring errors and just
@@ -62,7 +64,7 @@
                 behavior (:behaviors (error-function ind random-data))
                 map-for-behavior (get @behavior-map behavior)
                 prog-points (count-points push-prog)]
-            (println (count random-data))
+            ;; (println (count random-data))
             (if (nil? map-for-behavior)
               (swap! behavior-map
                      assoc
@@ -83,9 +85,13 @@
                      prog-hash))
             (recur (rest solutions))))))))
 
+(defn find-modal-behavior
+  []
+  (apply max-key
+         #(count (get-in @behavior-map [% :structs]))
+         (keys @behavior-map)))
 
 (comment
-  ;; TMH testing
   (change-nested-map {:number 7
                       :smallest (range 5)
                       :smallest-points 5
@@ -465,7 +471,7 @@
            print-csv-logs print-json-logs csv-log-filename json-log-filename
            log-fitnesses-for-all-cases json-log-program-strings
            print-edn-logs edn-keys edn-log-filename edn-additional-keys
-           visualize calculate-mod-metrics]
+           visualize calculate-mod-metrics generations-after-success]
     :as argmap}]
   (r/generation-data! [:population]
                       (map #(dissoc % :program) population))
@@ -738,9 +744,7 @@
     ;; Calculate current values of L, n_struct, and b. These are for run so far.
     (when (track-solutions argmap sorted)
       (let [vals-of-behavior-map (vals @behavior-map)
-            modal-behavior (apply max-key
-                                  #(count (get-in @behavior-map [% :structs]))
-                                  (keys @behavior-map))
+            modal-behavior (find-modal-behavior)
             L (count (get-in @behavior-map [modal-behavior :structs]))
             n_struct_per_behavior_sorted (sort (map #(count (:structs %))
                                                     vals-of-behavior-map))
@@ -773,15 +777,30 @@
     (when visualize
       (swap! viz-data-atom update-in [:history-of-errors-of-best] conj (:errors best))
       (swap! viz-data-atom assoc :generation generation))
+    
+    ;; Check for success generation for generalization experiments
+    (when (and (nil? @success-generation)
+               (or (<= (:total-error best) error-threshold)
+                   (:success best)))
+      (reset! success-generation generation))
     (cond
       ; Succeed
       (and exit-on-success
            (or (<= (:total-error best) error-threshold)
                (:success best)))
       [:success best]
+
+      ; Succeed, and after :generations-after-success generations, end
+      (and @success-generation
+           (>= generation (+ @success-generation generations-after-success)))
+      [:success best]
+
+
       ; Fail max generations
-      (>= generation max-generations)
+      (and (nil? @success-generation)
+           (>= generation max-generations))
       [:failure best]
+
       ; Fail max program executions
       (>= @program-executions-count max-program-executions)
       [:failure best]
@@ -856,8 +875,32 @@
   (when print-ancestors-of-solution
     (printf "\nAncestors of solution:\n")
     (prn (:ancestors best)))
-  (let [simplified-best (auto-simplify best error-function final-report-simplifications true 500 argmap)]
+
+  ;; Find modal behavior, print a bunch of behavior about it
+  ;; Note: a bunch of stats, like b and n_struct and L are printed every generation and don't need to be printed here
+  ;; TMH working here
+
+  (println "\n;;******************************")
+  (println ";; Generalization experiment final report. Generalization, before and after simplification, reported for certain solutions.")
+  (let [modal-behavior (find-modal-behavior)
+        modal-behavior-data-map (get @behavior-map modal-behavior)
+        programs-to-report '(:first :last :smallest :largest)]
+    (println "modal behavior smallest solution size:" (:smallest-points modal-behavior-data-map))
+    (println "modal behavior largest solution size:" (:largest-points modal-behavior-data-map))
     (println "\n;;******************************")
-    (println ";; Problem-Specific Report of Simplified Solution")
-    (println "Reuse in Simplified Solution:" (:reuse-info (error-function simplified-best)))
-    (problem-specific-report simplified-best [] generation error-function report-simplifications)))
+    (loop [programs-to-report programs-to-report]
+      (if (empty? programs-to-report)
+        nil
+        (let [program-type (first programs-to-report)
+              solution-program (get modal-behavior-data-map program-type)
+              solution-individual (error-function {:program solution-program})
+              full-solution-individual (assoc solution-individual :total-error (apply +' (:errors solution-individual)))]
+          (println "\n;;====================================")
+          (println "experiment generalization info" program-type)
+          (problem-specific-report full-solution-individual [] program-type error-function report-simplifications)
+          (let [simplified (auto-simplify full-solution-individual error-function final-report-simplifications true 500 argmap)]
+            (println "\n;;====================================")
+            (println "experiment generalization info simplified" program-type)
+            (problem-specific-report simplified [] program-type error-function report-simplifications)
+
+            (recur (rest programs-to-report))))))))
