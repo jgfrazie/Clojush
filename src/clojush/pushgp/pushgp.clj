@@ -143,14 +143,24 @@
 
 (defn produce-new-offspring
   [pop-agents child-agents rand-gens
-   {:keys [decimation-ratio population-size decimation-tournament-size use-single-thread]
+   {:keys [decimation-ratio population-size decimation-tournament-size
+           use-single-thread remove-solutions error-threshold]
     :as argmap}]
   (let [pop (if (>= decimation-ratio 1)
               (vec (doall (map deref pop-agents)))
               (decimate (vec (doall (map deref pop-agents)))
                         (int (* decimation-ratio population-size))
                         decimation-tournament-size))
+        pop (if remove-solutions
+              (filter #(< error-threshold (:total-error %))
+                      pop) ;; doesn't take into account what will happen if all programs are solutions, hope that doesn't happen.
+                           ;; added a check below for that
+              ;; TODO: Still need to make this work in report-and-check-for-success. Want to run to 300 generations? Or still 50 past solution?
+              ;; I guess let's try 50 past solution for comparisons sake. Also faster.
+              pop)
         ages (map :age pop)]
+    (assert (not (empty? pop))
+            "Entire population was solutions, but solutions are being filtered out. This is bad?")
     (reset! min-age (apply min ages))
     (reset! max-age (apply max ages))
     (dotimes [i population-size]

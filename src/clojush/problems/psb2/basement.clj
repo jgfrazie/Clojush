@@ -236,5 +236,7 @@
   (count '(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0))
   ;; => 100
 
+  ; call: lein run clojush.problems.software.compare-string-lengths :exit-on-success false :generations-after-success 50 :parent-selection :downsampled-lexicase :downsample-factor 0.25
+
   
   )

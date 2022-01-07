@@ -617,6 +617,10 @@
          :generations-after-success 50
           ;; When :exit-on-success is false, this is the number of generations to run after success.
 
+         :remove-solutions false
+          ;; When :exit-on-success is false, this is checked whether to remove
+          ;; solutions when continuing evolution after a solution.
+
          :visualize false
           ;; When true, graphics will be displayed to indicate system progress.
           ;; See the comments in src/clojush/pushgp/visualize.clj
