@@ -64,11 +64,11 @@
                          (if (pos? num-remaining)
                            (let [new-seeds (repeatedly num-remaining
                                                        #(random/lrand-bytes
-                                                         (:mersennetwister random/*seed-length*)))]
+                                                          (:mersennetwister random/*seed-length*)))]
                              (recur (list-concat seeds (filter ; only add seeds that we do not already have
-                                                        (fn [candidate]
-                                                          (not (some #(random/=byte-array % candidate)
-                                                                     seeds))) new-seeds))))
+                                                         (fn [candidate]
+                                                           (not (some #(random/=byte-array % candidate)
+                                                                      seeds))) new-seeds))))
                            seeds)))]
     {:random-seeds random-seeds
      :rand-gens (vec (doall (for [k (range population-size)]
@@ -185,6 +185,11 @@
     (swap! push-argmap assoc :sub-training-cases
            (down-sample @push-argmap))
     (println "Cases for this generation:" (pr-str (:sub-training-cases @push-argmap))))
+  ; print cases for counterexample-driven GP
+  (when (:counterexample-driven @push-argmap)
+    (println "\nNumber of cases this generation:" (count (:sub-training-cases @push-argmap)))
+    (println "Cases for this generation:" (pr-str (:sub-training-cases @push-argmap)))
+    (println))
   ; compute errors
   (compute-errors pop-agents rand-gens novelty-archive @push-argmap)
   (println "Done computing errors.")
@@ -272,8 +277,7 @@
                                                      (:error-function @push-argmap)
                                                      (:final-report-simplifications @push-argmap)
                                                      true
-                                                     500
-                                                     argmap))])
+                                                     500))])
           (= outcome :continue) (let [next-novelty-archive
                                       (list-concat novelty-archive
                                                    (select-individuals-for-novelty-archive
@@ -317,9 +321,14 @@
    (random/with-rng (random/make-mersennetwister-rng (:random-seed @push-argmap))
      ;; set globals from parameters
      (reset-globals)
+     ;; Set initial training case for counterexample-driven GP
+     (when (:counterexample-driven @push-argmap)
+       (swap! push-argmap assoc :sub-training-cases
+              (take (:counterexample-driven-number-of-initial-training-cases @push-argmap)
+                    (lshuffle (:training-cases @push-argmap)))))
      (initial-report @push-argmap) ;; Print the inital report
      (r/uuid! (:run-uuid @push-argmap))
-     (print-params (r/config-data! [:argmap] @push-argmap))
+     (print-params (r/config-data! [:argmap] (dissoc @push-argmap :run-uuid)))
      (check-genetic-operator-probabilities-add-to-one @push-argmap)
      (timer @push-argmap :initialization)
      (when (:print-timings @push-argmap)
@@ -337,6 +346,3 @@
            (if (nil? next-novelty-archive)
              return-val
              (recur (inc generation) next-novelty-archive))))))))
-
-
-

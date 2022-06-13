@@ -2,7 +2,18 @@
   (:require [clj-random.core :as random])
   (:use [clojush globals random util pushstate]
         [clojush.instructions.tag]
-        [clojush.pushgp report]))
+        ;[clojush.pushgp report]
+        ))
+
+(defn default-problem-specific-initial-report
+  "Customize this for your own problem. It will be called at the beginning of the initial report."
+  [argmap]
+  :no-problem-specific-initial-report-function-defined)
+
+(defn default-problem-specific-report
+  "Customize this for your own problem. It will be called at the beginning of the generational report."
+  [best population generation error-function report-simplifications]
+  :no-problem-specific-report-function-defined)
 
 (def push-argmap
   (atom (sorted-map
@@ -80,12 +91,67 @@
 
          :training-cases '()
           ;; The list of training cases (inputs and outputs). Used for some parent
-          ;; selection methods, such as downsampled lexicase.
+          ;; selection methods, such as downsampled lexicase and counterexample-driven GP.
 
          :sub-training-cases '()
-          ;; The subsample of the training cases used for downsampled lexicase.
+          ;; The subsample of the training cases used for downsampled lexicase and
+          ;; counterexample-driven GP.
 
+          ;;----------------------------------------
+          ;; Counterexample-driven GP
+          ;;----------------------------------------
+
+         :counterexample-driven false
+          ;; If true, will enable counterexample-drive GP, which means that
+          ;; it will start with a single training case, and will increase the
+          ;; set of training cases each time a program is found that passes all
+          ;; training cases, until one is found that passes all available cases.
+
+         :counterexample-driven-case-generator :hard-coded
+          ;; Method for generating cases for checker to check when a program is
+          ;; found that passes all current sub-cases.
+          ;; Options: :hard-coded
+          ;; Possible future options: auto-generated
          
+         :counterexample-driven-case-checker :automatic
+          ;; Method for checking whether a program passes all cases.
+          ;; Options: :human, :automatic
+
+         :counterexample-driven-number-of-initial-training-cases 10
+          ;; The number of cases to start with when using counterexample-driven GP
+
+         :counterexample-driven-number-cases-to-add 1
+          ;; The number of cases to add when a program passes all cases or when
+          ;; reaching a generation to add cases.
+
+         :counterexample-driven-add-case-every-X-generations 0
+          ;; If a positive integer, will add a case to the sub-training-cases
+          ;; every this many genreations after a case was last added.
+          ;; Good value might be something that adds 10-20 cases throughout run.
+
+         :counterexample-max-cases-before-removing-easiest 10e100
+          ;; The maximum number of training cases to use when using counterexample-
+          ;; driven GP. If the limit is reached, when adding a case, the case
+          ;; passed by the largest portion of the population will be removed,
+          ;; breaking ties at random.
+         
+         :counterexample-driven-fitness-threshold-for-new-case 1.0
+          ;; Should be a number in range [0.0, 1.0]. When using counterexample-driven
+          ;; GP, determines the proportion of cases that must be passed by an individual
+          ;; before adding a new case. At 1.0, some individual needs to pass all cases
+          ;; in order to add a new one. At 0.0, any individual will have a new case
+          ;; added for it. The CDGP papers recommend a value near 0.75-0.8.
+
+         :output-stacks :integer
+          ;; Gives the stacks to take outputs from. Should just be single stack
+          ;; if one output, and a vector of stacks if multiple. Used by
+          ;; counterexample-driven GP
+
+         :single-vector-input false
+          ;; true if the input for the problem is a single vector of something, false
+          ;; otherwise. This is a bit hacky of a workaround for telling whether to treat
+          ;; the inputs from test cases as inputs or vectors of inputs when using CDGP.
+
           ;;----------------------------------------
           ;; Genetic operator probabilities
           ;;----------------------------------------
@@ -562,10 +628,6 @@
           ;; The number of simplification steps that will happen during final report
           ;; simplifications.
 
-         :lazy-automatic-simplification false
-          ;; When true, uses lazy automatic simplification to only run the simplifying
-          ;; program one input at a time until a non-zero error is found.
-
          :problem-specific-initial-report default-problem-specific-initial-report
           ;; A function can be called to provide a problem-specific initial report, which happens
           ;; before the normal initial report is printed.
@@ -664,16 +726,6 @@
          :label nil
           ;; If set, will send this in the configuration of the run, to the
           ;; external record
-         
-         :calculate-mod-metrics false
-          ;; If true, will calculate modularity metrics (reuse and repetition) as the run proceeds.
-          ;; By default, metrics are calculated on the execution trace for a randomly chosen test case.
-
-          :simplification-steps-for-mod-metrics 0
-          ;; Number of simplification steps applied to a program before calculating mod metrics.
-          ;; 0 implies simplification won't be carried out.
-          ;; WARNING: Keep this value low as every individual in the population will be simplified for this many number of steps
-                
          )))
 
 (defn augment-for-autoconstruction

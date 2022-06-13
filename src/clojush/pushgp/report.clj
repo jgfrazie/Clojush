@@ -1,5 +1,6 @@
 (ns clojush.pushgp.report
   (:use [clojush util globals pushstate simplification individual]
+        [clojush.pushgp counterexample-driven-gp]
         [clojure.data.json :only (json-str)])
   (:require [clojure.string :as string]
             [config :as config]
@@ -11,16 +12,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; helper functions
-
-(defn default-problem-specific-initial-report
-  "Customize this for your own problem. It will be called at the beginning of the initial report."
-  [argmap]
-  :no-problem-specific-initial-report-function-defined)
-
-(defn default-problem-specific-report
-  "Customize this for your own problem. It will be called at the beginning of the generational report."
-  [best population generation error-function report-simplifications]
-  :no-problem-specific-report-function-defined)
 
 (defn git-last-commit-hash
   "Returns the last Git commit hash"
@@ -42,6 +33,7 @@
              (cond
                (= param :random-seed) (random/seed-to-string val)
                (= param :training-cases) (pr-str val)
+               (= param :sub-training-cases) (pr-str val)
                :else val))))
 
 (defn print-genome
@@ -258,8 +250,7 @@
                                                             error-function
                                                             report-simplifications
                                                             false
-                                                            1000
-                                                            argmap))))))
+                                                            1000))))))
       (when print-errors (println "Lexicase best errors:" (not-lazy (:errors lex-best))))
       (when (and print-errors (not (empty? meta-error-categories)))
         (println "Lexicase best meta-errors:" (not-lazy (:meta-errors lex-best))))
@@ -283,8 +274,7 @@
                                                             error-function
                                                             report-simplifications
                                                             false
-                                                            1000
-                                                            argmap))))))
+                                                            1000))))))
       (when print-errors (println "Zero cases best errors:" (not-lazy (:errors most-zero-cases-best))))
       (when (and print-errors (not (empty? meta-error-categories)))
         (println "Zero cases best meta-errors:" (not-lazy (:meta-errors most-zero-cases-best))))
@@ -306,7 +296,6 @@
               (double (/ (count-parens (:program most-zero-cases-best))
                          (count-points (:program most-zero-cases-best))))) ;Number of (open) parens / points
       )
-
     (println "--- Lexicase Population Statistics ---")
     (println "Count of elite individuals by case:" count-elites-by-case)
     (println (format "Population mean number of elite cases: %.2f"
@@ -348,11 +337,12 @@
            max-program-executions use-ALPS
            print-error-frequencies-by-case normalization autoconstructive
            print-selection-counts print-preselection-fraction exit-on-success
+           counterexample-driven
            ;; The following are for CSV or JSON logs
            print-csv-logs print-json-logs csv-log-filename json-log-filename
            log-fitnesses-for-all-cases json-log-program-strings
            print-edn-logs edn-keys edn-log-filename edn-additional-keys
-           visualize calculate-mod-metrics]
+           visualize]
     :as argmap}]
   (r/generation-data! [:population]
     (map #(dissoc % :program) population))
@@ -413,6 +403,7 @@
                                      (truncate (/ (count nums) 2)))
                                 (nth sorted
                                      (truncate (/ (* 3 (count nums)) 4)))))))]
+
     (when print-error-frequencies-by-case
       (println "Error frequencies by case:"
                (doall (map frequencies (apply map vector (map :errors population))))))
@@ -426,20 +417,14 @@
     (r/generation-data! [:best :individual] (dissoc best :program))
     (println "Best genome:" (print-genome best argmap))
     (println "Best program:" (pr-str (not-lazy (:program best))))
-    (when calculate-mod-metrics
-      (println "Reuse in Best Program:" (pr-str (:reuse-info best)))
-      (println "Repetition in Best Program:" (pr-str (:repetition-info best))))
-
     (when (> report-simplifications 0)
-      (let [simplified (not-lazy (:program (r/generation-data! [:best :individual-simplified]
-                                                               (auto-simplify best
-                                                                              error-function
-                                                                              report-simplifications
-                                                                              false
-                                                                              1000
-                                                                              argmap))))]
-        (println "Partial simplification:" (pr-str simplified))
-        (println "Partial simplified size:" (count-points simplified))))
+      (println "Partial simplification:"
+               (pr-str (not-lazy (:program (r/generation-data! [:best :individual-simplified]
+                                            (auto-simplify best
+                                                          error-function
+                                                          report-simplifications
+                                                          false
+                                                          1000)))))))
     (when print-errors (println "Errors:" (not-lazy (:errors best))))
     (when (and print-errors (not (empty? meta-error-categories)))
       (println "Meta-Errors:" (not-lazy (:meta-errors best))))
@@ -491,8 +476,8 @@
                (apply map (fn [& args] (apply min args))
                       (map :meta-errors population))))
     (println "Average genome size in population (length):"
-             (r/generation-data! [:population-report :mean-genome-size]
-                                 (*' 1.0 (mean (map count (map :genome sorted))))))
+          (r/generation-data! [:population-report :mean-genome-size]
+             (*' 1.0 (mean (map count (map :genome sorted))))))
     (println "Average program size in population (points):"
           (r/generation-data! [:population-report :mean-program-size]
              (*' 1.0 (mean (map count-points (map :program sorted))))))
@@ -503,38 +488,38 @@
       (when use-ALPS
         (println "Population ages:" ages))
       (println "Minimum age in population:"
-               (r/generation-data! [:population-report :min-age]
-                                   (* 1.0 (apply min ages))))
+          (r/generation-data! [:population-report :min-age]
+               (* 1.0 (apply min ages))))
       (println "Maximum age in population:"
-               (r/generation-data! [:population-report :max-age]
-                                   (* 1.0 (apply max ages))))
+          (r/generation-data! [:population-report :max-age]
+               (* 1.0 (apply max ages))))
       (println "Average age in population:"
-               (r/generation-data! [:population-report :mean-age]
-                                   (* 1.0 (mean ages))))
+          (r/generation-data! [:population-report :mean-age]
+               (* 1.0 (mean ages))))
       (println "Median age in population:"
-               (r/generation-data! [:population-report :median-age]
-                                   (* 1.0 (median ages)))))
+          (r/generation-data! [:population-report :median-age]
+               (* 1.0 (median ages)))))
     (let [grain-sizes (map :grain-size population)]
       (println "Minimum grain-size in population:"
-               (r/generation-data! [:population-report :min-grain-size]
-                                   (* 1.0 (apply min grain-sizes))))
+          (r/generation-data! [:population-report :min-grain-size]
+               (* 1.0 (apply min grain-sizes))))
       (println "Maximum grain-size in population:"
-               (r/generation-data! [:population-report :max-grain-size]
-                                   (* 1.0 (apply max grain-sizes))))
+          (r/generation-data! [:population-report :max-grain-size]
+               (* 1.0 (apply max grain-sizes))))
       (println "Average grain-size in population:"
-               (r/generation-data! [:population-report :mean-grain-size]
-                                   (* 1.0 (mean grain-sizes))))
+          (r/generation-data! [:population-report :mean-grain-size]
+               (* 1.0 (mean grain-sizes))))
       (println "Median grain-size in population:"
-               (r/generation-data! [:population-report :median-grain-size]
-                                   (* 1.0 (median grain-sizes)))))
+          (r/generation-data! [:population-report :median-grain-size]
+               (* 1.0 (median grain-sizes)))))
     (println "--- Population Diversity Statistics ---")
     (let [genome-frequency-map (frequencies (map :genome population))]
       (println "Min copy number of one genome:"
-               (r/generation-data! [:population-report :min-genome-frequency]
-                                   (apply min (vals genome-frequency-map))))
+        (r/generation-data! [:population-report :min-genome-frequency]
+          (apply min (vals genome-frequency-map))))
       (println "Median copy number of one genome:"
-               (r/generation-data! [:population-report :median-genome-frequency]
-                                   (median (vals genome-frequency-map))))
+        (r/generation-data! [:population-report :median-genome-frequency]
+          (median (vals genome-frequency-map))))
       (println "Max copy number of one genome:"
         (r/generation-data! [:population-report :max-genome-frequency]
           (apply max (vals genome-frequency-map))))
@@ -543,11 +528,11 @@
                (float (/ (count genome-frequency-map) (count population))))))
     (let [frequency-map (frequencies (map :program population))]
       (println "Min copy number of one Push program:"
-               (r/generation-data! [:population-report :min-program-frequency]
-                                   (apply min (vals frequency-map))))
+        (r/generation-data! [:population-report :min-program-frequency]
+          (apply min (vals frequency-map))))
       (println "Median copy number of one Push program:"
-               (r/generation-data! [:population-report :median-program-frequency]
-                                   (median (vals frequency-map))))
+        (r/generation-data! [:population-report :median-program-frequency]
+          (median (vals frequency-map))))
       (println "Max copy number of one Push program:"
         (r/generation-data! [:population-report :max-program-frequency]
           (apply max (vals frequency-map))))
@@ -573,6 +558,7 @@
         (println "First quartile: " first-quart-1)
         (println "Median:         " median-1)
         (println "Third quartile: " third-quart-1)))
+
     (when print-selection-counts
       (println "Selection counts:"
                (sort > (concat (vals @selection-counts)
@@ -628,24 +614,32 @@
     (when visualize
       (swap! viz-data-atom update-in [:history-of-errors-of-best] conj (:errors best))
       (swap! viz-data-atom assoc :generation generation))
-    (cond
-      ; Succeed
-      (and exit-on-success
-           (or (<= (:total-error best) error-threshold)
-               (:success best)))
-      [:success best]
-      ; Fail max generations
-      (>= generation max-generations)
-      [:failure best]
-      ; Fail max program executions
-      (>= @program-executions-count max-program-executions)
-      [:failure best]
-      ; Fail max point evaluations
-      (>= @point-evaluations-count max-point-evaluations)
-      [:failure best]
-      ; Continue
-      :else
-      [:continue best])))
+    (let [counterexample-driven-success (if counterexample-driven
+                                          (check-counterexample-driven-results sorted argmap)
+                                          false)]
+      (cond
+        ; Succeed for counterexample-driven GP
+        counterexample-driven-success
+        [:success counterexample-driven-success]
+        ; Succeed
+        (and exit-on-success
+             (not counterexample-driven)
+             (or (<= (:total-error best) error-threshold)
+                 (:success best)))
+        [:success best]
+        ; Fail max generations
+        (>= generation max-generations)
+        [:failure best]
+        ; Fail max program executions
+        (>= @program-executions-count max-program-executions)
+        [:failure best]
+        ; Fail max point evaluations
+        (>= @point-evaluations-count max-point-evaluations)
+        [:failure best]
+        ; Continue
+        :else
+        [:continue best]))))
+
 
 (defn remove-function-values [argmap]
   (into {} (filter (fn [[k v]] (not (fn? v)))
@@ -704,15 +698,14 @@
   "Prints the final report of a PushGP run if the run is successful."
   [generation best
    {:keys [error-function final-report-simplifications report-simplifications
-           print-ancestors-of-solution problem-specific-report] :as argmap}]
+           print-ancestors-of-solution problem-specific-report]}]
   (printf "\n\nSUCCESS at generation %s\nSuccessful program: %s\nErrors: %s\nTotal error: %s\nHistory: %s\nSize: %s\n\n"
           generation (pr-str (not-lazy (:program best))) (not-lazy (:errors best)) (:total-error best)
           (not-lazy (:history best)) (count-points (:program best)))
   (when print-ancestors-of-solution
     (printf "\nAncestors of solution:\n")
     (prn (:ancestors best)))
-  (let [simplified-best (auto-simplify best error-function final-report-simplifications true 500 argmap)]
+  (let [simplified-best (auto-simplify best error-function final-report-simplifications true 500)]
     (println "\n;;******************************")
     (println ";; Problem-Specific Report of Simplified Solution")
-    (println "Reuse in Simplified Solution:" (:reuse-info (error-function simplified-best)))
     (problem-specific-report simplified-best [] generation error-function report-simplifications)))
