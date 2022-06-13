@@ -54,7 +54,7 @@
           :upper-case
           :digits
           :specials
-   @param2 char-groups A string of the possible characters for each character of the string param
+   @param1 char-groups A string of the possible characters for each character of the string param
    @param & unique-chars A listing of all the other characters to be added to the
                          possible char creation of the string that were not otherwise specified
    @return A map of the following format: {:type :string, :range {:length {:lower lower,
@@ -79,7 +79,12 @@
        param))))
 
 (defn create-new-vectorof-param
-  "Creates a new vectorof parameter data type of a specific element"
+  "Creates a new vectorof parameter data type of a specific element
+   @param lower An integer of the lower bound of the count of a vector
+   @param upper An integer of the upper bound of the count of a vector
+   @param generator-function An anon function which already has the function and params
+                             for the element of the vector
+   @return A vectorof param data type as follows:"
   [lower upper generator-function]
   (let [length (+ lower (rand-int (inc (- upper lower))))
         element-type (get (generator-function) :type)
@@ -99,5 +104,4 @@
     (create-new-vectorof-param 5 7 #(create-new-integer-param -127 100))
     (create-new-vectorof-param 1 3 #(create-new-float-param 5 6))
     (create-new-vectorof-param 4 8 #(create-new-string-param 3 16 [:lower-case :digits] "?" "." "!"))
-    (create-new-vectorof-param 2 3 (fn [] (create-new-vectorof-param 2 3 (fn [] (create-new-integer-param 0 10)))))
     )
