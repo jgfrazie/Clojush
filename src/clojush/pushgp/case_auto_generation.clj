@@ -66,7 +66,7 @@
      (def available-chars (add-groups-to-str (reduce str unique-chars) char-groups)))
 
   {:type :string
-   :range {:bounds {:lower lower :upper upper}
+   :range {:lower lower :upper upper
            :available-characters available-chars}
    :param (create-new-string-param length available-chars)})
   
@@ -84,7 +84,13 @@
    @param upper An integer of the upper bound of the count of a vector
    @param generator-function An anon function which already has the function and params
                              for the element of the vector
-   @return A vectorof param data type as follows:"
+   @return A vectorof param data type as follows:
+           {:type :vectorof
+            :range {:lower lower
+                    :upper upper}
+            :element-type %1
+            :element-range %2
+            :param %3}"
   [lower upper generator-function]
   (let [length (+ lower (rand-int (inc (- upper lower))))
         element-type (get (generator-function) :type)
