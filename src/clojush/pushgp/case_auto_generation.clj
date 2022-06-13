@@ -81,29 +81,23 @@
 (defn create-new-vectorof-param
   "Creates a new vectorof parameter data type of a specific element"
   [lower upper generator-function]
-  (def length (+ lower (rand-int (inc (- upper lower)))))
-  (loop [param []
-         index 0]
-    (if (< index length)
-      (recur (conj param (generator-function)) (inc index))
-      param)))
+  (let [length (+ lower (rand-int (inc (- upper lower))))
+        element-type (get (generator-function) :type)
+        element-range (get (generator-function) :range)]
+    {:type :vectorof
+     :range {:lower lower
+             :upper upper}
+     :element-type element-type
+     :element-range element-range
+     :param (loop [param []
+                   index 0]
+              (if (< index length)
+                (recur (conj param (get (generator-function) :param)) (inc index))
+                param))}))
 
-(comment
-  (create-new-string-param 2 5 [] "+" "-" "_")
-  (get (create-new-string-param 3 4 [:upper-case]) :param)
-  (create-new-string-param 2 5 "ABCDE")
-
-  (get (create-new-integer-param 0 1) :param)
-  (create-new-integer-param -127 100)
-
-  (get (create-new-float-param 0 1) :param)
-  (create-new-float-param 0.5 0.6)
-
-  (add-groups-to-str "HEYO " [:lower-case :upper-case :digits :specials])
-
-  (partial (create-new-integer-param -127 100))
-
-  (create-new-vectorof-param 5 7 #(create-new-integer-param -127 100))
-  (create-new-vectorof-param 1 3 #(create-new-float-param 5 6))
-  (create-new-vectorof-param 4 8 #(create-new-string-param 3 16 [:lower-case :digits] "?" "." "!"))
-  )
+  (comment
+    (create-new-vectorof-param 5 7 #(create-new-integer-param -127 100))
+    (create-new-vectorof-param 1 3 #(create-new-float-param 5 6))
+    (create-new-vectorof-param 4 8 #(create-new-string-param 3 16 [:lower-case :digits] "?" "." "!"))
+    (create-new-vectorof-param 2 3 (fn [] (create-new-vectorof-param 2 3 (fn [] (create-new-integer-param 0 10)))))
+    )
