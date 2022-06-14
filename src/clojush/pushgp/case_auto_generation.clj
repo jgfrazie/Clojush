@@ -15,51 +15,116 @@
              (= %2 :lower-case) (str %1 "abcdefghijklmnopqrstuvwxyz")
              (= %2 :upper-case) (str %1 "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
              (= %2 :specials)   (str %1 " !@#$%^&*()_+-=`~,<.>/?]}[{")
-             (= %2 :digits)     (str %1 "0123456789"))
+             (= %2 :digits)     (str %1 "0123456789")
+             :else              %1)
           string
           groups))
 
+(defn process-user-input
+  "Displays prompt for the user and will convert input to a specified data type
+   @param prompt A string to be printed to terminal for the user to read
+   @param type A keyword which will identify which data type is anticipated to be received.
+              Options include:
+                    :integer
+                    :float
+                    :string
+   @return The user input as the specified data type"
+  [prompt type]
+  (println prompt)
+  (cond
+    (= type :integer) (Integer/parseInt (read-line))
+    (= type :string)  (read-line)
+    (= type :float)   (Float/parseFloat (read-line))))
+
 (defn create-new-integer-param
   "Creates a new integer parameter type with a range specified by the user
-   @param lower An integer of the lower bound of the range of the parameter
-   @param upper An integer of the upper bound of the range of the parameter
+   @param1 lower An integer of the lower bound of the range of the parameter
+   @param1 upper An integer of the upper bound of the range of the parameter
    @return A map of the following format: {:type :integer, :range {:lower lower,
                                                  :upper upper}, :param #}"
-  [lower upper]
+  ([]
+   (println "For an Integer, please provide the following information.")
+   (let [lower (process-user-input "Lower-bound of intger range:" :integer)
+         upper (process-user-input "Upper-bound of integer range:" :integer)]
+     #(create-new-integer-param lower upper)))
+  
+  ([lower upper]
   (def rand-param (+ lower (rand-int (inc (- upper lower)))))
   {:type :integer
    :range {:lower lower
            :upper upper}
-   :param rand-param})
+   :param rand-param}))
 
 (defn create-new-float-param
   "Creates a new float parameter type with a range specified by the user
-   @param lower A float of the lower bound of the range of the parameter
-   @param upper A float of the upper bound of the range of the parameter
+   @param1 lower A float of the lower bound of the range of the parameter
+   @param1 upper A float of the upper bound of the range of the parameter
    @return A map of the following format: {:type :float, :range {:lower, lower,
            :upper upper}, :param #}"
-  [lower upper]
+  ([]
+   (println "For a Float, please provide the following information.")
+   (let [lower (process-user-input "Lower-bound of float range:" :float)
+         upper (process-user-input "Upper-bound of float range:" :float)]
+     #(create-new-float-param lower upper)))
+  
+  ([lower upper]
   (def rand-param (+ lower (rand (- upper lower))))
   {:type :float
    :range {:lower lower
            :upper upper}
-   :param rand-param})
+   :param rand-param}))
+
+(defn get-char-sets
+  []
+  (println "Of the following options, select the corresponding number associated witht the grouping of characters followed by a space if you wish to add more than one group.
+If you wish to select none of the following options, select 0.
+    (1) Lower-case
+    (2) Upper-case
+    (3) Digits
+    (4) Special Characeters")
+  (def choices (clojure.string/split (read-line) #" "))
+  (for [choice choices]
+    (cond
+      (= choice "0") nil
+      (= choice "1") :lower-case
+      (= choice "2") :upper-case
+      (= choice "3") :digits
+      (= choice "4") :specials)))
+
+(defn get-extra-chars
+  []
+  (println "List any other character options to include in this string parameter followed by a space.
+If you wish to add the \" \" character, enter \"space\" to do so.
+If there are no extra characters, press enter.")
+  (def extras (clojure.string/split (read-line) #" "))
+  (for [character extras]
+    (if (= character "space")
+      " "
+      character)))
 
 (defn create-new-string-param
   "Creates a new string parameter type with a length range specified by the user
    @param lower An integer of the lower-bound of the string length
    @param upper An integer of the upper-bound of the string length
-   @param1 char-groups A vector of the following possible key-words to add to the possible string combination:
+   @param char-groups A vector of the following possible key-words to add to the possible string combination:
           :lower-case
           :upper-case
           :digits
           :specials
    @param1 char-groups A string of the possible characters for each character of the string param
-   @param & unique-chars A listing of all the other characters to be added to the
+   @param unique-chars A listing of all the other characters to be added to the
                          possible char creation of the string that were not otherwise specified
    @return A map of the following format: {:type :string, :range {:length {:lower lower,
            :upper upper}, :available-characters #1}, :param #2}"
-  ([lower upper char-groups & unique-chars]
+  ([]
+   (println "For a String, please provide the following information.")
+   (let [lower (process-user-input "Lower-bound of string length: " :integer)
+         upper (process-user-input "Upper-bound of string length: " :integer)
+         char-sets (get-char-sets)
+         extras (get-extra-chars)]
+     #(create-new-string-param lower upper char-sets extras)))
+
+  ([lower upper char-groups unique-chars]
    (def length (+ lower (rand-int (inc (- upper lower)))))
    (if (string? char-groups)
      (def available-chars char-groups)
@@ -105,9 +170,33 @@
               (if (< index length)
                 (recur (conj param (get (generator-function) :param)) (inc index))
                 param))}))
+  
+  (defn create-param
+    []
+    (def choice (process-user-input "What is the data type for this parameter?
+    (1) Integer
+    (2) Float
+    (3) String
+    (4) VectorOf
+Please choose a number from the options above" :string))
+    (cond
+      (= choice "1") (create-new-integer-param)
+      (= choice "2") (create-new-float-param)
+      (= choice "3") (create-new-string-param)))
+  
+  (defn aquire-params
+    []
+    (def num-params (process-user-input "How many parameters are given?: " :integer))
+    (loop [input []
+           param-count 0]
+      (if (< param-count num-params)
+        (conj input (create-param)))))
 
   (comment
     (create-new-vectorof-param 5 7 #(create-new-integer-param -127 100))
     (create-new-vectorof-param 1 3 #(create-new-float-param 5 6))
-    (create-new-vectorof-param 4 8 #(create-new-string-param 3 16 [:lower-case :digits] "?" "." "!"))
+    (create-new-vectorof-param 4 8 #(create-new-string-param 3 5 [:digits] ["?" "." "!"]))
+    (create-param)
+    ((create-param))
+    (aquire-params)
     )
