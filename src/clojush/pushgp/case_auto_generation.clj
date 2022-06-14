@@ -156,7 +156,15 @@ If there are no extra characters, press enter.")
             :element-type %1
             :element-range %2
             :param %3}"
-  [lower upper generator-function]
+  ([]
+   (println "For a VectorOf, please provide the following information.")
+   (let [lower (process-user-input "Lower-bound of element-count: " :integer)
+         upper (process-user-input "Upper-bound of element-count: " :integer)
+         generator (do (println "Now specify the data type of each element of the vector:")
+                       (create-param))]
+     #(create-new-vectorof-param lower upper generator)))
+  
+  ([lower upper generator-function]
   (let [length (+ lower (rand-int (inc (- upper lower))))
         element-type (get (generator-function) :type)
         element-range (get (generator-function) :range)]
@@ -169,9 +177,9 @@ If there are no extra characters, press enter.")
                    index 0]
               (if (< index length)
                 (recur (conj param (get (generator-function) :param)) (inc index))
-                param))}))
+                param))})))
   
-  (defn create-param
+  (defn create-parameter-from-user
     []
     (def choice (process-user-input "What is the data type for this parameter?
     (1) Integer
@@ -182,21 +190,27 @@ Please choose a number from the options above" :string))
     (cond
       (= choice "1") (create-new-integer-param)
       (= choice "2") (create-new-float-param)
-      (= choice "3") (create-new-string-param)))
+      (= choice "3") (create-new-string-param)
+      (= choice "4") (create-new-vectorof-param)))
   
-  (defn aquire-params
+  (defn aquire-parameters-from-user
     []
     (def num-params (process-user-input "How many parameters are given?: " :integer))
     (loop [input []
            param-count 0]
       (if (< param-count num-params)
-        (conj input (create-param)))))
+        (recur (conj input (create-parameter-from-user)) (inc param-count))
+        input))) 
+  
+  (defn generate-case
+    [case-generator]
+    (mapv #(%) case-generator))
 
   (comment
     (create-new-vectorof-param 5 7 #(create-new-integer-param -127 100))
     (create-new-vectorof-param 1 3 #(create-new-float-param 5 6))
     (create-new-vectorof-param 4 8 #(create-new-string-param 3 5 [:digits] ["?" "." "!"]))
-    (create-param)
-    ((create-param))
-    (aquire-params)
+    (create-parameter-from-user)
+    ((create-parameter-from-user))
+    (generate-case (aquire-parameters-from-user))
     )
