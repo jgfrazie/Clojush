@@ -75,8 +75,11 @@
    :param rand-param}))
 
 (defn get-char-sets
+  "A helper function which aquires character grouping selections from the user.
+   @return A sequence of key words (possibly empty) which the user requested"
   []
-  (println "Of the following options, select the corresponding number associated witht the grouping of characters followed by a space if you wish to add more than one group.
+  (println "Of the following options, select the corresponding number associated with
+the grouping of characters followed by a space if you wish to add more than one group.
 If you wish to select none of the following options, select 0.
     (1) Lower-case
     (2) Upper-case
@@ -92,6 +95,9 @@ If you wish to select none of the following options, select 0.
       (= choice "4") :specials)))
 
 (defn get-extra-chars
+  "A helper function which aquires extra possible characters from the user which could
+   occur within a given string parameter.
+   @return A sequence of characters which the user inputed"
   []
   (println "List any other character options to include in this string parameter followed by a space.
 If you wish to add the \" \" character, enter \"space\" to do so.
@@ -180,6 +186,13 @@ If there are no extra characters, press enter.")
                 param))})))
   
   (defn create-parameter-from-user
+    "Creates a parameter generator function which is made via user input.
+     @return A parameter generator function of specified type. Could be of
+             the following:
+                 :integer
+                 :float
+                 :string
+                 :vectorof"
     []
     (def choice (process-user-input "What is the data type for this parameter?
     (1) Integer
@@ -194,6 +207,8 @@ Please choose a number from the options above" :string))
       (= choice "4") (create-new-vectorof-param)))
   
   (defn aquire-parameters-from-user
+    "Will inquire the user to provide parameters for a given problem.
+     @return A sequence of parameter generator functions"
     []
     (def num-params (process-user-input "How many parameters are given?: " :integer))
     (loop [input []
@@ -203,6 +218,9 @@ Please choose a number from the options above" :string))
         input))) 
   
   (defn generate-case
+    "Generates a new case input given a sequence of parameter generator functions.
+     @param case-generator A sequence of parameter generator functions
+     @return A sequence of case inputs"
     [case-generator]
     (mapv #(%) case-generator))
 
