@@ -1,6 +1,8 @@
 (ns clojush.pushgp.counterexample-driven-gp
   (:use [clojush random args pushstate interpreter globals individual util]))
 
+(declare create-parameter-from-user)
+
 (defn add-groups-to-str
   "Will add a predefined group of chars to a string
    @param string A string given to concatenate to
@@ -47,13 +49,13 @@
    (let [lower (process-user-input "Lower-bound of intger range:" :integer)
          upper (process-user-input "Upper-bound of integer range:" :integer)]
      #(create-new-integer-param lower upper)))
-  
+
   ([lower upper]
-  (def rand-param (+ lower (rand-int (inc (- upper lower)))))
-  {:type :integer
-   :range {:lower lower
-           :upper upper}
-   :param rand-param}))
+   (let [rand-param (+ lower (rand-int (inc (- upper lower))))]
+     {:type :integer
+      :range {:lower lower
+              :upper upper}
+      :param rand-param})))
 
 (defn create-new-float-param
   "Creates a new float parameter type with a range specified by the user
@@ -66,13 +68,13 @@
    (let [lower (process-user-input "Lower-bound of float range:" :float)
          upper (process-user-input "Upper-bound of float range:" :float)]
      #(create-new-float-param lower upper)))
-  
+
   ([lower upper]
-  (def rand-param (+ lower (rand (- upper lower))))
-  {:type :float
-   :range {:lower lower
-           :upper upper}
-   :param rand-param}))
+   (let [rand-param (+ lower (rand (- upper lower)))]
+     {:type :float
+      :range {:lower lower
+              :upper upper}
+      :param rand-param})))
 
 (defn get-char-sets
   "A helper function which aquires character grouping selections from the user.
@@ -85,14 +87,14 @@ If you wish to select none of the following options, select 0.
     (2) Upper-case
     (3) Digits
     (4) Special Characeters")
-  (def choices (clojure.string/split (read-line) #" "))
-  (for [choice choices]
-    (cond
-      (= choice "0") nil
-      (= choice "1") :lower-case
-      (= choice "2") :upper-case
-      (= choice "3") :digits
-      (= choice "4") :specials)))
+  (let [choices (clojure.string/split (read-line) #" ")]
+    (for [choice choices]
+      (cond
+        (= choice "0") nil
+        (= choice "1") :lower-case
+        (= choice "2") :upper-case
+        (= choice "3") :digits
+        (= choice "4") :specials))))
 
 (defn get-extra-chars
   "A helper function which aquires extra possible characters from the user which could
@@ -102,11 +104,11 @@ If you wish to select none of the following options, select 0.
   (println "List any other character options to include in this string parameter followed by a space.
 If you wish to add the \" \" character, enter \"space\" to do so.
 If there are no extra characters, press enter.")
-  (def extras (clojure.string/split (read-line) #" "))
-  (for [character extras]
-    (if (= character "space")
-      " "
-      character)))
+  (let [extras (clojure.string/split (read-line) #" ")]
+    (for [character extras]
+      (if (= character "space")
+        " "
+        character))))
 
 (defn create-new-string-param
   "Creates a new string parameter type with a length range specified by the user
@@ -131,15 +133,19 @@ If there are no extra characters, press enter.")
      #(create-new-string-param lower upper char-sets extras)))
 
   ([lower upper char-groups unique-chars]
-   (def length (+ lower (rand-int (inc (- upper lower)))))
-   (if (string? char-groups)
-     (def available-chars char-groups)
-     (def available-chars (add-groups-to-str (reduce str unique-chars) char-groups)))
+   (let [length (+ lower (rand-int (inc (- upper lower))))]
+     (if (string? char-groups)
+       (let [available-chars char-groups]
+         {:type :string
+          :range {:lower lower :upper upper
+                  :available-characters available-chars}
+          :param (create-new-string-param length available-chars)}))
 
-  {:type :string
-   :range {:lower lower :upper upper
-           :available-characters available-chars}
-   :param (create-new-string-param length available-chars)})
+     (let [available-chars (add-groups-to-str (reduce str unique-chars) char-groups)]
+       {:type :string
+        :range {:lower lower :upper upper
+                :available-characters available-chars}
+        :param (create-new-string-param length available-chars)})))
   
   ([length available-chars]
    (loop [param ""
@@ -166,24 +172,23 @@ If there are no extra characters, press enter.")
    (println "For a VectorOf, please provide the following information.")
    (let [lower (process-user-input "Lower-bound of element-count: " :integer)
          upper (process-user-input "Upper-bound of element-count: " :integer)
-         generator (do (println "Now specify the data type of each element of the vector:")
-                       (create-param))]
+         generator (create-parameter-from-user "Now specify the data type of each element of the vector:")]
      #(create-new-vectorof-param lower upper generator)))
-  
+
   ([lower upper generator-function]
-  (let [length (+ lower (rand-int (inc (- upper lower))))
-        element-type (get (generator-function) :type)
-        element-range (get (generator-function) :range)]
-    {:type :vectorof
-     :range {:lower lower
-             :upper upper}
-     :element-type element-type
-     :element-range element-range
-     :param (loop [param []
-                   index 0]
-              (if (< index length)
-                (recur (conj param (get (generator-function) :param)) (inc index))
-                param))})))
+   (let [length (+ lower (rand-int (inc (- upper lower))))
+         element-type (get (generator-function) :type)
+         element-range (get (generator-function) :range)]
+     {:type :vectorof
+      :range {:lower lower
+              :upper upper}
+      :element-type element-type
+      :element-range element-range
+      :param (loop [param []
+                    index 0]
+               (if (< index length)
+                 (recur (conj param (get (generator-function) :param)) (inc index))
+                 param))})))
   
   (defn create-parameter-from-user
     "Creates a parameter generator function which is made via user input.
@@ -193,29 +198,33 @@ If there are no extra characters, press enter.")
                  :float
                  :string
                  :vectorof"
-    []
-    (def choice (process-user-input "What is the data type for this parameter?
+    ([]
+    (let [choice (process-user-input "What is the data type for this parameter?
     (1) Integer
     (2) Float
     (3) String
     (4) VectorOf
-Please choose a number from the options above" :string))
-    (cond
-      (= choice "1") (create-new-integer-param)
-      (= choice "2") (create-new-float-param)
-      (= choice "3") (create-new-string-param)
-      (= choice "4") (create-new-vectorof-param)))
+Please choose a number from the options above" :string)]
+      (cond
+        (= choice "1") (create-new-integer-param)
+        (= choice "2") (create-new-float-param)
+        (= choice "3") (create-new-string-param)
+        (= choice "4") (create-new-vectorof-param))))
+    
+    ([prompt]
+     (println prompt)
+     (create-parameter-from-user)))
   
   (defn aquire-parameters-from-user
     "Will inquire the user to provide parameters for a given problem.
      @return A sequence of parameter generator functions"
     []
-    (def num-params (process-user-input "How many parameters are given?: " :integer))
-    (loop [input []
-           param-count 0]
-      (if (< param-count num-params)
-        (recur (conj input (create-parameter-from-user)) (inc param-count))
-        input))) 
+    (let [num-params (process-user-input "How many parameters are given?: " :integer)]
+      (loop [input []
+             param-count 0]
+        (if (< param-count num-params)
+          (recur (conj input (create-parameter-from-user)) (inc param-count))
+          input)))) 
   
   (defn generate-case
     "Generates a new case input given a sequence of parameter generator functions.
