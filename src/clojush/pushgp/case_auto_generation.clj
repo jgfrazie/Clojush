@@ -224,7 +224,32 @@ Please choose a number from the options above" :string)]
              param-count 0]
         (if (< param-count num-params)
           (recur (conj input (create-parameter-from-user)) (inc param-count))
-          input)))) 
+          input))))
+  
+  (defn aquire-output-type-from-user
+    "Inquires user for the data type of the output.
+     @return The keywords :integer, :float, or :string if it is only that, or
+             returns a vector with the following format: [:vectorof %]"
+    []
+    (let [choice (process-user-input "What is the data type for the output of the program?
+    (1) Integer
+    (2) Float
+    (3) String
+    (4) VectorOf
+Please choose a number from the options above" :string)]
+      (cond
+        (= choice "1") :integer
+        (= choice "2") :float
+        (= choice "3") :string
+        (= choice "4") (let [vector-elements (process-user-input "What is the data type of each element?
+    (1) Integer
+    (2) Float
+    (3) String
+Please choose a number from the options above" :string)]
+                         (cond
+                           (= vector-elements "1") [:vectorof :integer]
+                           (= vector-elements "2") [:vectorof :float]
+                           (= vector-elements "3") [:vectorof :string])))))
   
   (defn generate-case
     "Generates a new case input given a sequence of parameter generator functions.
@@ -239,5 +264,6 @@ Please choose a number from the options above" :string)]
     (create-new-vectorof-param 4 8 #(create-new-string-param 3 5 [:digits] ["?" "." "!"]))
     (create-parameter-from-user)
     ((create-parameter-from-user))
+    (aquire-output-type-from-user)
     (generate-case (aquire-parameters-from-user))
     )
