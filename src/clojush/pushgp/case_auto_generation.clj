@@ -1,5 +1,5 @@
 (ns clojush.pushgp.counterexample-driven-gp
-  (:use [clojush random args pushstate interpreter globals individual util]))
+  (:require [clojush random args pushstate interpreter globals individual util]))
 
 (declare create-parameter-from-user)
 
@@ -127,10 +127,16 @@ If there are no extra characters, press enter.")
   ([]
    (println "For a String, please provide the following information.")
    (let [lower (process-user-input "Lower-bound of string length: " :integer)
-         upper (process-user-input "Upper-bound of string length: " :integer)
-         char-sets (get-char-sets)
-         extras (get-extra-chars)]
-     #(create-new-string-param lower upper char-sets extras)))
+         upper (process-user-input "Upper-bound of string length: " :integer)]
+     (if (and (>= lower 0) (>= upper lower))
+       (let [char-sets (get-char-sets)
+             extras (get-extra-chars)]
+         #(create-new-string-param lower upper char-sets extras))
+       (do (println "
+    INVALID INPUT DETECTED. MAKE SURE LOWER-BOUND IS GREATER THAN OR EQUAL TO
+       ZERO (0) AND UPPER-BOUND IS GREATER THAN OR EQUAL TO LOWER-BOUND
+                     ")
+           (create-new-string-param)))))
 
   ([lower upper char-groups unique-chars]
    (let [length (+ lower (rand-int (inc (- upper lower))))]
@@ -172,7 +178,7 @@ If there are no extra characters, press enter.")
    (println "For a VectorOf, please provide the following information.")
    (let [lower (process-user-input "Lower-bound of element-count: " :integer)
          upper (process-user-input "Upper-bound of element-count: " :integer)
-         generator (create-parameter-from-user "Now specify the data type of each element of the vector:")]
+         generator (create-parameter-from-user "Now specify the data type of each element of the vector:" "of the vector")]
      #(create-new-vectorof-param lower upper generator)))
 
   ([lower upper generator-function]
@@ -198,22 +204,22 @@ If there are no extra characters, press enter.")
                  :float
                  :string
                  :vectorof"
-    ([]
-    (let [choice (process-user-input "What is the data type for this parameter?
+    ([param-number]
+    (let [choice (do (println "") (process-user-input (str "What is the data type for parameter " param-number "?
     (1) Integer
     (2) Float
     (3) String
     (4) VectorOf
-Please choose a number from the options above" :string)]
-      (cond
-        (= choice "1") (create-new-integer-param)
-        (= choice "2") (create-new-float-param)
-        (= choice "3") (create-new-string-param)
-        (= choice "4") (create-new-vectorof-param))))
+Please choose a number from the options above.") :string))]
+         (cond
+           (= choice "1") (create-new-integer-param)
+           (= choice "2") (create-new-float-param)
+           (= choice "3") (create-new-string-param)
+           (= choice "4") (create-new-vectorof-param))))
     
-    ([prompt]
+    ([prompt param-for?]
      (println prompt)
-     (create-parameter-from-user)))
+     (create-parameter-from-user param-for?)))
   
   (defn aquire-parameters-from-user
     "Will inquire the user to provide parameters for a given problem.
@@ -221,9 +227,9 @@ Please choose a number from the options above" :string)]
     []
     (let [num-params (process-user-input "How many parameters are given?: " :integer)]
       (loop [input []
-             param-count 0]
-        (if (< param-count num-params)
-          (recur (conj input (create-parameter-from-user)) (inc param-count))
+             param-count 1]
+        (if (<= param-count num-params)
+          (recur (conj input (create-parameter-from-user param-count)) (inc param-count))
           input))))
   
   (defn aquire-output-type-from-user
@@ -262,8 +268,8 @@ Please choose a number from the options above" :string)]
     (create-new-vectorof-param 5 7 #(create-new-integer-param -127 100))
     (create-new-vectorof-param 1 3 #(create-new-float-param 5 6))
     (create-new-vectorof-param 4 8 #(create-new-string-param 3 5 [:digits] ["?" "." "!"]))
-    (create-parameter-from-user)
-    ((create-parameter-from-user))
+    (create-parameter-from-user 1)
+    ((create-parameter-from-user 1))
     (aquire-output-type-from-user)
     (generate-case (aquire-parameters-from-user))
     )
