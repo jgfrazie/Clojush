@@ -89,6 +89,8 @@
 ; Define the argmap
 (def argmap
   {:error-function human-driven-error-function
+   :input-parameterization input-parameterization
+   :output-parameterization output-parameterization
    :training-cases initial-training-cases
    :atom-generators human-driven-atom-generators
    :max-points 2000
