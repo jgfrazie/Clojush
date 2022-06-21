@@ -1,10 +1,24 @@
+"File: case_auto_generation.clj
+ Desc: Creates parameter data types either via coder or human input.
+       Will also generate a completly new case input from given parameters
+       when prompted.
+       Will acquire output from human user as well.
+ Main-Functions: acquire-output-type-from-user
+                 acquire-parameters-from-user
+                 create-parameter
+                 generate-parameter
+ Author: James Frazier
+ Date-Last-Edited: June 21, 2022"
+
 (ns clojush.pushgp.counterexample-driven-gp
   (:require [clojush random args pushstate interpreter globals individual util]))
 
+(declare generate-parameter)
 (declare create-parameter-from-user)
 
 (defn add-groups-to-str
-  "Will add a predefined group of chars to a string
+  "[HELPER FUNCTION]
+   Will add a predefined group of chars to a string
    @param string A string given to concatenate to
    @param groups A vector of the groups of characters to add with the possible keywords:
           :lower-case - Adds all lower-case letters
@@ -23,7 +37,8 @@
           groups))
 
 (defn process-user-input
-  "Displays prompt for the user and will convert input to a specified data type
+  "[HELPER FUNCTION]
+   Displays prompt for the user and will convert input to a specified data type
    @param prompt A string to be printed to terminal for the user to read
    @param type A keyword which will identify which data type is anticipated to be received.
               Options include:
@@ -43,41 +58,72 @@
    @param1 lower An integer of the lower bound of the range of the parameter
    @param1 upper An integer of the upper bound of the range of the parameter
    @return A map of the following format: {:type :integer, :range {:lower lower,
-                                                 :upper upper}, :param #}"
+                                                                   :upper upper}}"
   ([]
    (println "For an Integer, please provide the following information.")
    (let [lower (process-user-input "Lower-bound of intger range:" :integer)
          upper (process-user-input "Upper-bound of integer range:" :integer)]
-     #(create-new-integer-param lower upper)))
+     (if (> lower upper)
+       (do (println "
+    INVALID INPUT DETECTED. MAKE SURE LOWER-BOUND IS LESS THAN OR EQUAL TO
+                               UPPER-BOUND
+                     ")
+           (create-new-integer-param))
+       (create-new-integer-param lower upper))))
 
-  ([lower upper]
-   (let [rand-param (+ lower (rand-int (inc (- upper lower))))]
-     {:type :integer
-      :range {:lower lower
-              :upper upper}
-      :param rand-param})))
+  ([lower upper] 
+   {:type :integer
+    :range {:lower lower
+            :upper upper}}))
+
+(defn generate-integer
+  "[HELPER FUNCTION]
+   Generates a new raw integer parameter based off of boundries
+   @param parameter A map which is the parameter data type
+   @return An integer that satisifies the range of the given parameter"
+  [parameter]
+  (let [lower (get-in parameter [:range :lower])
+        upper (get-in parameter [:range :upper])
+        rand-int (+ lower (rand-int (- upper lower)))]
+    rand-int))
 
 (defn create-new-float-param
   "Creates a new float parameter type with a range specified by the user
    @param1 lower A float of the lower bound of the range of the parameter
    @param1 upper A float of the upper bound of the range of the parameter
    @return A map of the following format: {:type :float, :range {:lower, lower,
-           :upper upper}, :param #}"
+           :upper upper}}"
   ([]
    (println "For a Float, please provide the following information.")
    (let [lower (process-user-input "Lower-bound of float range:" :float)
          upper (process-user-input "Upper-bound of float range:" :float)]
-     #(create-new-float-param lower upper)))
+     (if (> lower upper)
+       (do (println "
+    INVALID INPUT DETECTED. MAKE SURE LOWER-BOUND IS LESS THAN OR EQUAL TO
+                               UPPER-BOUND
+                     ")
+            (create-new-float-param))
+       (create-new-float-param lower upper))))
 
   ([lower upper]
-   (let [rand-param (+ lower (rand (- upper lower)))]
-     {:type :float
-      :range {:lower lower
-              :upper upper}
-      :param rand-param})))
+   {:type :float
+    :range {:lower lower
+            :upper upper}}))
+
+(defn generate-float
+  "[HELPER FUNCTION]
+   Generates a new raw float parameter based off of boundries
+   @param parameter A map which is the parameter data type
+   @return A float that satisifies the range of the given parameter"
+  [parameter]
+  (let [lower (get-in parameter [:range :lower])
+        upper (get-in parameter [:range :upper])
+        rand-float (+ lower (rand (- upper lower)))]
+    rand-float))
 
 (defn get-char-sets
-  "A helper function which aquires character grouping selections from the user.
+  "[HELPER FUNCTION]
+   Acquires character grouping selections from the user.
    @return A sequence of key words (possibly empty) which the user requested"
   []
   (println "Of the following options, select the corresponding number associated with
@@ -97,7 +143,8 @@ If you wish to select none of the following options, select 0.
         (= choice "4") :specials))))
 
 (defn get-extra-chars
-  "A helper function which aquires extra possible characters from the user which could
+  "[HELPER FUNCTION]
+   Acquires extra possible characters from the user which could
    occur within a given string parameter.
    @return A sequence of characters which the user inputed"
   []
@@ -123,7 +170,7 @@ If there are no extra characters, press enter.")
    @param unique-chars A listing of all the other characters to be added to the
                          possible char creation of the string that were not otherwise specified
    @return A map of the following format: {:type :string, :range {:length {:lower lower,
-           :upper upper}, :available-characters #1}, :param #2}"
+           :upper upper}, :available-characters #1}}"
   ([]
    (println "For a String, please provide the following information.")
    (let [lower (process-user-input "Lower-bound of string length: " :integer)
@@ -131,70 +178,103 @@ If there are no extra characters, press enter.")
      (if (and (>= lower 0) (>= upper lower))
        (let [char-sets (get-char-sets)
              extras (get-extra-chars)]
-         #(create-new-string-param lower upper char-sets extras))
+         (create-new-string-param lower upper char-sets extras))
        (do (println "
     INVALID INPUT DETECTED. MAKE SURE LOWER-BOUND IS GREATER THAN OR EQUAL TO
        ZERO (0) AND UPPER-BOUND IS GREATER THAN OR EQUAL TO LOWER-BOUND
                      ")
            (create-new-string-param)))))
 
-  ([lower upper char-groups unique-chars]
-   (let [length (+ lower (rand-int (inc (- upper lower))))]
-     (if (string? char-groups)
-       (let [available-chars char-groups]
-         {:type :string
-          :range {:lower lower :upper upper
-                  :available-characters available-chars}
-          :param (create-new-string-param length available-chars)}))
-
+  ([lower upper char-groups unique-chars] 
+   (if (string? char-groups)
+     (let [available-chars char-groups]
+       {:type :string
+        :range {:lower lower :upper upper
+                :available-characters available-chars}})) 
      (let [available-chars (add-groups-to-str (reduce str unique-chars) char-groups)]
        {:type :string
         :range {:lower lower :upper upper
-                :available-characters available-chars}
-        :param (create-new-string-param length available-chars)})))
-  
-  ([length available-chars]
-   (loop [param ""
-          current-char 0]
-     (if (< current-char length)
-       (recur (str param (#(get % (rand-int (count %))) available-chars))
-              (inc current-char))
-       param))))
+                :available-characters available-chars}})))
+
+(defn generate-string
+  "[HELPER FUNCTION]
+   Generates a new raw string parameter based off of boundries
+   @param parameter A map which is the parameter data type
+   @return A string that satisifies the range of the given parameter"
+  [parameter]
+  (let [lower (get-in parameter [:range :lower])
+        upper (get-in parameter [:range :upper])
+        available-chars (get-in parameter [:range :available-characters])
+        length (+ lower (rand-int (inc (- upper lower))))]
+    (loop [param ""
+           current-char 0]
+      (if (< current-char length)
+        (recur (str param (#(get % (rand-int (count %))) available-chars))
+               (inc current-char))
+        param))))
 
 (defn create-new-vectorof-param
   "Creates a new vectorof parameter data type of a specific element
    @param lower An integer of the lower bound of the count of a vector
    @param upper An integer of the upper bound of the count of a vector
-   @param generator-function An anon function which already has the function and params
-                             for the element of the vector
+   @param element-parameters A parameter data type of the elements to be stored in
+                             the vector
    @return A vectorof param data type as follows:
            {:type :vectorof
             :range {:lower lower
                     :upper upper}
             :element-type %1
-            :element-range %2
-            :param %3}"
+            :element-range %2}"
   ([]
    (println "For a VectorOf, please provide the following information.")
    (let [lower (process-user-input "Lower-bound of element-count: " :integer)
-         upper (process-user-input "Upper-bound of element-count: " :integer)
-         generator (create-parameter-from-user "Now specify the data type of each element of the vector:" "of the vector")]
-     #(create-new-vectorof-param lower upper generator)))
+         upper (process-user-input "Upper-bound of element-count: " :integer)]
+     (if (and (>= lower 0) (<= lower upper))
+       (let [elements (create-parameter-from-user "Now specify the data type of each element of the vector:" "of the vector")]
+         (create-new-vectorof-param lower upper elements))
+       (do (println "
+    INVALID INPUT DETECTED. MAKE SURE LOWER-BOUND IS GREATER THAN OR EQUAL TO
+       ZERO (0) AND UPPER-BOUND IS GREATER THAN OR EQUAL TO LOWER-BOUND
+                     ")
+           (create-new-vectorof-param)))))
 
-  ([lower upper generator-function]
-   (let [length (+ lower (rand-int (inc (- upper lower))))
-         element-type (get (generator-function) :type)
-         element-range (get (generator-function) :range)]
+  ([lower upper element-parameter]
+   (let [element-type (get element-parameter :type)
+         element-range (get element-parameter :range)]
      {:type :vectorof
       :range {:lower lower
               :upper upper}
       :element-type element-type
-      :element-range element-range
-      :param (loop [param []
-                    index 0]
-               (if (< index length)
-                 (recur (conj param (get (generator-function) :param)) (inc index))
-                 param))})))
+      :element-range element-range})))
+  
+  (defn generate-vectorof
+    "[HELPER FUNCTION]
+     Generates a new raw vectorof parameter based off of boundries
+     @param parameter A map which is the parameter data type
+     @return A vectorof that satisifies the range and 
+             element-range of the given parameter"
+    [parameter]
+    (let [lower (get-in parameter [:range :lower])
+          upper (get-in parameter [:range :upper])
+          length (+ lower (rand-int (inc (- upper lower))))
+          element {:type (get parameter :element-type)
+                   :range (get parameter :element-range)}]
+      (loop [vector []]
+        (if (< (count vector) length)
+          (recur (conj vector (generate-parameter element)))
+          vector))))
+  
+  (defn generate-parameter
+    "Creates a random parameter of the given parameter data type
+     @param parameter A parameter data type
+     @return A random generation of the data type given"
+    [parameter]
+    (let [type (get parameter :type)]
+      (cond
+        (= type :integer) (generate-integer parameter)
+        (= type :float) (generate-float parameter)
+        (= type :string) (generate-string parameter)
+        (= type :vectorof) (generate-vectorof parameter))))
   
   (defn create-parameter-from-user
     "Creates a parameter generator function which is made via user input.
@@ -221,7 +301,7 @@ Please choose a number from the options above.") :string))]
      (println prompt)
      (create-parameter-from-user param-for?)))
   
-  (defn aquire-parameters-from-user
+  (defn acquire-parameters-from-user
     "Will inquire the user to provide parameters for a given problem.
      @return A sequence of parameter generator functions"
     []
@@ -232,7 +312,7 @@ Please choose a number from the options above.") :string))]
           (recur (conj input (create-parameter-from-user param-count)) (inc param-count))
           input))))
   
-  (defn aquire-output-type-from-user
+  (defn acquire-output-type-from-user
     "Inquires user for the data type of the output.
      @return The keywords :integer, :float, or :string if it is only that, or
              returns a vector with the following format: [:vectorof %]"
@@ -244,9 +324,9 @@ Please choose a number from the options above.") :string))]
     (4) VectorOf
 Please choose a number from the options above" :string)]
       (cond
-        (= choice "1") :integer
-        (= choice "2") :float
-        (= choice "3") :string
+        (= choice "1") [:integer]
+        (= choice "2") [:float]
+        (= choice "3") [:string]
         (= choice "4") (let [vector-elements (process-user-input "What is the data type of each element?
     (1) Integer
     (2) Float
@@ -257,19 +337,31 @@ Please choose a number from the options above" :string)]
                            (= vector-elements "2") [:vectorof :float]
                            (= vector-elements "3") [:vectorof :string])))))
   
-  (defn generate-case
+  (defn generate-case-input
     "Generates a new case input given a sequence of parameter generator functions.
      @param case-generator A sequence of parameter generator functions
      @return A sequence of case inputs"
     [case-generator]
-    (mapv #(%) case-generator))
+    (mapv #(generate-parameter %) case-generator))
 
   (comment
-    (create-new-vectorof-param 5 7 #(create-new-integer-param -127 100))
-    (create-new-vectorof-param 1 3 #(create-new-float-param 5 6))
-    (create-new-vectorof-param 4 8 #(create-new-string-param 3 5 [:digits] ["?" "." "!"]))
-    (create-parameter-from-user 1)
-    ((create-parameter-from-user 1))
-    (aquire-output-type-from-user)
-    (generate-case (aquire-parameters-from-user))
+    (create-new-integer-param)
+    (generate-integer (create-new-integer-param 0 5))
+
+    (create-new-float-param 0 1)
+    (generate-float (create-new-float-param 0 1))
+
+    (create-new-string-param 3 6 [:lower-case] [" " "!" "." "?"])
+    (generate-string (create-new-string-param 3 6 [:lower-case] [" " "!" "." "?"]))
+
+    (create-new-vectorof-param 5 7 (create-new-integer-param -127 100))
+    (create-new-vectorof-param)
+    (generate-parameter (create-new-vectorof-param 5 7 (create-new-integer-param -127 100)))
+    (generate-parameter (create-new-vectorof-param))
+
+    (acquire-parameters-from-user)
+    (let [case-input (acquire-parameters-from-user)
+          generator #(generate-case-input case-input)]
+      (do (generator)
+          (generator)))
     )
