@@ -145,6 +145,10 @@
                                                             (second smallest-train-and-test-cases))
    :training-cases (first smallest-train-and-test-cases)
    :sub-training-cases '()
+
+   :counterexample-driven true
+   :counterexample-driven-case-checker :human
+
    :atom-generators smallest-atom-generators
    :max-points 800
    :max-genome-size-in-initial-program 100
@@ -156,8 +160,7 @@
    :genetic-operator-probabilities {:alternation 0.2
                                     :uniform-mutation 0.2
                                     :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5
-                                    }
+                                    [:alternation :uniform-mutation] 0.5}
    :alternation-rate 0.01
    :alignment-deviation 5
    :uniform-mutation-rate 0.01
@@ -166,5 +169,6 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1
-   :output-stacks :output
-   })
+   :output-stacks :output})
+
+(pushgp argmap)
