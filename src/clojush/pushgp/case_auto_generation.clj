@@ -10,8 +10,7 @@
  Author: James Frazier
  Date-Last-Edited: June 21, 2022"
 
-(ns clojush.pushgp.counterexample-driven-gp
-  (:require [clojush random args pushstate interpreter globals individual util]))
+(ns clojush.pushgp.case-auto-generation)
 
 (declare generate-parameter)
 (declare create-parameter-from-user)
@@ -247,102 +246,102 @@ If there are no extra characters, press enter.")
       :element-type element-type
       :element-range element-range})))
   
-  (defn generate-vectorof
-    "[HELPER FUNCTION]
+(defn generate-vectorof
+  "[HELPER FUNCTION]
      Generates a new raw vectorof parameter based off of boundries
      @param parameter A map which is the parameter data type
      @return A vectorof that satisifies the range and 
              element-range of the given parameter"
-    [parameter]
-    (let [lower (get-in parameter [:range :lower])
-          upper (get-in parameter [:range :upper])
-          length (+ lower (rand-int (inc (- upper lower))))
-          element {:type (get parameter :element-type)
-                   :range (get parameter :element-range)}]
-      (loop [vector []]
-        (if (< (count vector) length)
-          (recur (conj vector (generate-parameter element)))
-          vector))))
+  [parameter]
+  (let [lower (get-in parameter [:range :lower])
+        upper (get-in parameter [:range :upper])
+        length (+ lower (rand-int (inc (- upper lower))))
+        element {:type (get parameter :element-type)
+                 :range (get parameter :element-range)}]
+    (loop [vector []]
+      (if (< (count vector) length)
+        (recur (conj vector (generate-parameter element)))
+        vector))))
   
-  (defn generate-parameter
-    "Creates a random parameter of the given parameter data type
+(defn generate-parameter
+  "Creates a random parameter of the given parameter data type
      @param parameter A parameter data type
      @return A random generation of the data type given"
-    [parameter]
-    (let [type (get parameter :type)]
-      (cond
-        (= type :integer) (generate-integer parameter)
-        (= type :float) (generate-float parameter)
-        (= type :string) (generate-string parameter)
-        (= type :vectorof) (generate-vectorof parameter))))
+  [parameter]
+  (let [type (get parameter :type)]
+    (cond
+      (= type :integer) (generate-integer parameter)
+      (= type :float) (generate-float parameter)
+      (= type :string) (generate-string parameter)
+      (= type :vectorof) (generate-vectorof parameter))))
   
-  (defn create-parameter-from-user
-    "Creates a parameter generator function which is made via user input.
+(defn create-parameter-from-user
+  "Creates a parameter generator function which is made via user input.
      @return A parameter generator function of specified type. Could be of
              the following:
                  :integer
                  :float
                  :string
                  :vectorof"
-    ([param-number]
-    (let [choice (do (println "") (process-user-input (str "What is the data type for parameter " param-number "?
+  ([param-number]
+   (let [choice (do (println "") (process-user-input (str "What is the data type for parameter " param-number "?
     (1) Integer
     (2) Float
     (3) String
     (4) VectorOf
 Please choose a number from the options above.") :string))]
-         (cond
-           (= choice "1") (create-new-integer-param)
-           (= choice "2") (create-new-float-param)
-           (= choice "3") (create-new-string-param)
-           (= choice "4") (create-new-vectorof-param))))
-    
-    ([prompt param-for?]
-     (println prompt)
-     (create-parameter-from-user param-for?)))
+     (cond
+       (= choice "1") (create-new-integer-param)
+       (= choice "2") (create-new-float-param)
+       (= choice "3") (create-new-string-param)
+       (= choice "4") (create-new-vectorof-param))))
+
+  ([prompt param-for?]
+   (println prompt)
+   (create-parameter-from-user param-for?)))
   
-  (defn acquire-parameters-from-user
-    "Will inquire the user to provide parameters for a given problem.
+(defn acquire-parameters-from-user
+  "Will inquire the user to provide parameters for a given problem.
      @return A sequence of parameter generator functions"
-    []
-    (let [num-params (process-user-input "How many parameters are given?: " :integer)]
-      (loop [input []
-             param-count 1]
-        (if (<= param-count num-params)
-          (recur (conj input (create-parameter-from-user param-count)) (inc param-count))
-          input))))
+  []
+  (let [num-params (process-user-input "How many parameters are given?: " :integer)]
+    (loop [input []
+           param-count 1]
+      (if (<= param-count num-params)
+        (recur (conj input (create-parameter-from-user param-count)) (inc param-count))
+        input))))
   
-  (defn acquire-output-type-from-user
-    "Inquires user for the data type of the output.
+(defn acquire-output-type-from-user
+  "Inquires user for the data type of the output.
      @return The keywords :integer, :float, or :string if it is only that, or
              returns a vector with the following format: [:vectorof %]"
-    []
-    (let [choice (process-user-input "What is the data type for the output of the program?
+  []
+  (let [choice (process-user-input "What is the data type for the output of the program?
     (1) Integer
     (2) Float
     (3) String
     (4) VectorOf
 Please choose a number from the options above" :string)]
-      (cond
-        (= choice "1") [:integer]
-        (= choice "2") [:float]
-        (= choice "3") [:string]
-        (= choice "4") (let [vector-elements (process-user-input "What is the data type of each element?
+    (cond
+      (= choice "1") [:integer]
+      (= choice "2") [:float]
+      (= choice "3") [:string]
+      (= choice "4") (let [vector-elements (process-user-input "What is the data type of each element?
     (1) Integer
     (2) Float
     (3) String
 Please choose a number from the options above" :string)]
-                         (cond
-                           (= vector-elements "1") [:vectorof :integer]
-                           (= vector-elements "2") [:vectorof :float]
-                           (= vector-elements "3") [:vectorof :string])))))
+                       (cond
+                         (= vector-elements "1") [:vectorof :integer]
+                         (= vector-elements "2") [:vectorof :float]
+                         (= vector-elements "3") [:vectorof :string])))))
   
-  (defn generate-case-input
-    "Generates a new case input given a sequence of parameter generator functions.
+(defn generate-case-input
+  "Generates a new case input given a sequence of parameter generator functions.
      @param case-generator A sequence of parameter generator functions
      @return A sequence of case inputs"
-    [case-generator]
-    (mapv #(generate-parameter %) case-generator))
+  [case-generator]
+  (mapv #(generate-parameter %) case-generator))
 
   (comment
     (create-new-integer-param)
@@ -360,6 +359,12 @@ Please choose a number from the options above" :string)]
     (generate-parameter (create-new-vectorof-param))
 
     (acquire-parameters-from-user)
+
+    (repeatedly 50 #(generate-case-input [{:type :string, :range {:lower 2, :upper 10, :available-characters "-+abcdefghijklmnopqrstuvwxyz0123456789"}}
+                                         {:type :integer, :range {:lower -50, :upper 50}}]))
+
+    (acquire-output-type-from-user)
+
     (let [case-input (acquire-parameters-from-user)
           generator #(generate-case-input case-input)]
       (do (generator)
