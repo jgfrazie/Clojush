@@ -15,7 +15,7 @@
 
 (ns clojush.problems.software.human-driven
   (:require [clojush random pushstate interpreter]
-            clojush.pushgp.case-auto-generation :as cag))
+            [clojush.pushgp.case-auto-generation :as cag]))
 
 ;; Atom generators
 ;; This needs tons of work
@@ -34,9 +34,11 @@
 
 (def input-parameterization (cag/acquire-parameters-from-user))
 
-(def output-parameterization (cag/acquire-outputs-from-user))
+(def output-parameterization (cag/acquire-output-type-from-user))
 
-(def initial-training-cases (cag/get-initial-training-cases-from-user))
+(def initial-training-cases (cag/get-initial-training-cases-from-user
+                             input-parameterization
+                             output-parameterization))
 
 ;; TMH: This function is likely done, but not tested.
 (defn human-driven-evaluate-program-for-behaviors
