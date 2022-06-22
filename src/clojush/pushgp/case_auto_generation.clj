@@ -3,7 +3,7 @@
        Will also generate a completly new case input from given parameters
        when prompted.
        Will acquire output from human user as well.
- Main-Functions: acquire-output-type-from-user
+ Main-Functions: acquire-outputs-from-user
                  acquire-parameters-from-user
                  create-parameter
                  generate-parameter
@@ -312,16 +312,17 @@ Please choose a number from the options above.") :string))]
         input))))
   
 (defn acquire-output-type-from-user
-  "Inquires user for the data type of the output.
-     @return The keywords :integer, :float, or :string if it is only that, or
+  "[HELPER FUNCTION]
+   Inquires user for the data type of the output.
+     @return The keywords [:integer], [:float], or [:string] if it is only that, or
              returns a vector with the following format: [:vectorof %]"
-  []
-  (let [choice (process-user-input "What is the data type for the output of the program?
+  [output-num]
+  (let [choice (process-user-input (str "What is the data type for output " output-num " of the program?
     (1) Integer
     (2) Float
     (3) String
     (4) VectorOf
-Please choose a number from the options above" :string)]
+Please choose a number from the options above") :string)]
     (cond
       (= choice "1") [:integer]
       (= choice "2") [:float]
@@ -335,6 +336,20 @@ Please choose a number from the options above" :string)]
                          (= vector-elements "1") [:vectorof :integer]
                          (= vector-elements "2") [:vectorof :float]
                          (= vector-elements "3") [:vectorof :string])))))
+
+(defn acquire-outputs-from-user
+  "Inquires user to how many outputs there can be and then prompts user to
+   specify each possible output
+   @return A vector with each element as a vector that contains the specifics of
+           the outputs (see acquire-output-type-from-user for more information)"
+  []
+  (let [num-outputs (process-user-input "How many outputs are possible?" :integer)]
+    (loop [outputs []
+           output-count 1]
+      (if (<= output-count num-outputs)
+        (recur (conj outputs (acquire-output-type-from-user output-count))
+               (inc output-count))
+        outputs))))
   
 (defn generate-case-input
   "Generates a new case input given a sequence of parameter generator functions.
@@ -342,31 +357,3 @@ Please choose a number from the options above" :string)]
      @return A sequence of case inputs"
   [case-generator]
   (mapv #(generate-parameter %) case-generator))
-
-  (comment
-    (create-new-integer-param)
-    (generate-integer (create-new-integer-param 0 5))
-
-    (create-new-float-param 0 1)
-    (generate-float (create-new-float-param 0 1))
-
-    (create-new-string-param 3 6 [:lower-case] [" " "!" "." "?"])
-    (generate-string (create-new-string-param 3 6 [:lower-case] [" " "!" "." "?"]))
-
-    (create-new-vectorof-param 5 7 (create-new-integer-param -127 100))
-    (create-new-vectorof-param)
-    (generate-parameter (create-new-vectorof-param 5 7 (create-new-integer-param -127 100)))
-    (generate-parameter (create-new-vectorof-param))
-
-    (acquire-parameters-from-user)
-
-    (repeatedly 50 #(generate-case-input [{:type :string, :range {:lower 2, :upper 10, :available-characters "-+abcdefghijklmnopqrstuvwxyz0123456789"}}
-                                         {:type :integer, :range {:lower -50, :upper 50}}]))
-
-    (acquire-output-type-from-user)
-
-    (let [case-input (acquire-parameters-from-user)
-          generator #(generate-case-input case-input)]
-      (do (generator)
-          (generator)))
-    )
