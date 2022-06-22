@@ -3,9 +3,10 @@
        Will also generate a completly new case input from given parameters
        when prompted.
        Will acquire output from human user as well.
- Main-Functions: acquire-output-type-from-user
+ Main-Functions: acquire-outputs-from-user
                  acquire-parameters-from-user
                  create-parameter
+                 generate-case-input
                  generate-parameter
  Author: James Frazier
  Date-Last-Edited: June 21, 2022"
@@ -312,16 +313,17 @@ Please choose a number from the options above.") :string))]
         input))))
   
 (defn acquire-output-type-from-user
-  "Inquires user for the data type of the output.
-     @return The keywords :integer, :float, or :string if it is only that, or
+  "[HELPER FUNCTION]
+   Inquires user for the data type of the output.
+     @return The keywords [:integer], [:float], or [:string] if it is only that, or
              returns a vector with the following format: [:vectorof %]"
-  []
-  (let [choice (process-user-input "What is the data type for the output of the program?
+  [output-num]
+  (let [choice (process-user-input (str "What is the data type for output " output-num " of the program?
     (1) Integer
     (2) Float
     (3) String
     (4) VectorOf
-Please choose a number from the options above" :string)]
+Please choose a number from the options above") :string)]
     (cond
       (= choice "1") [:integer]
       (= choice "2") [:float]
@@ -335,6 +337,20 @@ Please choose a number from the options above" :string)]
                          (= vector-elements "1") [:vectorof :integer]
                          (= vector-elements "2") [:vectorof :float]
                          (= vector-elements "3") [:vectorof :string])))))
+
+(defn acquire-outputs-from-user
+  "Inquires user to how many outputs there can be and then prompts user to
+   specify each possible output
+   @return A vector with each element as a vector that contains the specifics of
+           the outputs (see acquire-output-type-from-user for more information)"
+  []
+  (let [num-outputs (process-user-input "How many outputs are possible?" :integer)]
+    (loop [outputs []
+           output-count 1]
+      (if (<= output-count num-outputs)
+        (recur (conj outputs (acquire-output-type-from-user output-count))
+               (inc output-count))
+        outputs))))
   
 (defn generate-case-input
   "Generates a new case input given a sequence of parameter generator functions.
@@ -343,30 +359,50 @@ Please choose a number from the options above" :string)]
   [case-generator]
   (mapv #(generate-parameter %) case-generator))
 
-  (comment
-    (create-new-integer-param)
-    (generate-integer (create-new-integer-param 0 5))
+;;TO-DO: Create get-initial-training-cases-from-user
 
-    (create-new-float-param 0 1)
-    (generate-float (create-new-float-param 0 1))
+;;-------------------------------------------------------------------------------------;;
 
-    (create-new-string-param 3 6 [:lower-case] [" " "!" "." "?"])
-    (generate-string (create-new-string-param 3 6 [:lower-case] [" " "!" "." "?"]))
+;;NOTE: Should check that the user accuratly enters a parameter given the bounds
+;;      and each data type should have a helper function to deal with this
+(defn acquire-training-inputs
+  [types]
+  types
+  :stub)
 
-    (create-new-vectorof-param 5 7 (create-new-integer-param -127 100))
-    (create-new-vectorof-param)
-    (generate-parameter (create-new-vectorof-param 5 7 (create-new-integer-param -127 100)))
-    (generate-parameter (create-new-vectorof-param))
+;;NOTE: Should check that the user accuratly enters outputs based on
+;;      given information. May not require helper functions for each data type
+;;      TBD
+(defn acquire-training-outputs
+  [types]
+  types
+  :stub)
 
-    (acquire-parameters-from-user)
+;;NOTE: Should acquire both the input and output for a specific case from the user
+;;      and place them in a vector
+(defn acquire-training-case-from-user
+  [input-types output-types case-num]
+  (println "Case #" case-num ":
+                              ")
+  (conj [] (acquire-training-inputs input-types) (acquire-training-outputs output-types)))
 
-    (repeatedly 50 #(generate-case-input [{:type :string, :range {:lower 2, :upper 10, :available-characters "-+abcdefghijklmnopqrstuvwxyz0123456789"}}
-                                         {:type :integer, :range {:lower -50, :upper 50}}]))
+;;NOTE: Should return a vector of vectors of vectors which contain inputs and outputs
+;;      for each case which is represented by the index of the outter vector
+;;      i.e. [[[inputs1] [outputs1]]
+;;            .....................
+;;            [[inputsn] [outputsn]]]
+(defn get-initial-training-cases-from-user
+  [input-types output-types num-cases]
+  (println "")
+  (println "Please provide some example training cases for the GP run to use.
+            ")
+  (loop [initial-cases []
+         case-count 1]
+    (if (<= case-count num-cases)
+      (recur (conj initial-cases (acquire-training-case-from-user input-types output-types case-count))
+             (inc case-count))
+      initial-cases)))
 
-    (acquire-output-type-from-user)
-
-    (let [case-input (acquire-parameters-from-user)
-          generator #(generate-case-input case-input)]
-      (do (generator)
-          (generator)))
-    )
+(comment
+  (acquire-training-inputs {:type :integer :range {:lower 1 :upper 2}})
+  )
