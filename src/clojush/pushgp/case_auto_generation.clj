@@ -6,6 +6,7 @@
  Main-Functions: acquire-outputs-from-user
                  acquire-parameters-from-user
                  create-parameter
+                 generate-case-input
                  generate-parameter
  Author: James Frazier
  Date-Last-Edited: June 21, 2022"
@@ -357,3 +358,51 @@ Please choose a number from the options above" :string)]
      @return A sequence of case inputs"
   [case-generator]
   (mapv #(generate-parameter %) case-generator))
+
+;;TO-DO: Create get-initial-training-cases-from-user
+
+;;-------------------------------------------------------------------------------------;;
+
+;;NOTE: Should check that the user accuratly enters a parameter given the bounds
+;;      and each data type should have a helper function to deal with this
+(defn acquire-training-inputs
+  [types]
+  types
+  :stub)
+
+;;NOTE: Should check that the user accuratly enters outputs based on
+;;      given information. May not require helper functions for each data type
+;;      TBD
+(defn acquire-training-outputs
+  [types]
+  types
+  :stub)
+
+;;NOTE: Should acquire both the input and output for a specific case from the user
+;;      and place them in a vector
+(defn acquire-training-case-from-user
+  [input-types output-types case-num]
+  (println "Case #" case-num ":
+                              ")
+  (conj [] (acquire-training-inputs input-types) (acquire-training-outputs output-types)))
+
+;;NOTE: Should return a vector of vectors of vectors which contain inputs and outputs
+;;      for each case which is represented by the index of the outter vector
+;;      i.e. [[[inputs1] [outputs1]]
+;;            .....................
+;;            [[inputsn] [outputsn]]]
+(defn get-initial-training-cases-from-user
+  [input-types output-types num-cases]
+  (println "")
+  (println "Please provide some example training cases for the GP run to use.
+            ")
+  (loop [initial-cases []
+         case-count 1]
+    (if (<= case-count num-cases)
+      (recur (conj initial-cases (acquire-training-case-from-user input-types output-types case-count))
+             (inc case-count))
+      initial-cases)))
+
+(comment
+  (acquire-training-inputs {:type :integer :range {:lower 1 :upper 2}})
+  )
