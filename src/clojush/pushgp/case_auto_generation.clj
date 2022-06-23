@@ -85,7 +85,7 @@
            (create-new-integer-param))
        (create-new-integer-param lower upper))))
 
-  ([lower upper] 
+  ([lower upper]
    {:type :integer
     :range {:lower lower
             :upper upper}}))
@@ -116,7 +116,7 @@
     INVALID INPUT DETECTED. MAKE SURE LOWER-BOUND IS LESS THAN OR EQUAL TO
                                UPPER-BOUND
                      ")
-            (create-new-float-param))
+           (create-new-float-param))
        (create-new-float-param lower upper))))
 
   ([lower upper]
