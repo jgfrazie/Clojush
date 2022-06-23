@@ -11,10 +11,23 @@
  Author: James Frazier
  Date-Last-Edited: June 21, 2022"
 
-(ns clojush.pushgp.case-auto-generation)
+(ns clojush.pushgp.case-auto-generation
+  (:require [clojure.math.numeric-tower :as math]))
 
 (declare generate-parameter)
 (declare create-parameter-from-user)
+
+(defn vector-of-number-difference
+  "Implements distances between vectors of numbers. Alg:
+   Add the difference in length between the program's output vector and the
+   correct vector times 1000 to the absolute difference between each integer
+   and the corresponding integer in the correct vector."
+  [vecA vecB]
+  (+ (* 1000 (math/abs (- (count vecA) (count vecB))))
+     (apply +
+            (map #(math/abs (- %1 %2))
+                 vecA
+                 vecB))))
 
 (defn add-groups-to-str
   "[HELPER FUNCTION]

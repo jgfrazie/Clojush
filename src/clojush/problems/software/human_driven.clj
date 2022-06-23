@@ -12,10 +12,23 @@
 ;; We'll assume we can create, for now, but might need to be user input:
 ;; - Error function based on type of output(s)
 ;;
+;; NOTE: Need to be careful if use this on any PSB1 problems or Index Of
+;;       Substrings from PSB2, since they might use a non-standard error function.
+
+;; Anywhere cases are used, they're expected to be of the form:
+;; ([[input1 input2 ...] [output1 output2 ...]], ;; first case
+;;  [[input1 input2 ...] [output1 output2 ...]], ;; second case
+;;    ...)
+;; This is even true if there's only 1 input or 1 output, i.e. each case
+;; is still a vector containing a vector as the input(s) and a vector as the output(s)
 
 (ns clojush.problems.software.human-driven
-  (:require [clojush random pushstate interpreter]
-            [clojush.pushgp.case-auto-generation :as cag]))
+  (:require [clojush random pushstate interpreter util]
+            [clojush.pushgp.case-auto-generation :as cag]
+            [clojure.math.numeric-tower :as math]))
+
+;; Penalty error used if no answer is returned by program
+(def penalty-error 1000000)
 
 ;; Atom generators
 ;; This needs tons of work
@@ -34,13 +47,14 @@
 
 (def input-parameterization (cag/acquire-parameters-from-user))
 
-(def output-parameterization (cag/acquire-output-type-from-user))
+(def output-parameterization (cag/acquire-outputs-from-user))
 
 (def initial-training-cases (cag/get-initial-training-cases-from-user
                              input-parameterization
-                             output-parameterization))
+                             output-parameterization
+                             5))
 
-;; TMH: This function is likely done, but not tested.
+;; TMH: This function is likely done, and mostly tested
 (defn human-driven-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
    Returns the behaviors, a list of the outputs of the program on the inputs."
@@ -48,35 +62,50 @@
   (doall
    (for [[input output] cases]
      (let [reversed-inputs (reverse input)
+           start-state (reduce (fn [psh-state inp]
+                                 (clojush.pushstate/push-item inp :input psh-state))
+                               (clojush.pushstate/make-push-state)
+                               reversed-inputs)
            final-state (clojush.interpreter/run-push
                         program
-                        (reduce (fn [psh-state inp]
-                                  (clojush.pushstate/push-item psh-state inp :input))
-                                (clojush.pushstate/make-push-state)
-                                reversed-inputs))]
+                        start-state)]
+       (prn final-state)
        (map #(clojush.pushstate/top-item % final-state)
             output-types)))))
 
-;; TMH: this function is not implemented. Will need to decide how to evaluate
-;; error based on the output data types
+;; Map of error functions by type
+(def error-distance-functions
+  {:boolean (fn [x y] (if (= x y) 0 1))
+   :integer (fn [x y] (math/abs (- x y)))
+   :float (fn [x y] (math/abs (- x y)))
+   :string clojush.util/levenshtein-distance
+   :vector_integer cag/vector-of-number-difference
+   :vector_float cag/vector-of-number-difference})
+
+;; TMH: This function is likely done, and mostly tested
 (defn human-driven-errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error
-   for each of those behaviors, returning an error vector."
+   for each of those behaviors, returning an error vector.
+   Note: each behavior must be a sequence, even if only one output"
   [behaviors cases output-types]
-  (map (fn [result correct-output]
-         (if (= result correct-output)
-           0
-           1))
-       behaviors
-       (map second cases)))
+  (flatten
+   ;; Outer map over all training cases
+   (map (fn [result-vector correct-output-vector]
+          ;; Inner map over outputs of a single case (often only one, but could be multiple)
+          (map (fn [out-type result correct-output]
+                 (if (= result :no-stack-item)
+                   penalty-error
+                   ((get error-distance-functions out-type) result correct-output)))
+               output-types
+               result-vector
+               correct-output-vector))
+        behaviors
+        (map second cases))))
 
 ;; TMH: Not sure if this function's done or not.
 (defn human-driven-error-function
   "The error function. Takes an individual and data-cases as input,
-   and returns that individual with :errors and :behaviors set.
-   data-cases should be a list of input/output pairs. For consistency between
-   problems with single inputs and multiple inputs, each input should be a sequence
-   containing one or more inputs, and same with outputs."
+   and returns that individual with :errors and :behaviors set."
   [individual data-cases output-types]
   (let [behaviors (human-driven-evaluate-program-for-behaviors (:program individual)
                                                                data-cases
@@ -87,7 +116,6 @@
            :errors errors)))
 
 
-
 ; Define the argmap
 (def argmap
   {:error-function human-driven-error-function
@@ -95,6 +123,9 @@
    :output-parameterization output-parameterization
    :training-cases initial-training-cases
    :atom-generators human-driven-atom-generators
+
+   ;; TMH: Add some pushargs here to do the counterexamples correctly
+
    :max-points 2000
    :max-genome-size-in-initial-program 250
    :evalpush-limit 2000
@@ -105,3 +136,54 @@
    :uniform-addition-and-deletion-rate 0.09
    :report-simplifications 0
    :final-report-simplifications 5000})
+
+
+;; TMH NOTE: Testing problem
+;; Given in1 = Integer [0, 20]
+;; and   in2 = String length [0, 20], all chars
+;; Return the substring containing the first in1 characters of in2
+
+(comment
+
+  (def prog '(in1 in2 integer_add))
+  (def prog2 '("dwdwadwa"))
+
+  (def some-cases '([[1 2] [2]]
+                    [[3 7] [21]]
+                    [[-3 5] [-15]]))
+
+  (def out-types [:integer])
+
+  ;; test human-driven-evaluate-program-for-behaviors
+  (human-driven-evaluate-program-for-behaviors prog some-cases out-types)
+  ;; => ((3) (10) (2))
+
+  (human-driven-errors-from-behaviors (human-driven-evaluate-program-for-behaviors
+                                       prog
+                                       some-cases
+                                       out-types)
+                                      some-cases
+                                      out-types)
+  ;; => (1 11 17)
+
+  (def prog-str '(in2 in1 string_concat [] in1 string_length vector_integer_conj
+                      in2 string_length vector_integer_conj))
+
+  (def string-cases '([["hi" "there"] ["hithere" [2 5]]]
+                      [["123" "456"] ["123456" [3 3]]]
+                      [["" ""] ["" [0 0]]]))
+
+  (def out-types-str [:string :vector_integer])
+
+  (human-driven-evaluate-program-for-behaviors prog-str string-cases out-types-str)
+
+  (human-driven-errors-from-behaviors (human-driven-evaluate-program-for-behaviors
+                                       prog-str
+                                       string-cases
+                                       out-types-str)
+                                      string-cases
+                                      out-types-str)
+
+  (human-driven-error-function {:program prog} some-cases out-types)
+  
+  )
