@@ -347,7 +347,7 @@ Please choose a number from the options above" :string)]
            to a specified data type"
   []
   (let [num-outputs (process-user-input "
-Output count: " :integer)]
+How many outputs there are: " :integer)]
     (loop [outputs []
            output-count 1]
       (if (<= output-count num-outputs)
@@ -372,28 +372,40 @@ Output count: " :integer)]
   "[HELPER FUNCTION]
    Prompts user to give an integer for the given case
    @param parameter A parameter data type
-   @return A raw parameter of parameter type"
-  [parameter]
-  (let [user-choice (process-user-input "Integer: " :integer)]
-    user-choice))
+   @return A raw parameter of parameter type" 
+  ([parameter parameter-number]
+   (let [user-choice (process-user-input (str "Integer " parameter-number ": ") :integer)]
+     user-choice))
+
+  ([parameter] 
+   (let [user-choice (process-user-input "Integer: " :integer)] 
+     user-choice)))
 
 (defn acquire-specific-input-float
   "[HELPER FUNCTION]
    Prompts user to give a float for the given case
    @param parameter A parameter data type
    @return A raw parameter of parameter type"
-  [parameter]
-  (let [user-choice (process-user-input "Float: " :float)]
-    user-choice))
+  ([parameter parameter-number]
+   (let [user-choice (process-user-input (str "Float " parameter-number ": ") :float)]
+     user-choice))
+
+  ([parameter] 
+   (let [user-choice (process-user-input "Float: " :float)] 
+     user-choice)))
 
 (defn acquire-specific-input-string
   "[HELPER FUNCTION]
    Prompts user to give a string for the given case
    @param parameter A parameter data type
    @return A raw parameter of parameter type"
-  [parameter]
-  (let [user-choice (process-user-input "String: " :string)]
-    user-choice))
+  ([parameter parameter-number]
+   (let [user-choice (process-user-input (str "String " parameter-number ": ") :string)]
+     user-choice))
+
+  ([parameter] 
+   (let [user-choice (process-user-input "String: " :string)] 
+     user-choice)))
 
 (defn acquire-specific-input-vectorof
   "[HELPER FUNCTION]
@@ -403,20 +415,15 @@ Output count: " :integer)]
   [parameter]
   (let [user-vector-length (process-user-input "Vector:
       Element Count: " :integer)
-        user-element-type (let [raw-pick (process-user-input "      Element Type:
-            (1) Integer
-            (2) Float
-            (3) String
-      Please choose from the choices above." :integer)
-                                 processed-pick (cond
-                                                  (= raw-pick 1) acquire-specific-input-integer
-                                                  (= raw-pick 2) acquire-specific-input-float
-                                                  (= raw-pick 3) acquire-specific-input-string)]
-                             processed-pick)]
+        type (get parameter :element-type)
+        element-type (cond
+                  (= type :integer) (partial acquire-specific-input-integer parameter)
+                  (= type :float) (partial acquire-specific-input-float parameter)
+                  (= type :string) (partial acquire-specific-input-string parameter))]
     (loop [vector []
            element-count 1]
       (if (<= element-count user-vector-length)
-        (recur (conj vector (user-element-type parameter))
+        (recur (conj vector (element-type element-count))
                (inc element-count))
         vector))))
 
