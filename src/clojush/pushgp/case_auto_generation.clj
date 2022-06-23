@@ -8,6 +8,7 @@
                  create-parameter
                  generate-case-input
                  generate-parameter
+                 get-initial-training-cases-from-user
  Author: James Frazier
  Date-Last-Edited: June 21, 2022"
 
@@ -265,7 +266,8 @@ If there are no extra characters, press enter.")
         vector))))
   
 (defn generate-parameter
-  "Creates a random parameter of the given parameter data type
+  "[ABSTRACTION]
+   Creates a random parameter of the given parameter data type
      @param parameter A parameter data type
      @return A random generation of the data type given"
   [parameter]
@@ -277,7 +279,8 @@ If there are no extra characters, press enter.")
       (= type :vectorof) (generate-vectorof parameter))))
   
 (defn create-parameter-from-user
-  "Creates a parameter generator function which is made via user input.
+  "[ABSTRACTION]
+   Creates a parameter generator function which is made via user input.
      @return A parameter generator function of specified type. Could be of
              the following:
                  :integer
@@ -305,7 +308,7 @@ Please choose a number from the options above.") :string))]
   "Will inquire the user to provide parameters for a given problem.
      @return A sequence of parameter generator functions"
   []
-  (let [num-params (process-user-input "How many parameters are given?: " :integer)]
+  (let [num-params (process-user-input "How many input parameters are given?: " :integer)]
     (loop [input []
            param-count 1]
       (if (<= param-count num-params)
@@ -315,8 +318,7 @@ Please choose a number from the options above.") :string))]
 (defn acquire-output-type-from-user
   "[HELPER FUNCTION]
    Inquires user for the data type of the output.
-     @return The keywords [:integer], [:float], or [:string] if it is only that, or
-             returns a vector with the following format: [:vectorof %]"
+     @return A Clojush friendly keyword that corresponds to a specified data type"
   [output-num]
   (let [choice (process-user-input (str "What is the data type for output " output-num " of the program?
     (1) Integer
@@ -325,26 +327,27 @@ Please choose a number from the options above.") :string))]
     (4) VectorOf
 Please choose a number from the options above") :string)]
     (cond
-      (= choice "1") [:integer]
-      (= choice "2") [:float]
-      (= choice "3") [:string]
+      (= choice "1") :integer
+      (= choice "2") :float
+      (= choice "3") :string
       (= choice "4") (let [vector-elements (process-user-input "What is the data type of each element?
     (1) Integer
     (2) Float
     (3) String
 Please choose a number from the options above" :string)]
                        (cond
-                         (= vector-elements "1") [:vectorof :integer]
-                         (= vector-elements "2") [:vectorof :float]
-                         (= vector-elements "3") [:vectorof :string])))))
+                         (= vector-elements "1") :vector_integer
+                         (= vector-elements "2") :vector_float
+                         (= vector-elements "3") :vector_string)))))
 
 (defn acquire-outputs-from-user
   "Inquires user to how many outputs there can be and then prompts user to
    specify each possible output
-   @return A vector with each element as a vector that contains the specifics of
-           the outputs (see acquire-output-type-from-user for more information)"
+   @return A vector with each element as a Clojush friendly keyword that corresponds
+           to a specified data type"
   []
-  (let [num-outputs (process-user-input "How many outputs are possible?" :integer)]
+  (let [num-outputs (process-user-input "
+Output count: " :integer)]
     (loop [outputs []
            output-count 1]
       (if (<= output-count num-outputs)
@@ -359,39 +362,136 @@ Please choose a number from the options above" :string)]
   [case-generator]
   (mapv #(generate-parameter %) case-generator))
 
-;;TO-DO: Create get-initial-training-cases-from-user
-
 ;;-------------------------------------------------------------------------------------;;
 
-;;NOTE: Should check that the user accuratly enters a parameter given the bounds
-;;      and each data type should have a helper function to deal with this
-(defn acquire-training-inputs
-  [types]
-  types
-  :stub)
+;;NOTE: The following 4 functions are made so the user can shoot themselves in the
+;;      foot. However, they are also made to easily change this fact for any choice in
+;;      in the future.
 
-;;NOTE: Should check that the user accuratly enters outputs based on
-;;      given information. May not require helper functions for each data type
-;;      TBD
-(defn acquire-training-outputs
+(defn acquire-specific-input-integer
+  "[HELPER FUNCTION]
+   Prompts user to give an integer for the given case
+   @param parameter A parameter data type
+   @return A raw parameter of parameter type"
+  [parameter]
+  (let [user-choice (process-user-input "Integer: " :integer)]
+    user-choice))
+
+(defn acquire-specific-input-float
+  "[HELPER FUNCTION]
+   Prompts user to give a float for the given case
+   @param parameter A parameter data type
+   @return A raw parameter of parameter type"
+  [parameter]
+  (let [user-choice (process-user-input "Float: " :float)]
+    user-choice))
+
+(defn acquire-specific-input-string
+  "[HELPER FUNCTION]
+   Prompts user to give a string for the given case
+   @param parameter A parameter data type
+   @return A raw parameter of parameter type"
+  [parameter]
+  (let [user-choice (process-user-input "String: " :string)]
+    user-choice))
+
+(defn acquire-specific-input-vectorof
+  "[HELPER FUNCTION]
+   Prompts user to give a vectorof for the given case
+   @param parameter A parameter data type
+   @return A raw parameter of parameter type"
+  [parameter]
+  (let [user-vector-length (process-user-input "Vector:
+      Element Count: " :integer)
+        user-element-type (let [raw-pick (process-user-input "      Element Type:
+            (1) Integer
+            (2) Float
+            (3) String
+      Please choose from the choices above." :integer)
+                                 processed-pick (cond
+                                                  (= raw-pick 1) acquire-specific-input-integer
+                                                  (= raw-pick 2) acquire-specific-input-float
+                                                  (= raw-pick 3) acquire-specific-input-string)]
+                             processed-pick)]
+    (loop [vector []
+           element-count 1]
+      (if (<= element-count user-vector-length)
+        (recur (conj vector (user-element-type parameter))
+               (inc element-count))
+        vector))))
+
+(defn acquire-specific-parameter
+  "[HELPER FUNCTION] [ABSTRACTION]
+   Prompts user to give a parameter for the given case
+   @param parameter A parameter data type
+   @return A raw parameter of parameter type"
+  [param-types parameter]
+  (let [type (if (= param-types "Inputs")
+               (get parameter :type)
+               parameter)]
+    (cond
+      (= type :integer) (acquire-specific-input-integer parameter)
+      (= type :float) (acquire-specific-input-float parameter)
+      (= type :string) (acquire-specific-input-string parameter)
+      :else (acquire-specific-input-vectorof parameter))))
+
+(defn acquire-multiple-params
+  "[HELPER FUNCTION] [ABSTRACTION]
+   Prompts the user to give a specific parameter for a specified parameter type
+   @param param-types A string that is either Inputs or Outputs
+   @param types A sequence of parameter data types or keywords which indicate the types
+   @return A sequence of raw parameters"
+  [param-types types]
+  (println "---------------------------------------------------------
+" param-types "
+               ")
+  (let [num-params (count types)]
+    (loop [params []
+           param-count 1]
+      (if (<= param-count num-params)
+        (recur (conj params (acquire-specific-parameter param-types (nth types (dec param-count))))
+               (inc param-count))
+        (do (println "---------------------------------------------------------")
+            params)))))
+
+(defn acquire-training-inputs
+  "[HELPER FUNCTION]
+   Prompts user to give training inputs for a given case
+   @param types A sequence of parameter data type
+   @return A sequence of raw parameters of parameter type"
   [types]
-  types
-  :stub)
+  (acquire-multiple-params "Inputs" types))
+
+(defn acquire-training-outputs
+  "[HELPER FUNCTION]
+   Prompts user to give training outputs for a given case
+   @param types A sequence of parameter data type
+   @return A sequence of raw parameters of parameter type"
+  [types]
+  (acquire-multiple-params "Outputs" types))
 
 ;;NOTE: Should acquire both the input and output for a specific case from the user
 ;;      and place them in a vector
 (defn acquire-training-case-from-user
-  [input-types output-types case-num]
-  (println "Case #" case-num ":
-                              ")
+  "[HELPER FUNCTION]
+   Prompts user to give training cases
+   @param input-types A sequence of parameter data types for the inputs of the case
+   @param output-types A sequence of parameter data types for the outputs of the case
+   @return A sequence of two sequences where the first element is the inputs and
+           the second is the outputs"
+  [input-types output-types] 
   (conj [] (acquire-training-inputs input-types) (acquire-training-outputs output-types)))
 
-;;NOTE: Should return a vector of vectors of vectors which contain inputs and outputs
-;;      for each case which is represented by the index of the outter vector
-;;      i.e. [[[inputs1] [outputs1]]
-;;            .....................
-;;            [[inputsn] [outputsn]]]
 (defn get-initial-training-cases-from-user
+  "Prompts the user to give n number of initial training cases
+   @param input-types A sequence of parameter data types
+   @param output-types A sequence of Clojush friendly keywords
+   @param num-cases An integer of the number of initial cases requested
+   @return A sequence (initial training cases) where each element is a sequence (initial training case)
+           that contains two sequences each (Inputs & Outputs)
+           i.e. [[[inputs-1] [outputs-1]]
+                 .....................
+                 [[inputs-n] [outputs-n]]]"
   [input-types output-types num-cases]
   (println "")
   (println "Please provide some example training cases for the GP run to use.
@@ -399,10 +499,14 @@ Please choose a number from the options above" :string)]
   (loop [initial-cases []
          case-count 1]
     (if (<= case-count num-cases)
-      (recur (conj initial-cases (acquire-training-case-from-user input-types output-types case-count))
-             (inc case-count))
-      initial-cases)))
+      (do (println "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Case #" case-count ":
+                              ")
+          (recur (conj initial-cases (acquire-training-case-from-user input-types output-types))
+             (inc case-count)))
+      (do (println "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        initial-cases))))
 
-(comment
-  (acquire-training-inputs {:type :integer :range {:lower 1 :upper 2}})
+(comment 
+  (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
   )
