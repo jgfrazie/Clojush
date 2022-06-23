@@ -112,7 +112,7 @@
           ;; found that passes all current sub-cases.
           ;; Options: :hard-coded
           ;; Possible future options: auto-generated
-         
+
          :counterexample-driven-case-checker :automatic
           ;; Method for checking whether a program passes all cases.
           ;; Options: :human, :automatic
@@ -134,7 +134,7 @@
           ;; driven GP. If the limit is reached, when adding a case, the case
           ;; passed by the largest portion of the population will be removed,
           ;; breaking ties at random.
-         
+
          :counterexample-driven-fitness-threshold-for-new-case 1.0
           ;; Should be a number in range [0.0, 1.0]. When using counterexample-driven
           ;; GP, determines the proportion of cases that must be passed by an individual
@@ -151,6 +151,14 @@
           ;; true if the input for the problem is a single vector of something, false
           ;; otherwise. This is a bit hacky of a workaround for telling whether to treat
           ;; the inputs from test cases as inputs or vectors of inputs when using CDGP.
+
+          ;;----------------------------------------
+          ;; Counterexample-driven GP
+          ;;----------------------------------------
+         
+         :input-parameterization []
+          ;; Information about inputs. Format: Vector containing maps, one per input
+
 
           ;;----------------------------------------
           ;; Genetic operator probabilities
@@ -406,7 +414,7 @@
          :epsilon-lexicase-version :semi-dynamic
           ;; The version of epsilon-lexicase selection to use.
           ;; Options: :semi-dynamic (default and recommended), :dynamic, :static
-         
+
          :epsilon-lexicase-epsilon nil
           ;; When parent-selection is :epsilon-lexicase,
           ;; the value for epsilon. If nil, automatic epsilon lexicase selection will be used.
@@ -453,7 +461,7 @@
          ;; When set to integer > 1, sets the batch size for batch lexicase selection.
          ;; Should work with any parent selection that uses an individual's :errors,
          ;; such as lexicase, epsilon-lexicase, etc.
-         
+
          :tournament-size 7
           ;; If using tournament selection, the size of the tournaments.
 
@@ -495,7 +503,7 @@
           ;; If truthy, should be an integer which will be the number of history elements
           ;; used to calculate :lineage-redundancy meta-errors.
 
-         :decimation-ratio 1 
+         :decimation-ratio 1
           ;; If >= 1, does nothing. Otherwise, is the percent of the population
           ;; size that is retained before breeding. If 0 < decimation-ratio < 1, decimation
           ;; tournaments will be used to reduce the population to size (* population-size

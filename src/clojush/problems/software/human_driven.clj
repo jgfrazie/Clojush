@@ -47,18 +47,18 @@
 
 (def input-parameterization (cag/acquire-parameters-from-user))
 
-(def output-parameterization (cag/acquire-outputs-from-user))
+(def output-types (cag/acquire-outputs-from-user))
 
 (def initial-training-cases (cag/get-initial-training-cases-from-user
                              input-parameterization
-                             output-parameterization
+                             output-types
                              5))
 
 ;; TMH: This function is likely done, and mostly tested
 (defn human-driven-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
    Returns the behaviors, a list of the outputs of the program on the inputs."
-  [program cases output-types]
+  [program cases]
   (doall
    (for [[input output] cases]
      (let [reversed-inputs (reverse input)
@@ -87,7 +87,7 @@
   "Takes a list of behaviors across the list of cases and finds the error
    for each of those behaviors, returning an error vector.
    Note: each behavior must be a sequence, even if only one output"
-  [behaviors cases output-types]
+  [behaviors cases]
   (flatten
    ;; Outer map over all training cases
    (map (fn [result-vector correct-output-vector]
@@ -106,11 +106,10 @@
 (defn human-driven-error-function
   "The error function. Takes an individual and data-cases as input,
    and returns that individual with :errors and :behaviors set."
-  [individual data-cases output-types]
+  [individual data-cases]
   (let [behaviors (human-driven-evaluate-program-for-behaviors (:program individual)
-                                                               data-cases
-                                                               output-types)
-        errors (human-driven-errors-from-behaviors behaviors data-cases output-types)]
+                                                               data-cases)
+        errors (human-driven-errors-from-behaviors behaviors data-cases)]
     (assoc individual
            :behaviors behaviors
            :errors errors)))
@@ -120,11 +119,15 @@
 (def argmap
   {:error-function human-driven-error-function
    :input-parameterization input-parameterization
-   :output-parameterization output-parameterization
+   :output-stacks output-types
    :training-cases initial-training-cases
    :atom-generators human-driven-atom-generators
 
    ;; TMH: Add some pushargs here to do the counterexamples correctly
+   :counterexample-driven true
+   :counterexample-driven-case-generator :auto-generated
+   :counterexample-driven-case-checker :human
+
 
    :max-points 2000
    :max-genome-size-in-initial-program 250
@@ -141,6 +144,7 @@
 ;; TMH NOTE: Testing problem
 ;; Given in1 = Integer [0, 20]
 ;; and   in2 = String length [0, 20], all chars
+;;      out1 = String
 ;; Return the substring containing the first in1 characters of in2
 
 (comment
@@ -155,15 +159,13 @@
   (def out-types [:integer])
 
   ;; test human-driven-evaluate-program-for-behaviors
-  (human-driven-evaluate-program-for-behaviors prog some-cases out-types)
+  (human-driven-evaluate-program-for-behaviors prog some-cases)
   ;; => ((3) (10) (2))
 
   (human-driven-errors-from-behaviors (human-driven-evaluate-program-for-behaviors
                                        prog
-                                       some-cases
-                                       out-types)
-                                      some-cases
-                                      out-types)
+                                       some-cases)
+                                      some-cases)
   ;; => (1 11 17)
 
   (def prog-str '(in2 in1 string_concat [] in1 string_length vector_integer_conj
@@ -175,15 +177,13 @@
 
   (def out-types-str [:string :vector_integer])
 
-  (human-driven-evaluate-program-for-behaviors prog-str string-cases out-types-str)
+  (human-driven-evaluate-program-for-behaviors prog-str string-cases)
 
   (human-driven-errors-from-behaviors (human-driven-evaluate-program-for-behaviors
                                        prog-str
-                                       string-cases
-                                       out-types-str)
-                                      string-cases
-                                      out-types-str)
+                                       string-cases)
+                                      string-cases)
 
-  (human-driven-error-function {:program prog} some-cases out-types)
+  (human-driven-error-function {:program prog} some-cases)
   
   )
