@@ -322,7 +322,8 @@
      ;; set globals from parameters
      (reset-globals)
      ;; Set initial training case for counterexample-driven GP
-     (when (:counterexample-driven @push-argmap)
+     (when (and (:counterexample-driven @push-argmap)
+                (empty? (:sub-training-cases @push-argmap)))
        (swap! push-argmap assoc :sub-training-cases
               (take (:counterexample-driven-number-of-initial-training-cases @push-argmap)
                     (lshuffle (:training-cases @push-argmap)))))

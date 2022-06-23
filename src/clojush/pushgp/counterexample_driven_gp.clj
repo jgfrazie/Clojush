@@ -62,29 +62,29 @@
   numbered, and have user enter the number of a wrong case or correct if
   they are all correct."
   [random-cases best-results-on-all-cases]
-  ;; (println "Printing random (input output) examples: ")
-  (def input_params (for [case-num random-cases]
-                      (map :param case-num)))
-  (println input_params)
-  (let [input_output_pairs (map list (vec input_params) best-results-on-all-cases)]
-    (doseq [[i x] (map-indexed vector input_output_pairs)]
-      (println "Case" i ":" x))
-    (prn "Are all these correct? Y for Yes/N for No ")
-    (let [answer (read-line)] answer
-         (cond
-           (= "Y" answer) :passes-all-generated-cases ; program passes all randomly generated cases
-           (= "N" answer) (do (prn "Which cases are wrong? Enter the numbers separated by a space: ")
-                              (flush)
-                              (let [str-wrong (read-line)]
-                                (let [wrong-cases (filter #(and (< % (count random-cases)) (>= % 0))
-                                                          (vec (map #(Integer/parseInt %)
-                                                                    (re-seq #"\d+" str-wrong))))]
-                                  (let [counterexample-cases-to-add (for [case-num wrong-cases]
-                                                                      (nth random-cases case-num))]
+  (println)
+  (prn "Whoa, all the current cases were solved! Now it's time to check")
+  (prn "if the best program works on some new inputs:")
+  (println)
+  (doseq [[i x] (map-indexed vector
+                             (map vector random-cases best-results-on-all-cases))]
+    (println "Case" i ":" (pr-str x)))
+  (prn "Are all these correct? Y for Yes/N for No ")
+  (let [answer (read-line)] answer
+       (cond
+         (= "Y" answer) :passes-all-cases ; program passes all randomly generated cases
+         (= "N" answer) (do (prn "Which cases are wrong? Enter the numbers separated by a space: ")
+                            (flush)
+                            (let [str-wrong (read-line)]
+                              (let [wrong-cases (filter #(and (< % (count random-cases)) (>= % 0))
+                                                        (vec (map #(Integer/parseInt %)
+                                                                  (re-seq #"\d+" str-wrong))))]
+                                (let [counterexample-cases-to-add (for [case-num wrong-cases]
+                                                                    (nth random-cases case-num))]
 
                                     ;; (println wrong-cases)
                                     ;; (println counterexample-cases-to-add)
-                                    (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases :float)))))))))
+                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases :string))))))))
 
 
 (defn proportion-of-passed-cases
@@ -131,6 +131,7 @@
     (loop [best (first sorted-pop)
            pop (rest sorted-pop)
            new-cases '()]
+      (println "HERE'S THE BEST PROGRAM:" best)
       (let [best-results-on-all-cases (run-best-on-all-cases best all-cases argmap)
             counterexample-cases (case counterexample-driven-case-checker
                                   :automatic (counterexample-check-results-automatic
@@ -157,10 +158,11 @@
           new-cases-with-new-case
           ; If there's more pop, see if next program also has 0 on training error.
           ; If so, recur
-          (if (>= counterexample-driven-fitness-threshold-for-new-case 1.0)
-            (<= (:total-error (first pop)) error-threshold)
-            (> (proportion-of-passed-cases (first pop))
-               counterexample-driven-fitness-threshold-for-new-case))
+          (and (= counterexample-driven-case-checker :automatic)
+               (if (>= counterexample-driven-fitness-threshold-for-new-case 1.0)
+                 (<= (:total-error (first pop)) error-threshold)
+                 (> (proportion-of-passed-cases (first pop))
+                    counterexample-driven-fitness-threshold-for-new-case)))
           (recur (first pop)
                  (rest pop)
                  new-cases-with-new-case)

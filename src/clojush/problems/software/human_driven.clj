@@ -120,12 +120,18 @@
   {:error-function human-driven-error-function
    :input-parameterization input-parameterization
    :output-stacks output-types
-   :training-cases initial-training-cases
+   :training-cases (list
+                    [[5 "Hamilton"] ["Hamil"]]
+                    [[17 "computer"] ["computer"]]
+                    [[2 "cheese"] ["ch"]]
+                    [[5 "gebna"] ["gebna"]])
+
+   :sub-training-cases initial-training-cases
    :atom-generators human-driven-atom-generators
 
    ;; TMH: Add some pushargs here to do the counterexamples correctly
    :counterexample-driven true
-   :counterexample-driven-case-generator :auto-generated ; :hard-coded ; :auto-generated
+   :counterexample-driven-case-generator :hard-coded ; :hard-coded ; :auto-generated
    :counterexample-driven-case-checker :human ; :automatic ; :human
 
 
