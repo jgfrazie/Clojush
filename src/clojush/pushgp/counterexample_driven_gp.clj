@@ -37,6 +37,20 @@
             ;(print "Press enter to continue...") (flush) (read-line)
             counterexample-cases-to-add)))))) ; return counterexample since program does not pass all generated cases
 
+(defn finish-adding-cases-to-training-set
+  "Takes a list of the wrong cases and merges it with a list of
+   the corresponding right answers from the user"
+  [counterexample-cases-to-add wrong-cases output-type]
+  (map vector counterexample-cases-to-add (loop [index 0
+                                                 right-answers []]
+                                            (if (< index (count wrong-cases))
+                                              (do (println "What is the right answer for case" (nth wrong-cases index) "? Separate by spaces if it's a vector!")
+                                                  (recur (inc index) (conj right-answers (cond
+                                                                                           (= output-type :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" ")))
+                                                                                           (= output-type :float) (vec (map #(Float/parseFloat %) (clojure.string/split (read-line) #" ")))
+                                                                                           (= output-type :string) (clojure.string/split (read-line) #" ")))))
+                                              right-answers))))
+
 (defn counterexample-check-results-human
   "Checks if the best program passed all generated cases, returning true
   if so and false otherwise. If not, also updates :sub-training-cases by
@@ -47,8 +61,30 @@
   NOTE WHEN IMPLEMENTING: Should print all case inputs and best outputs,
   numbered, and have user enter the number of a wrong case or correct if
   they are all correct."
-  [all-cases best-results-on-all-cases]
-  :stub)
+  [random-cases best-results-on-all-cases]
+  (println "Printing random (input output) examples: ")
+  (def input_params (for [case-num random-cases]
+                      (map :param case-num)))
+  (println input_params)
+  (let [input_output_pairs (map list (vec input_params) best-results-on-all-cases)]
+    (doseq [[i x] (map-indexed vector input_output_pairs)]
+      (println "Case" i ":" x))
+    (prn "Are all these correct? Y for Yes/N for No ")
+    (let [answer (read-line)] answer
+         (cond
+           (= "Y" answer) :passes-all-generated-cases ; program passes all randomly generated cases
+           (= "N" answer) (do (prn "Which cases are wrong? Enter the numbers separated by a space: ")
+                              (flush)
+                              (let [str-wrong (read-line)]
+                                (let [wrong-cases (filter #(and (< % (count random-cases)) (>= % 0))
+                                                          (vec (map #(Integer/parseInt %)
+                                                                    (re-seq #"\d+" str-wrong))))]
+                                  (let [counterexample-cases-to-add (for [case-num wrong-cases]
+                                                                      (nth random-cases case-num))]
+
+                                    (println wrong-cases)
+                                    (println counterexample-cases-to-add)
+                                    (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases :float)))))))))
 
 
 (defn proportion-of-passed-cases
