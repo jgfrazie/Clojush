@@ -38,12 +38,13 @@
 (def human-driven-atom-generators
   (concat (list
             (fn [] (- (clojush.random/lrand-int 21) 10))
+           ""
             ;;; end tag ERCs
             'in1
             'in2
             ;;; end input instructions
             )
-          (clojush.pushstate/registered-for-stacks [:integer :boolean :vector_integer :exec])))
+          (clojush.pushstate/registered-for-stacks [:integer :boolean :string :char :exec])))
 
 (def input-parameterization (cag/acquire-parameters-from-user))
 
@@ -69,7 +70,6 @@
            final-state (clojush.interpreter/run-push
                         program
                         start-state)]
-       (prn final-state)
        (map #(clojush.pushstate/top-item % final-state)
             output-types)))))
 
@@ -125,8 +125,8 @@
 
    ;; TMH: Add some pushargs here to do the counterexamples correctly
    :counterexample-driven true
-   :counterexample-driven-case-generator :auto-generated
-   :counterexample-driven-case-checker :human
+   :counterexample-driven-case-generator :auto-generated ; :hard-coded ; :auto-generated
+   :counterexample-driven-case-checker :human ; :automatic ; :human
 
 
    :max-points 2000
