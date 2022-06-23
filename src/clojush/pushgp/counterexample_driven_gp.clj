@@ -1,5 +1,6 @@
 (ns clojush.pushgp.counterexample-driven-gp
-  (:use [clojush random args pushstate interpreter globals individual util]))
+  (:use [clojush random args pushstate interpreter globals individual util])
+  (:require [clojush.pushgp.selecting-interesting-cases :as interesting]))
 
 ; NOTE: When using counterexample-driven GP, only uses the current set of training
 ;       cases when simplifying at the end of a run. While intentional for now,
@@ -123,15 +124,23 @@
   Returns set of new counterexample cases if not a solution."
   [sorted-pop {:keys [counterexample-driven-case-generator counterexample-driven-case-checker
                       training-cases error-threshold error-function
-                      counterexample-driven-fitness-threshold-for-new-case] :as argmap}]
-  (let [all-cases (case counterexample-driven-case-generator
+                      counterexample-driven-fitness-threshold-for-new-case
+                      input-parameterization] :as argmap}]
+  (let [edge-cases (apply mapv ;;; transposing, need to fix later
+                          vector
+                          (interesting/generate-edge-cases input-parameterization))
+        better-edge-cases (map #(vector % [])
+                               edge-cases)
+        qq (prn "EDGE CASES:" better-edge-cases)
+        all-cases (case counterexample-driven-case-generator
                     :hard-coded training-cases
+                    :edge-cases better-edge-cases
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
                                       counterexample-driven-case-generator)))]
     (loop [best (first sorted-pop)
            pop (rest sorted-pop)
            new-cases '()]
-      (println "HERE'S THE BEST PROGRAM:" best)
+      ;; (println "HERE'S THE BEST PROGRAM:" best)
       (let [best-results-on-all-cases (run-best-on-all-cases best all-cases argmap)
             counterexample-cases (case counterexample-driven-case-checker
                                   :automatic (counterexample-check-results-automatic

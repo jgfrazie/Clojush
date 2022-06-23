@@ -131,7 +131,7 @@
 
    ;; TMH: Add some pushargs here to do the counterexamples correctly
    :counterexample-driven true
-   :counterexample-driven-case-generator :hard-coded ; :hard-coded ; :auto-generated
+   :counterexample-driven-case-generator :edge-cases ; :hard-coded ; :auto-generated
    :counterexample-driven-case-checker :human ; :automatic ; :human
 
 
