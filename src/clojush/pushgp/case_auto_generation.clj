@@ -337,21 +337,25 @@ Please choose a number from the options above.") :string))]
     (1) Integer
     (2) Float
     (3) String
-    (4) VectorOf
+    (4) Boolean
+    (5) VectorOf
 Please choose a number from the options above") :string)]
     (cond
       (= choice "1") :integer
       (= choice "2") :float
       (= choice "3") :string
-      (= choice "4") (let [vector-elements (process-user-input "What is the data type of each element?
+      (= choice "4") :boolean
+      (= choice "5") (let [vector-elements (process-user-input "What is the data type of each element?
     (1) Integer
     (2) Float
     (3) String
+    (4) Boolean
 Please choose a number from the options above" :string)]
                        (cond
                          (= vector-elements "1") :vector_integer
                          (= vector-elements "2") :vector_float
-                         (= vector-elements "3") :vector_string)))))
+                         (= vector-elements "3") :vector_string
+                         (= vector-elements "4") :vector_boolean)))))
 
 (defn acquire-outputs-from-user
   "Inquires user to how many outputs there can be and then prompts user to
@@ -528,5 +532,6 @@ Case #" case-count ":
         initial-cases))))
 
 (comment 
+  (acquire-outputs-from-user)
   (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
   )
