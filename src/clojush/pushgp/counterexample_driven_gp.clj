@@ -64,14 +64,14 @@
   they are all correct."
   [random-cases best-results-on-all-cases]
   (println)
-  (prn "Whoa, all the current cases were solved! Now it's time to check")
-  (prn "if the best program works on some new inputs:")
+  (println "*** A program was found that passes all of the training cases! ***")
+  (println "*** Now it's time to check if the best program works on some new inputs: ***")
   (println)
   (doseq [[i x] (map-indexed vector
                              (map vector random-cases best-results-on-all-cases))]
     (println "Case" i ":" (pr-str x)))
-  (prn "Are all these correct? Y for Yes/N for No ")
-  (let [answer (read-line)] answer
+  (println "\nAre all these correct? Y for Yes/N for No ")
+  (let [answer (read-line)]
        (cond
          (= "Y" answer) :passes-all-cases ; program passes all randomly generated cases
          (= "N" answer) (do (prn "Which cases are wrong? Enter the numbers separated by a space: ")
@@ -82,9 +82,6 @@
                                                                   (re-seq #"\d+" str-wrong))))]
                                 (let [counterexample-cases-to-add (for [case-num wrong-cases]
                                                                     (nth random-cases case-num))]
-
-                                    ;; (println wrong-cases)
-                                    ;; (println counterexample-cases-to-add)
                                   (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases :string))))))))
 
 
@@ -131,7 +128,6 @@
                           (interesting/generate-edge-cases input-parameterization))
         better-edge-cases (map #(vector % [])
                                edge-cases)
-        qq (prn "EDGE CASES:" better-edge-cases)
         all-cases (case counterexample-driven-case-generator
                     :hard-coded training-cases
                     :edge-cases better-edge-cases
