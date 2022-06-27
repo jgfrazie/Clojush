@@ -41,7 +41,6 @@
            ""
             ;;; end tag ERCs
             'in1
-            'in2
             ;;; end input instructions
             )
           (clojush.pushstate/registered-for-stacks [:integer :boolean :string :char :exec])))
