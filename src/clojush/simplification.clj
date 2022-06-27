@@ -1,5 +1,5 @@
 (ns clojush.simplification
-  (:use [clojush util globals pushstate random individual evaluate translate]))
+  (:use [clojush util globals pushstate random individual evaluate translate args]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; auto-simplification
@@ -81,7 +81,11 @@
                                        (dec how-many))))
                             ;; remove single paren pair
                             (remove-paren-pair program))
-              new-errors (:errors (error-function {:program new-program}))
+              new-errors (:errors 
+                          (if (and (:counterexample-driven @push-argmap)
+                                   (= :human (:counterexample-driven-case-checker @push-argmap)))
+                            (error-function {:program new-program} (:sub-training-cases @push-argmap))
+                            (error-function {:program new-program})))
               new-total-errors (compute-total-error new-errors)] ;simplification bases its decision on raw error; HAH-error could also be used here
           (if (= new-errors errors) ; only keep the simplified program if its error vector is the same as the original program's error vector
             (recur (inc step) new-program new-errors new-total-errors)
