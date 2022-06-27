@@ -1,6 +1,5 @@
 (ns clojush.random
-  (:use [clojush globals translate pushstate]
-        clojush.instructions.common)
+  (:use [clojush globals translate pushstate])
   (:require [clj-random.core :as random]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -110,7 +109,7 @@
                       plushy-close-probability
                       (/ (apply + (filter identity ; This will look up each atom generator in the instruction table and
                                                    ; get the number of parentheses it requires
-                                          (map lookup-instruction-paren-groups
+                                          (map (comp :parentheses meta @instruction-table)
                                                atom-generators)))
                          (count atom-generators)))]
     (if (< (lrand) plushy-prob)

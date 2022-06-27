@@ -46,5 +46,3 @@
       (println "######################################")
       (pushgp params)
       (shutdown-agents))))
-
-

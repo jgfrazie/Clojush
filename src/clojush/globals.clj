@@ -9,10 +9,11 @@
 
 
 (def push-types '(:exec :code :integer :float :boolean :char :string :zip
-                        :vector_integer :vector_float :vector_boolean :vector_string
-                        :input :output :auxiliary :tag :return :environment :genome
-                        :gtm))
-;; The list of stacks used by the Push interpreter
+                  :vector_integer :vector_float :vector_boolean :vector_string
+                  :input :output :auxiliary :tag :return :environment :genome
+                  :gtm))
+;; The list of stacks and non-stack storage types used by the Push interpreter
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Used by instructions to keep computed values within limits or when using random 
@@ -97,8 +98,6 @@
 (def frontier (atom []))
 ;; used for preserve-frontier
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The globals below may be reset by arguments to pushgp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -166,4 +165,5 @@
 ;; will require quil.core, which will launch the quil sketch.
 
 (def viz-data-atom (atom {}))
+
 

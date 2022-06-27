@@ -623,8 +623,9 @@ given by uniform-deletion-rate.
                                                          atom-generators argmap)])
                                             [%])
                                          (:genome ind))))
-        new-genome (vec (remove (fn [_] (< (lrand) deletion-rate))
-                                after-addition))]
+        new-genome (vec (filter identity
+                                (mapv #(if (< (lrand) deletion-rate) nil %)
+                                      after-addition)))]
     (make-individual :genome new-genome
                      :history (:history ind)
                      :grain-size (compute-grain-size new-genome ind argmap)
