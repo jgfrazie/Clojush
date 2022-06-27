@@ -6,7 +6,7 @@
  Main-Functions: acquire-outputs-from-user
                  acquire-parameters-from-user
                  create-parameter
-                 generate-case-input
+                 generate-random-case-input
                  generate-parameter
                  get-initial-training-cases-from-user
  Author: James Frazier
@@ -199,16 +199,16 @@ If there are no extra characters, press enter.")
                      ")
            (create-new-string-param)))))
 
-  ([lower upper char-groups unique-chars] 
+  ([lower upper char-groups unique-chars]
    (if (string? char-groups)
      (let [available-chars char-groups]
        {:type :string
         :range {:lower lower :upper upper
-                :available-characters available-chars}})) 
-     (let [available-chars (add-groups-to-str (reduce str unique-chars) char-groups)]
-       {:type :string
-        :range {:lower lower :upper upper
-                :available-characters available-chars}})))
+                :available-characters available-chars}}))
+   (let [available-chars (add-groups-to-str (reduce str unique-chars) char-groups)]
+     {:type :string
+      :range {:lower lower :upper upper
+              :available-characters available-chars}})))
 
 (defn generate-string
   "[HELPER FUNCTION]
@@ -260,7 +260,7 @@ If there are no extra characters, press enter.")
               :upper upper}
       :element-type element-type
       :element-range element-range})))
-  
+
 (defn generate-vectorof
   "[HELPER FUNCTION]
      Generates a new raw vectorof parameter based off of boundries
@@ -277,7 +277,7 @@ If there are no extra characters, press enter.")
       (if (< (count vector) length)
         (recur (conj vector (generate-parameter element)))
         vector))))
-  
+
 (defn generate-parameter
   "[ABSTRACTION]
    Creates a random parameter of the given parameter data type
@@ -290,7 +290,7 @@ If there are no extra characters, press enter.")
       (= type :float) (generate-float parameter)
       (= type :string) (generate-string parameter)
       (= type :vectorof) (generate-vectorof parameter))))
-  
+
 (defn create-parameter-from-user
   "[ABSTRACTION]
    Creates a parameter generator function which is made via user input.
@@ -316,7 +316,7 @@ Please choose a number from the options above.") :string))]
   ([prompt param-for?]
    (println prompt)
    (create-parameter-from-user param-for?)))
-  
+
 (defn acquire-parameters-from-user
   "Will inquire the user to provide parameters for a given problem.
      @return A sequence of parameter generator functions"
@@ -327,7 +327,7 @@ Please choose a number from the options above.") :string))]
       (if (<= param-count num-params)
         (recur (conj input (create-parameter-from-user param-count)) (inc param-count))
         input))))
-  
+
 (defn acquire-output-type-from-user
   "[HELPER FUNCTION]
    Inquires user for the data type of the output.
@@ -337,21 +337,25 @@ Please choose a number from the options above.") :string))]
     (1) Integer
     (2) Float
     (3) String
-    (4) VectorOf
+    (4) Boolean
+    (5) VectorOf
 Please choose a number from the options above") :string)]
     (cond
       (= choice "1") :integer
       (= choice "2") :float
       (= choice "3") :string
-      (= choice "4") (let [vector-elements (process-user-input "What is the data type of each element?
+      (= choice "4") :boolean
+      (= choice "5") (let [vector-elements (process-user-input "What is the data type of each element?
     (1) Integer
     (2) Float
     (3) String
+    (4) Boolean
 Please choose a number from the options above" :string)]
                        (cond
                          (= vector-elements "1") :vector_integer
                          (= vector-elements "2") :vector_float
-                         (= vector-elements "3") :vector_string)))))
+                         (= vector-elements "3") :vector_string
+                         (= vector-elements "4") :vector_boolean)))))
 
 (defn acquire-outputs-from-user
   "Inquires user to how many outputs there can be and then prompts user to
@@ -367,13 +371,24 @@ How many outputs there are: " :integer)]
         (recur (conj outputs (acquire-output-type-from-user output-count))
                (inc output-count))
         outputs))))
-  
-(defn generate-case-input
+
+(defn generate-random-case-input
   "Generates a new case input given a sequence of parameter generator functions.
      @param case-generator A sequence of parameter generator functions
      @return A sequence of case inputs"
   [case-generator]
   (mapv #(generate-parameter %) case-generator))
+
+(defn generate-random-cases
+  "Generates a new case input set given a sequence of parameter generator functions.
+     @param case-generator A sequence of parameter generator functions
+     @return A case set data type"
+  [case-generator num-cases]
+  (loop [case-count 0
+         cases []]
+    (if (< case-count num-cases)
+      (recur (inc case-count) (conj cases (vector (generate-random-case-input case-generator) '[])))
+      cases)))
 
 ;;-------------------------------------------------------------------------------------;;
 
@@ -385,13 +400,13 @@ How many outputs there are: " :integer)]
   "[HELPER FUNCTION]
    Prompts user to give an integer for the given case
    @param parameter A parameter data type
-   @return A raw parameter of parameter type" 
+   @return A raw parameter of parameter type"
   ([parameter parameter-number]
    (let [user-choice (process-user-input (str "Integer " parameter-number ": ") :integer)]
      user-choice))
 
-  ([parameter] 
-   (let [user-choice (process-user-input "Integer: " :integer)] 
+  ([parameter]
+   (let [user-choice (process-user-input "Integer: " :integer)]
      user-choice)))
 
 (defn acquire-specific-input-float
@@ -403,8 +418,8 @@ How many outputs there are: " :integer)]
    (let [user-choice (process-user-input (str "Float " parameter-number ": ") :float)]
      user-choice))
 
-  ([parameter] 
-   (let [user-choice (process-user-input "Float: " :float)] 
+  ([parameter]
+   (let [user-choice (process-user-input "Float: " :float)]
      user-choice)))
 
 (defn acquire-specific-input-string
@@ -416,9 +431,40 @@ How many outputs there are: " :integer)]
    (let [user-choice (process-user-input (str "String " parameter-number ": ") :string)]
      user-choice))
 
-  ([parameter] 
-   (let [user-choice (process-user-input "String: " :string)] 
+  ([parameter]
+   (let [user-choice (process-user-input "String: " :string)]
      user-choice)))
+
+(defn acquire-specific-input-boolean
+  "[HELPER FUNCTION]
+   Prompts user to give a boolean for the given case
+   @param parameter A parameter data type
+   @return A raw parameter of parameter type"
+  ([parameter parameter-number]
+   (let [user-choice (process-user-input (str "Boolean " parameter-number ": 
+    (1) True
+    (2) False") :integer)]
+     (cond
+       (= user-choice 1) true
+       (= user-choice 2) false
+       :else (do
+               (println "
+    INVALID INPUT DETECTED. ONLY VALID CHOICES ARE (1) AND (2).
+                     ")
+               (acquire-specific-input-boolean parameter parameter-number)))))
+
+  ([parameter]
+   (let [user-choice (process-user-input "Boolean: 
+    (1) True
+    (2) False" :integer)]
+     (cond
+       (= user-choice 1) true
+       (= user-choice 2) false
+       :else (do
+               (println "
+    INVALID INPUT DETECTED. ONLY VALID CHOICES ARE (1) AND (2).
+                     ")
+               (acquire-specific-input-boolean parameter))))))
 
 (defn acquire-specific-input-vectorof
   "[HELPER FUNCTION]
@@ -430,9 +476,10 @@ How many outputs there are: " :integer)]
       Element Count: " :integer)
         type (get parameter :element-type)
         element-type (cond
-                  (= type :integer) (partial acquire-specific-input-integer parameter)
-                  (= type :float) (partial acquire-specific-input-float parameter)
-                  (= type :string) (partial acquire-specific-input-string parameter))]
+                       (= type :integer) (partial acquire-specific-input-integer parameter)
+                       (= type :float) (partial acquire-specific-input-float parameter)
+                       (= type :string) (partial acquire-specific-input-string parameter)
+                       (= type :boolean) (partial acquire-specific-input-boolean parameter))]
     (loop [vector []
            element-count 1]
       (if (<= element-count user-vector-length)
@@ -453,6 +500,7 @@ How many outputs there are: " :integer)]
       (= type :integer) (acquire-specific-input-integer parameter)
       (= type :float) (acquire-specific-input-float parameter)
       (= type :string) (acquire-specific-input-string parameter)
+      (= type :boolean) (acquire-specific-input-boolean parameter)
       :else (acquire-specific-input-vectorof parameter))))
 
 (defn acquire-multiple-params
@@ -499,7 +547,7 @@ How many outputs there are: " :integer)]
    @param output-types A sequence of parameter data types for the outputs of the case
    @return A sequence of two sequences where the first element is the inputs and
            the second is the outputs"
-  [input-types output-types] 
+  [input-types output-types]
   (conj [] (acquire-training-inputs input-types) (acquire-training-outputs output-types)))
 
 (defn get-initial-training-cases-from-user
@@ -523,10 +571,11 @@ How many outputs there are: " :integer)]
 Case #" case-count ":
                               ")
           (recur (conj initial-cases (acquire-training-case-from-user input-types output-types))
-             (inc case-count)))
+                 (inc case-count)))
       (do (println "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        initial-cases))))
+          initial-cases))))
 
-(comment 
+(comment
+  (acquire-outputs-from-user)
   (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
-  )
+  (generate-random-cases (acquire-parameters-from-user) 5))
