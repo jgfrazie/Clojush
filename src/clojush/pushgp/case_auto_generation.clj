@@ -6,7 +6,7 @@
  Main-Functions: acquire-outputs-from-user
                  acquire-parameters-from-user
                  create-parameter
-                 generate-case-input
+                 generate-random-case-input
                  generate-parameter
                  get-initial-training-cases-from-user
  Author: James Frazier
@@ -372,12 +372,23 @@ How many outputs there are: " :integer)]
                (inc output-count))
         outputs))))
   
-(defn generate-case-input
+(defn generate-random-case-input
   "Generates a new case input given a sequence of parameter generator functions.
      @param case-generator A sequence of parameter generator functions
      @return A sequence of case inputs"
   [case-generator]
   (mapv #(generate-parameter %) case-generator))
+
+(defn generate-random-cases
+  "Generates a new case input set given a sequence of parameter generator functions.
+     @param case-generator A sequence of parameter generator functions
+     @return A case set data type"
+  [case-generator num-cases]
+  (loop [case-count 0
+         cases []]
+    (if (< case-count num-cases)
+      (recur (inc case-count) (conj cases (vector (generate-random-case-input case-generator) '[])))
+      cases)))
 
 ;;-------------------------------------------------------------------------------------;;
 
@@ -424,6 +435,37 @@ How many outputs there are: " :integer)]
    (let [user-choice (process-user-input "String: " :string)] 
      user-choice)))
 
+(defn acquire-specific-input-boolean
+  "[HELPER FUNCTION]
+   Prompts user to give a boolean for the given case
+   @param parameter A parameter data type
+   @return A raw parameter of parameter type"
+  ([parameter parameter-number]
+   (let [user-choice (process-user-input (str "Boolean " parameter-number ": 
+    (1) True
+    (2) False") :integer)]
+     (cond
+       (= user-choice 1) true
+       (= user-choice 2) false
+       :else (do
+               (println "
+    INVALID INPUT DETECTED. ONLY VALID CHOICES ARE (1) AND (2).
+                     ")
+               (acquire-specific-input-boolean parameter parameter-number)))))
+
+  ([parameter]
+(let [user-choice (process-user-input "Boolean: 
+    (1) True
+    (2) False" :integer)]
+  (cond
+    (= user-choice 1) true
+    (= user-choice 2) false
+    :else (do
+            (println "
+    INVALID INPUT DETECTED. ONLY VALID CHOICES ARE (1) AND (2).
+                     ")
+            (acquire-specific-input-boolean parameter))))))
+
 (defn acquire-specific-input-vectorof
   "[HELPER FUNCTION]
    Prompts user to give a vectorof for the given case
@@ -434,9 +476,10 @@ How many outputs there are: " :integer)]
       Element Count: " :integer)
         type (get parameter :element-type)
         element-type (cond
-                  (= type :integer) (partial acquire-specific-input-integer parameter)
-                  (= type :float) (partial acquire-specific-input-float parameter)
-                  (= type :string) (partial acquire-specific-input-string parameter))]
+                       (= type :integer) (partial acquire-specific-input-integer parameter)
+                       (= type :float) (partial acquire-specific-input-float parameter)
+                       (= type :string) (partial acquire-specific-input-string parameter)
+                       (= type :boolean) (partial acquire-specific-input-boolean parameter))]
     (loop [vector []
            element-count 1]
       (if (<= element-count user-vector-length)
@@ -457,6 +500,7 @@ How many outputs there are: " :integer)]
       (= type :integer) (acquire-specific-input-integer parameter)
       (= type :float) (acquire-specific-input-float parameter)
       (= type :string) (acquire-specific-input-string parameter)
+      (= type :boolean) (acquire-specific-input-boolean parameter)
       :else (acquire-specific-input-vectorof parameter))))
 
 (defn acquire-multiple-params
@@ -534,4 +578,5 @@ Case #" case-count ":
 (comment 
   (acquire-outputs-from-user)
   (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
+  (generate-random-cases (acquire-parameters-from-user) 5)
   )

@@ -1,6 +1,7 @@
 (ns clojush.pushgp.counterexample-driven-gp
   (:use [clojush random args pushstate interpreter globals individual util])
-  (:require [clojush.pushgp.selecting-interesting-cases :as interesting]))
+  (:require [clojush.pushgp.selecting-interesting-cases :as interesting])
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; NOTE: When using counterexample-driven GP, only uses the current set of training
 ;       cases when simplifying at the end of a run. While intentional for now,
@@ -131,10 +132,13 @@
                           (interesting/generate-edge-cases input-parameterization))
         better-edge-cases (map #(vector % [])
                                edge-cases)
-        qq (prn "EDGE CASES:" better-edge-cases)
+        random (cag/generate-random-cases input-parameterization 5)
+        qq (prn "RANDOM:" random)
+        pp (prn "EDGE CASES:" better-edge-cases)
         all-cases (case counterexample-driven-case-generator
                     :hard-coded training-cases
                     :edge-cases better-edge-cases
+                    :randomly-generated random
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
                                       counterexample-driven-case-generator)))]
     (loop [best (first sorted-pop)
