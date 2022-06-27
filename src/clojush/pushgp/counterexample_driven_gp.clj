@@ -41,16 +41,28 @@
 (defn finish-adding-cases-to-training-set
   "Takes a list of the wrong cases and merges it with a list of
    the corresponding right answers from the user"
-  [counterexample-cases-to-add wrong-cases output-type]
-  (map vector counterexample-cases-to-add (loop [index 0
-                                                 right-answers []]
-                                            (if (< index (count wrong-cases))
-                                              (do (println "What is the right answer for case" (nth wrong-cases index) "? Separate by spaces if it's a vector!")
-                                                  (recur (inc index) (conj right-answers (cond
-                                                                                           (= output-type :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" ")))
-                                                                                           (= output-type :float) (vec (map #(Float/parseFloat %) (clojure.string/split (read-line) #" ")))
-                                                                                           (= output-type :string) (clojure.string/split (read-line) #" ")))))
-                                              right-answers))))
+  [counterexample-cases-to-add wrong-cases output-types no-of-outputs]
+  (vec (map vector (loop [inputs []
+                     index 0]
+                (if (< index (count counterexample-cases-to-add))
+                  (recur (conj inputs (first (nth counterexample-cases-to-add index)))
+                         (inc index))
+                  inputs)) 
+       (loop [index 0 
+              right-answers []] 
+         (if (< index (count wrong-cases)) 
+           (do (println "What is the right answer for case" (nth wrong-cases index) "? Separate by spaces if it's a vector!") 
+               (recur (inc index) (apply conj right-answers (loop [outputs []
+                                                             index 0]
+                                                        (if (< index no-of-outputs)
+                                                          (recur (conj outputs 
+                                                                       (cond 
+                                                                         (= (nth output-types index) :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" "))) 
+                                                                         (= (nth output-types index) :float) (vec (map #(Float/parseFloat %) (clojure.string/split (read-line) #" "))) 
+                                                                         (= (nth output-types index) :string) (clojure.string/split (read-line) #" ")))
+                                                                 (inc index))
+                                                          outputs))))) 
+           right-answers))))) 
 
 (defn counterexample-check-results-human
   "Checks if the best program passed all generated cases, returning true
@@ -69,8 +81,8 @@
   (println)
   (doseq [[i x] (map-indexed vector
                              (map vector random-cases best-results-on-all-cases))]
-    (println "Case" i ":" (pr-str x)))
-  (prn "Are all these correct? Y for Yes/N for No ")
+    (println "Case" i ": Generated random input: " (pr-str (first (first x)))"; Output from best program:" (pr-str (second x))))
+  (prn "Are all these correct? Y for Yes, N for No, any other character to continue evolving: ")
   (let [answer (read-line)] answer
        (cond
          (= "Y" answer) :passes-all-cases ; program passes all randomly generated cases
@@ -85,7 +97,7 @@
 
                                     ;; (println wrong-cases)
                                     ;; (println counterexample-cases-to-add)
-                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases :string))))))))
+                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases [:string] 1))))))))
 
 
 (defn proportion-of-passed-cases
