@@ -55,7 +55,6 @@
                              output-types
                              5))
 
-;; TMH: This function is likely done, and mostly tested
 (defn human-driven-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
    Returns the behaviors, a list of the outputs of the program on the inputs."
@@ -82,7 +81,6 @@
    :vector_integer cag/vector-of-number-difference
    :vector_float cag/vector-of-number-difference})
 
-;; TMH: This function is likely done, and mostly tested
 (defn human-driven-errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error
    for each of those behaviors, returning an error vector.
@@ -102,7 +100,6 @@
         behaviors
         (map second cases))))
 
-;; TMH: Not sure if this function's done or not.
 (defn human-driven-error-function
   "The error function. Takes an individual and data-cases as input,
    and returns that individual with :errors and :behaviors set."
