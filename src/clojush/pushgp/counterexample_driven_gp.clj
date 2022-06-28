@@ -105,7 +105,7 @@
                                 (let [counterexample-cases-to-add (for [case-num wrong-cases]
                                                                     (nth random-cases case-num))]
 
-                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases [:boolean] 1))))))))
+                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases [:string] 1))))))))
 
 
 (defn proportion-of-passed-cases
