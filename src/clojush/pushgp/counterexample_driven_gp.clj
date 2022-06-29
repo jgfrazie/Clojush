@@ -42,7 +42,7 @@
 (defn finish-adding-cases-to-training-set
   "Takes a list of the wrong cases and merges it with a list of
    the corresponding right answers from the user"
-  [counterexample-cases-to-add wrong-cases output-types no-of-outputs]
+  [counterexample-cases-to-add wrong-cases output-types]
   (vec (map vector (loop [inputs []
                           index 0]
                      (if (< index (count counterexample-cases-to-add))
@@ -55,7 +55,7 @@
                 (do (println "What is the right answer for case" (nth wrong-cases index) "? Separate by spaces if it's a vector!")
                     (recur (inc index) (apply conj right-answers (loop [outputs []
                                                                         index 0]
-                                                                   (if (< index no-of-outputs)
+                                                                   (if (< index (count output-types))
                                                                      (recur (conj outputs
                                                                                   (cond
                                                                                     (= (nth output-types index) :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" ")))
@@ -84,7 +84,7 @@
   NOTE WHEN IMPLEMENTING: Should print all case inputs and best outputs,
   numbered, and have user enter the number of a wrong case or correct if
   they are all correct."
-  [random-cases best-results-on-all-cases]
+  [random-cases best-results-on-all-cases output-stacks]
   (println)
   (println "*** A program was found that passes all of the training cases! ***")
   (println "*** Now it's time to check if the best program works on some new inputs: ***")
@@ -105,7 +105,7 @@
                                 (let [counterexample-cases-to-add (for [case-num wrong-cases]
                                                                     (nth random-cases case-num))]
 
-                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases [:string] 1))))))))
+                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases output-stacks))))))))
 
 
 (defn proportion-of-passed-cases
@@ -145,7 +145,7 @@
   [sorted-pop {:keys [counterexample-driven-case-generator counterexample-driven-case-checker
                       training-cases error-threshold error-function
                       counterexample-driven-fitness-threshold-for-new-case
-                      input-parameterization] :as argmap}]
+                      input-parameterization output-stacks] :as argmap}]
   (let [edge-cases (apply mapv ;;; transposing, need to fix later
                           vector
                           (interesting/generate-edge-cases input-parameterization))
@@ -167,7 +167,7 @@
                                   :automatic (counterexample-check-results-automatic
                                               all-cases best-results-on-all-cases argmap)
                                   :human (counterexample-check-results-human
-                                          all-cases best-results-on-all-cases))
+                                          all-cases best-results-on-all-cases output-stacks))
             new-cases-with-new-case (if (keyword? counterexample-cases)
                                       new-cases
                                       (concat counterexample-cases new-cases))]
