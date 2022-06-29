@@ -1,20 +1,20 @@
-(ns summer-clojure.core
-  (:require [clojush.util :as util]))
-
-(use 'clojure.set)
+(ns clojush.pushgp.selecting-interesting-cases
+  (:require [clojush.util :as util]
+            [clojush random pushstate interpreter]
+            [clojure.set :as cset]))
 
 ;;;;;;;;;;;;;;;
 ;; This is preparing for examine the outputs
 ;; first we have to run the best program to get the outputs and store them 
 ;; -> (we can also get this during the GP run so that we don't have a secondary GP run)
-(defn run-best-program
+#_(defn run-best-program
   "Returns the output of the target training case from the best program"
   [best-program training-case output-type]
-  (let [state (->> (make-push-state)
-                   (map #(push-item (get % :param) :input)
+  (let [state (->> (pushstate/make-push-state)
+                   (map #(pushstate/push-item (get % :param) :input)
                         training-case)
-                   (run-push (:program best-program)))]
-    (top-item output-type state)))
+                   (interpreter/run-push (:program best-program)))]
+    (pushstate/top-item output-type state)))
 
 (defn measure-output-difference
   "Gives a value that states the difference between the current training set 
@@ -44,8 +44,8 @@
                                       item2-set (set item2)
                                       size-difference (Math/abs (- item1-size item2-size))
                                       result-difference (measure-output-difference item1 item2 (vector (get output-type 1)))
-                                      num-of-distinct-elements (count (into (difference item1-set item2-set)
-                                                                            (difference item2-set item1-set)))]
+                                      num-of-distinct-elements (count (into (cset/difference item1-set item2-set)
+                                                                            (cset/difference item2-set item1-set)))]
                                   (conj result-difference num-of-distinct-elements size-difference)))
                               current-training-set-output
                               new-output-seq)))))
