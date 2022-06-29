@@ -16,6 +16,7 @@
 
 (ns clojush.pushgp.case-auto-generation
   (:require [clojure.math.numeric-tower :as math])
+  (:require [clojure.string])
   (:require [clojush.globals]))
 
 (declare generate-parameter)
@@ -78,7 +79,7 @@
                                                                    :upper upper}}"
   ([]
    (println "For an Integer, please provide the following information.")
-   (let [lower (process-user-input "Lower-bound of intger range:" :integer)
+   (let [lower (process-user-input "Lower-bound of integer range:" :integer)
          upper (process-user-input "Upper-bound of integer range:" :integer)]
      (if (> lower upper)
        (do (println "
@@ -207,11 +208,11 @@ If there are no extra characters, press enter.")
      (let [available-chars char-groups]
        {:type :string
         :range {:lower lower :upper upper
-                :available-characters available-chars}}))
-   (let [available-chars (add-groups-to-str (reduce str unique-chars) char-groups)]
-     {:type :string
-      :range {:lower lower :upper upper
-              :available-characters available-chars}})))
+                :available-characters available-chars}})
+     (let [available-chars (add-groups-to-str (reduce str unique-chars) char-groups)]
+       {:type :string
+        :range {:lower lower :upper upper
+                :available-characters available-chars}}))))
 
 (defn generate-string
   "[HELPER FUNCTION]
@@ -442,6 +443,7 @@ How many outputs there are: " :integer)]
   "[HELPER FUNCTION]
    Prompts user to give a boolean for the given case
    @param parameter A parameter data type
+   @param parameter-number An integer of the index of the current parameter
    @return A raw parameter of parameter type"
   ([parameter parameter-number]
    (let [user-choice (process-user-input (str "Boolean " parameter-number ": 
