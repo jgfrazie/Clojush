@@ -1,6 +1,7 @@
 (ns clojush.pushgp.counterexample-driven-gp
   (:use [clojush random args pushstate interpreter globals individual util])
-  (:require [clojush.pushgp.selecting-interesting-cases :as interesting]))
+  (:require [clojush.pushgp.selecting-interesting-cases :as interesting])
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; NOTE: When using counterexample-driven GP, only uses the current set of training
 ;       cases when simplifying at the end of a run. While intentional for now,
@@ -41,16 +42,37 @@
 (defn finish-adding-cases-to-training-set
   "Takes a list of the wrong cases and merges it with a list of
    the corresponding right answers from the user"
-  [counterexample-cases-to-add wrong-cases output-type]
-  (map vector counterexample-cases-to-add (loop [index 0
-                                                 right-answers []]
-                                            (if (< index (count wrong-cases))
-                                              (do (println "What is the right answer for case" (nth wrong-cases index) "? Separate by spaces if it's a vector!")
-                                                  (recur (inc index) (conj right-answers (cond
-                                                                                           (= output-type :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" ")))
-                                                                                           (= output-type :float) (vec (map #(Float/parseFloat %) (clojure.string/split (read-line) #" ")))
-                                                                                           (= output-type :string) (clojure.string/split (read-line) #" ")))))
-                                              right-answers))))
+  [counterexample-cases-to-add wrong-cases output-types]
+  (vec (map vector (loop [inputs []
+                          index 0]
+                     (if (< index (count counterexample-cases-to-add))
+                       (recur (conj inputs (first (nth counterexample-cases-to-add index)))
+                              (inc index))
+                       inputs))
+            (loop [index 0
+                   right-answers []]
+              (if (< index (count wrong-cases))
+                (do (println "What is the right answer for case" (nth wrong-cases index) "? Separate by spaces if it's a vector!")
+                    (recur (inc index) (apply conj right-answers (loop [outputs []
+                                                                        index 0]
+                                                                   (if (< index (count output-types))
+                                                                     (recur (conj outputs
+                                                                                  (cond
+                                                                                    (= (nth output-types index) :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" ")))
+                                                                                    (= (nth output-types index) :float) (vec (map #(Float/parseFloat %) (clojure.string/split (read-line) #" ")))
+                                                                                    (= (nth output-types index) :string) (clojure.string/split (read-line) #" ")
+                                                                                    (= (nth output-types index) :boolean) (do (println "Type in 0 for false or 1 for true:")
+                                                                                                                              (vec (loop [zeros-and-onex (map #(Integer/parseInt %) (clojure.string/split (read-line) #" "))
+                                                                                                                                          boolean-outputs []
+                                                                                                                                          index 0]
+                                                                                                                                     (if (< index (count zeros-and-onex))
+                                                                                                                                       (if (= (nth zeros-and-onex index) 0)
+                                                                                                                                         (recur zeros-and-onex (conj boolean-outputs false) (inc index))
+                                                                                                                                         (recur zeros-and-onex (conj boolean-outputs true) (inc index)))
+                                                                                                                                       boolean-outputs))))))
+                                                                            (inc index))
+                                                                     outputs)))))
+                right-answers)))))
 
 (defn counterexample-check-results-human
   "Checks if the best program passed all generated cases, returning true
@@ -62,15 +84,15 @@
   NOTE WHEN IMPLEMENTING: Should print all case inputs and best outputs,
   numbered, and have user enter the number of a wrong case or correct if
   they are all correct."
-  [random-cases best-results-on-all-cases]
+  [random-cases best-results-on-all-cases output-stacks]
   (println)
-  (prn "Whoa, all the current cases were solved! Now it's time to check")
-  (prn "if the best program works on some new inputs:")
+  (println "*** A program was found that passes all of the training cases! ***")
+  (println "*** Now it's time to check if the best program works on some new inputs: ***")
   (println)
   (doseq [[i x] (map-indexed vector
                              (map vector random-cases best-results-on-all-cases))]
-    (println "Case" i ":" (pr-str x)))
-  (prn "Are all these correct? Y for Yes/N for No ")
+    (println "Case" i ": Generated random input: " (pr-str (first (first x))) "; Output from best program:" (pr-str (second x))))
+  (prn "Are all these correct? Y for Yes, N for No, any other character to continue evolving: ")
   (let [answer (read-line)] answer
        (cond
          (= "Y" answer) :passes-all-cases ; program passes all randomly generated cases
@@ -83,9 +105,7 @@
                                 (let [counterexample-cases-to-add (for [case-num wrong-cases]
                                                                     (nth random-cases case-num))]
 
-                                    ;; (println wrong-cases)
-                                    ;; (println counterexample-cases-to-add)
-                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases :string))))))))
+                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases output-stacks))))))))
 
 
 (defn proportion-of-passed-cases
@@ -125,16 +145,17 @@
   [sorted-pop {:keys [counterexample-driven-case-generator counterexample-driven-case-checker
                       training-cases error-threshold error-function
                       counterexample-driven-fitness-threshold-for-new-case
-                      input-parameterization] :as argmap}]
+                      input-parameterization output-stacks] :as argmap}]
   (let [edge-cases (apply mapv ;;; transposing, need to fix later
                           vector
                           (interesting/generate-edge-cases input-parameterization))
         better-edge-cases (map #(vector % [])
                                edge-cases)
-        qq (prn "EDGE CASES:" better-edge-cases)
+        random (cag/generate-random-cases input-parameterization 5)
         all-cases (case counterexample-driven-case-generator
                     :hard-coded training-cases
                     :edge-cases better-edge-cases
+                    :randomly-generated random
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
                                       counterexample-driven-case-generator)))]
     (loop [best (first sorted-pop)
@@ -146,7 +167,7 @@
                                   :automatic (counterexample-check-results-automatic
                                               all-cases best-results-on-all-cases argmap)
                                   :human (counterexample-check-results-human
-                                          all-cases best-results-on-all-cases))
+                                          all-cases best-results-on-all-cases output-stacks))
             new-cases-with-new-case (if (keyword? counterexample-cases)
                                       new-cases
                                       (concat counterexample-cases new-cases))]

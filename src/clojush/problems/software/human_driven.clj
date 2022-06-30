@@ -30,22 +30,6 @@
 ;; Penalty error used if no answer is returned by program
 (def penalty-error 1000000)
 
-;; Atom generators
-;; This needs tons of work
-;; For example, the user should be able to specify the stacks to use for registered-for-stacks,
-;;   the number of inputs, and any constants (or ERCs?) to include.
-;; Also, if there are multiple outputs, need to have output instructions.
-(def human-driven-atom-generators
-  (concat (list
-            (fn [] (- (clojush.random/lrand-int 21) 10))
-           ""
-            ;;; end tag ERCs
-            'in1
-            'in2
-            ;;; end input instructions
-            )
-          (clojush.pushstate/registered-for-stacks [:integer :boolean :string :char :exec])))
-
 (def input-parameterization (cag/acquire-parameters-from-user))
 
 (def output-types (cag/acquire-outputs-from-user))
@@ -55,7 +39,20 @@
                              output-types
                              5))
 
-;; TMH: This function is likely done, and mostly tested
+;; Atom generators
+;; This needs tons of work
+;; For example, the user should be able to specify the stacks to use for registered-for-stacks,
+;;   the number of inputs, and any constants (or ERCs?) to include.
+;; Also, if there are multiple outputs, need to have output instructions.
+(def human-driven-atom-generators
+  (concat (list
+           (fn [] (- (clojush.random/lrand-int 21) 10))
+           ""
+            ;;; end tag ERCs
+           )
+          (cag/acquire-input-instructions input-parameterization)
+          (clojush.pushstate/registered-for-stacks (cag/acquire-atom-generator-push-stacks))))
+
 (defn human-driven-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
    Returns the behaviors, a list of the outputs of the program on the inputs."
@@ -82,7 +79,6 @@
    :vector_integer cag/vector-of-number-difference
    :vector_float cag/vector-of-number-difference})
 
-;; TMH: This function is likely done, and mostly tested
 (defn human-driven-errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error
    for each of those behaviors, returning an error vector.
@@ -102,7 +98,6 @@
         behaviors
         (map second cases))))
 
-;; TMH: Not sure if this function's done or not.
 (defn human-driven-error-function
   "The error function. Takes an individual and data-cases as input,
    and returns that individual with :errors and :behaviors set."
@@ -131,7 +126,7 @@
 
    ;; TMH: Add some pushargs here to do the counterexamples correctly
    :counterexample-driven true
-   :counterexample-driven-case-generator :edge-cases ; :hard-coded ; :auto-generated
+   :counterexample-driven-case-generator :randomly-generated ; :hard-coded ; :auto-generated ; randomly-generated
    :counterexample-driven-case-checker :human ; :automatic ; :human
 
 
