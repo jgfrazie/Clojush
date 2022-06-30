@@ -85,7 +85,7 @@
                     :string
    @return The user input as the specified data type"
   [prompt type]
-  (prn prompt)
+  (println prompt)
   (case type
     :integer (Integer/parseInt (read-line))
     :string  (read-line)
