@@ -18,7 +18,7 @@
 ;;  Date-Last-Edited: June 29, 2022
 
 (ns clojush.pushgp.case-auto-generation
-  (:require [clojure.math.numeric-tower :as math])
+  (:require [clojure.math.numeric-tower])
   (:require [clojure.string])
   (:require [clojush.globals]))
 
@@ -36,9 +36,9 @@
    correct vector times 1000 to the absolute difference between each integer
    and the corresponding integer in the correct vector."
   [vecA vecB]
-  (+ (* 1000 (math/abs (- (count vecA) (count vecB))))
+  (+ (* 1000 (clojure.math.numeric-tower/abs (- (count vecA) (count vecB))))
      (apply +
-            (map #(math/abs (- %1 %2))
+            (map #(clojure.math.numeric-tower/abs (- %1 %2))
                  vecA
                  vecB))))
 
@@ -710,6 +710,17 @@ ERROR: " invalid-stack " is not a recognized stack. Please correct this input
                     (recur (conj input-instructions (symbol (str "in" (inc input-index)))) (inc input-index))
                     input-instructions)))))
 
+(defn oracle-interpreter
+  "Given an oracle function and a vector of inputs, will translate to the oracle function
+   the inputs and give the output of the oracle function.
+   @param oracle-function A function which takes the same number of parameters
+                          as the count of inputs
+   @param inputs A vector of the exact count of parameters in the correct order as if being
+                 passed to the oracle function.
+   @return The results of the oracle function based on the parameters from inputs"
+  [oracle-function inputs]
+  ((reduce #(partial %1 %2) oracle-function inputs)))
+
 (comment
   (acquire-outputs-from-user)
   (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
@@ -719,4 +730,5 @@ ERROR: " invalid-stack " is not a recognized stack. Please correct this input
   (acquire-input-instructions (acquire-parameters-from-user))
   (concat '(1 2 3) '(4 5 6))
   
-  (create-new-parameter :vector-integer 2 3 (create-new-parameter :integer 1 100)))
+  (create-new-parameter :vector-integer 2 3 (create-new-parameter :integer 1 100))
+  ((oracle-interpreter str ["Heyo" " I think " "This" " should work lolololol"])))
