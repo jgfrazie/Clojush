@@ -81,13 +81,13 @@
 
 (comment
   ;; Output-analysis test
-  (def training-set-output [["1" "2"] ["4" "5" "10"]])
-  (def new-output-seq [["1" "2" "3"] ["-1" "2" "3"] ["-2" "-209"] ["0" "-af" "2fq"]])
+  (def training-set-output '(["1" "2"] ["4" "5" "10"]))
+  (def new-output-seq '([] ["-1" "2" "3"] ["-2" "-209"] ["0" "-af" "2fq"]))
   (def fake-randomly-generated-cases [[[1 4] []] [[2 3 4] []] [[1 4 3] []] [[7 7 7] []]])
   (let [pairs (output-analysis training-set-output new-output-seq fake-randomly-generated-cases :vector_string 4)]
     (println (get-chosen-inputs pairs))
     (println (get-chosen-outputs pairs)))
-  )
+   )
 
 (defn add-edge-number-cases
   "Helper functions to added a new edge case with int/float data type
@@ -208,18 +208,15 @@
   ;; edge-cases test
   (def training-set [{:type :integer
                       :range {:lower 0
-                              :upper 10}
-                      :param 0}
+                              :upper 10}}
 
                      {:type :string
                       :range {:lower 1
                               :upper 5
-                              :available-characters "01234"}
-                      :param "10"}
+                              :available-characters "01234"}}
 
                      {:type :float
                       :range {:lower 1.001
-                              :upper 10.999}
-                      :param 5.5}])
+                              :upper 10.999}}])
   (forming-input-output-sets training-set))
 
