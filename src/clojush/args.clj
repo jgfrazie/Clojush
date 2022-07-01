@@ -153,12 +153,14 @@
           ;; the inputs from test cases as inputs or vectors of inputs when using CDGP.
 
           ;;----------------------------------------
-          ;; Counterexample-driven GP
+          ;; Human-driven GP
           ;;----------------------------------------
-         
+
          :input-parameterization []
           ;; Information about inputs. Format: Vector containing maps, one per input
 
+         :oracle-function nil
+          ;; Oracle function used for simulating human-driven GP
 
           ;;----------------------------------------
           ;; Genetic operator probabilities

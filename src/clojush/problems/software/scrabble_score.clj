@@ -109,6 +109,11 @@
                  (apply + (map #(nth scrabble-letter-values (int %)) in))))
        inputs))
 
+(defn scrabble-score-calculator
+  "Takes a single input and calculates its score."
+  [input]
+  (apply + (map #(nth scrabble-letter-values (int %)) input)))
+
 (defn make-scrabble-score-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-scrabble-score-error-function
@@ -202,6 +207,7 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5
                                     }
+   :oracle-function scrabble-score-calculator
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01

@@ -74,6 +74,12 @@
                 (count (filter odd? %)))
        inputs))
 
+(defn count-odds-solver
+  "Given a vetor, it returns the count of 
+   odd integers inside that vector."
+  [input]
+  (count (filter odd? input)))
+
 (defn make-count-odds-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-count-odds-error-function
@@ -152,6 +158,13 @@
   {:error-function (make-count-odds-error-function-from-cases (first count-odds-train-and-test-cases)
                                                               (second count-odds-train-and-test-cases))
    :training-cases (first count-odds-train-and-test-cases)
+   :sub-training-cases (list
+                        [[[1 2 3 4 5 6 7 8 9]] [5]]
+                        [[[]] [0]]
+                        [[[11]] [1]]
+                        [[[2 45]] [0]]
+                        [[[5 783]] [2]])
+   
    :atom-generators count-odds-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
@@ -164,6 +177,7 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5
                                     }
+   :oracle-function count-odds-solver
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
