@@ -79,6 +79,18 @@
                                           in)))))
        inputs))
 
+(defn double-letters-solver
+  "Given a string, print the string, doubling every letter character, and
+   trippling every exclamation point. All other non-alphabetic 
+   and non-exclamation characters should be printed a single 
+   time each."
+  [input]
+  (apply str (flatten (map #(cond
+                              (Character/isLetter %) (list % %)
+                              (= % \!) (list % % %)
+                              :else %)
+                           input))))
+
 (defn make-double-letters-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-double-letters-error-function
@@ -170,6 +182,7 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5
                                     }
+   :oracle-function double-letters-solver
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01

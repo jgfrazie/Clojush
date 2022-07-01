@@ -76,6 +76,12 @@
   (map #(vector % (.lastIndexOf % 0))
        inputs))
 
+(defn last-index-of-zero-getter
+  "Given a vector of integers, it returns the last index in which 
+   zero appears."
+  [input]
+  (.lastIndexOf input 0))
+
 (defn make-last-index-of-zero-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-last-index-of-zero-error-function
@@ -170,6 +176,7 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5
                                     }
+   :oracle-function last-index-of-zero-getter
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01

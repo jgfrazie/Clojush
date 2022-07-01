@@ -67,6 +67,14 @@
                 (apply < (map count %)))
        inputs))
 
+(defn csl-solver
+  "Given three strings, returns true if 
+   lenth(in1) < length(in2) < length(in3), 
+   and false otherwise."
+  [in1 in2 in3]
+  (let [input (vector in1 in2 in3)] 
+    (apply < (map count input))))
+
 (defn make-compare-string-lengths-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-csl-error-function
@@ -160,6 +168,7 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5
                                     }
+   :oracle-function csl-solver
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
