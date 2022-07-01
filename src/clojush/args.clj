@@ -46,7 +46,7 @@
                                  (fn [] (lrand-int 100))
                                  (fn [] (lrand))))
           ;; The instructions that pushgp will use in random code.
-
+         
          :population-size 1000
           ;; Number of individuals in the population.
 
@@ -411,7 +411,7 @@
           ;; The parent selection method. Options include :tournament, :lexicase, :epsilon-lexicase,
           ;; :elitegroup-lexicase, :uniform, :leaky-lexicase, :random-threshold-lexicase,
           ;; :random-toggle-lexicase, :randomly-truncated-lexicase, :truncated-lexicase,
-          ;; :novelty-search, :downsampled-lexcase
+          ;; :novelty-search, :downsampled-lexicase
 
          :epsilon-lexicase-version :semi-dynamic
           ;; The version of epsilon-lexicase selection to use.
