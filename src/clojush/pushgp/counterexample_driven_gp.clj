@@ -198,7 +198,7 @@
            pop (rest sorted-pop)
            new-cases '()]
       ;; (println "HERE'S THE BEST PROGRAM:" best)
-      (let [best-results-on-all-cases (first (run-best-on-all-cases best all-cases argmap))
+      (let [best-results-on-all-cases (map first (run-best-on-all-cases best all-cases argmap))
             input-output-pairs-for-output-anlysis (if (= counterexample-driven-case-generator :selecting-new-cases-based-on-outputs)
                                                     (interesting/output-analysis (map second training-cases) best-results-on-all-cases all-cases (first output-stacks) num-of-cases-added-from-output-selection)
                                                     [])
@@ -224,7 +224,7 @@
           (prn "existing cases: " (:sub-training-cases @push-argmap))
           (prn "new case(s): " counterexample-cases)
           (prn "best individual: " best)
-          (prn "run it on new case:" (first (first (run-best-on-all-cases best counterexample-cases argmap))))
+          (prn "run it on new case:" (first (map first (run-best-on-all-cases best counterexample-cases argmap))))
           (throw (Exception. "Added a new case already in training cases. See above.")))
         (cond
           ; Found a solution, return it
@@ -309,7 +309,7 @@
                     :hard-coded training-cases
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
                                       counterexample-driven-case-generator)))
-        best-results-on-all-cases (first (run-best-on-all-cases best all-cases argmap))
+        best-results-on-all-cases (map first (run-best-on-all-cases best all-cases argmap))
         counterexample-cases (case counterexample-driven-case-checker
                               :automatic (counterexample-check-results-automatic
                                           all-cases best-results-on-all-cases argmap)

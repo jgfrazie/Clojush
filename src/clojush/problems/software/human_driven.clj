@@ -125,6 +125,7 @@
    :counterexample-driven-case-generator :randomly-generated ; :hard-coded ; :auto-generated ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-checker :human ; :automatic ; :human
 
+   :num-of-cases-added-from-random 5
    :num-of-cases-used-for-output-selection 1000
    :num-of-cases-added-from-output-selection 5
 

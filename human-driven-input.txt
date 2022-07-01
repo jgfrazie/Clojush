@@ -24,3 +24,4 @@ Integer
 10
 hope this works!!!! yay!
 hope this 
+integer string char boolean

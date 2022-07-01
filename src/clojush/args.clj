@@ -20,8 +20,6 @@
           ;;----------------------------------------
           ;; Clojush system arguments
           ;;----------------------------------------
-         :num-of-cases-used-for-output-selection 0
-         :num-of-cases-added-from-output-selection 0
 
          :use-single-thread false
           ;; When true, Clojush will only use a single thread.
@@ -48,7 +46,7 @@
                                  (fn [] (lrand-int 100))
                                  (fn [] (lrand))))
           ;; The instructions that pushgp will use in random code.
-         
+
          :population-size 1000
           ;; Number of individuals in the population.
 
@@ -163,6 +161,15 @@
 
          :oracle-function nil
           ;; Oracle function used for simulating human-driven GP
+
+         :num-of-cases-added-from-random 0
+          ;; Number of random cases checked by user 
+
+         :num-of-cases-used-for-output-selection 0
+          ;; Number of cases to generate for maximally distant cases
+
+         :num-of-cases-added-from-output-selection 0
+          ;; Number of cases whose outputs are maximally distant from current training set checked by user
 
           ;;----------------------------------------
           ;; Genetic operator probabilities
