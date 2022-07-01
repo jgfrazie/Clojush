@@ -4,6 +4,87 @@
             [clojure.math.combinatorics :as combo]
             [clojure.string :as str]))
 
+(defn getting-input-output-pairs
+  [num-of-cases sorted-indices inputs outputs]
+  (for [i (range num-of-cases)
+        :let [current-index (nth sorted-indices i)
+              the-output-to-be-presented (nth outputs current-index)
+              the-input-to-be-presenetd (nth inputs current-index)]]
+    (vector the-input-to-be-presenetd the-output-to-be-presented)))
+
+(defn sort-cases-by-trace
+  [training-set-traces new-cases-traces inputs outputs num-of-cases]
+  (let [bool-results (map (fn [the-new-case-traces]
+                            (map (fn [the-training-case]
+                                   (map = the-new-case-traces the-training-case))
+                                 training-set-traces))
+                          new-cases-traces)
+        count-results (map (fn [bool-results-from-one-case]
+                            (map (fn [bool-results-from-one-training-case]
+                                   (count (filter #(identity %) bool-results-from-one-training-case)))
+                                 bool-results-from-one-case))
+                           bool-results)
+        sorted-indices (map first (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))
+        sorted-diff (map second (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))]
+    (println (take 5 sorted-diff))
+    (getting-input-output-pairs num-of-cases sorted-indices inputs outputs))
+  )
+
+(defn sort-cases-by-trace-the-second-whole
+  [training-set-traces new-cases-traces]
+  (let [bool-results (map (fn [the-new-case-traces]
+                            (map (fn [the-training-case]
+                                   (= the-new-case-traces the-training-case))
+                                 training-set-traces))
+                          new-cases-traces)
+        count-results (map (fn [the-list]
+                             (count (filter #(identity (not %)) the-list)) bool-results))]
+   count-results))
+
+(comment
+  (def training-trace [['(0 0 0 0 0 0 0 0 0 1)
+                        '(0 0 0 0 0 0 0 0 0 6)
+                        '(1 0 0 0 0 0 0 0 0 5)
+                        '(2 0 0 0 0 0 0 0 0 4)
+                        '(1 0 0 0 0 0 0 0 0 3)
+                        '(2 0 0 0 0 0 0 0 0 2)
+                        '(3 0 0 0 0 0 0 0 0 1)]
+
+                       ['(0 0 0 0 0 0 0 0 0 9)
+                        '(3 0 0 0 0 0 0 0 0 8)
+                        '(1 0 0 0 0 0 0 1 0 5)
+                        '(2 0 0 2 0 0 0 0 0 4)
+                        '(1 0 0 0 0 0 0 0 0 3)
+                        '(2 0 0 0 0 0 0 0 3 2)
+                        '(2 0 0 0 0 0 0 0 0 1)]])
+  (def new-traces [['(0 0 0 0 0 0 0 0 0 1)
+                    '(0 0 0 0 0 0 0 0 0 6)
+                    '(1 0 0 0 0 0 0 0 0 5)
+                    '(2 0 0 0 0 0 0 0 0 4)
+                    '(1 0 0 0 0 0 0 0 0 3)
+                    '(2 0 0 0 0 0 0 0 0 2)
+                    '(3 0 0 0 0 0 0 0 0 1)]
+                   
+                   ['(0 0 0 0 0 0 0 0 0 2)
+                    '(0 0 0 0 0 0 1 0 0 6)
+                    '(1 0 0 0 0 0 0 0 0 5)
+                    '(2 0 0 4 0 0 0 0 0 4)
+                    '(1 0 0 0 0 0 3 0 0 3)
+                    '(2 0 0 0 0 0 0 0 0 2)
+                    '(3 0 0 0 4 0 0 0 0 1)]
+
+                   ['(1 0 0 0 0 0 0 0 0 9)
+                    '(3 0 0 0 0 0 0 0 0 8)
+                    '(1 0 0 0 0 0 0 1 0 5)
+                    '(2 0 0 2 0 0 0 0 0 4)
+                    '(1 0 0 0 0 0 0 0 0 3)
+                    '(2 0 0 0 0 0 0 0 3 2)
+                    '(2 0 0 0 0 0 0 0 0 1)]])
+  (def fake-randomly-generated-cases [[[1 4] []] [[2 3 4] []] [[1 4 3] []]])
+  (def new-output-seq '([] ["-1" "2" "3"] ["-2" "-209"] ["0" "-af" "2fq"]))
+  (sort-cases-by-trace-the-second-whole training-trace new-traces)
+  )
+
 (defn measure-output-difference
   "Gives a value that states the difference between the current training set 
    and the new generated input. The larger the value is, the more different two outputs are
@@ -63,11 +144,7 @@
                                                      new-outputs
                                                      separated-output-types)
         sorted-indices (map first (sort-by (comp #(apply min %) second) > (map-indexed vector result-difference)))]
-    (for [i (range num-of-cases-to-be-presented)
-          :let [current-index (nth sorted-indices i)
-                the-output-to-be-presented (nth new-outputs current-index)
-                the-input-to-be-presenetd (nth new-inputs current-index)]]
-      (vector the-input-to-be-presenetd the-output-to-be-presented))))
+    (getting-input-output-pairs num-of-cases-to-be-presented sorted-indices new-inputs new-outputs)))
 
 (defn get-chosen-inputs
   "Deconstructing the output-input pair to get the inputs. Return a list of input sets"

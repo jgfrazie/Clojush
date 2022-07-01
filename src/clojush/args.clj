@@ -158,6 +158,8 @@
           ;; Counterexample-driven GP
           ;;----------------------------------------
 
+         :num-of-cases-used-for-trace-selection 0
+         :num-of-cases-added-from-trace-selection 0
          :input-parameterization []
           ;; Information about inputs. Format: Vector containing maps, one per input
 

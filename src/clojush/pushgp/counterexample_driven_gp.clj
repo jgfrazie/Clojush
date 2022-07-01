@@ -149,32 +149,40 @@
                       training-cases error-threshold error-function
                       counterexample-driven-fitness-threshold-for-new-case
                       input-parameterization output-stacks num-of-cases-used-for-output-selection
-                      num-of-cases-added-from-output-selection] :as argmap}]
+                      num-of-cases-added-from-output-selection num-of-cases-used-for-trace-selection
+                      num-of-cases-added-from-trace-selection] :as argmap}]
   (let [edge-cases (interesting/forming-input-output-sets input-parameterization)
         random (cag/generate-random-cases input-parameterization 5)
+        random-for-traces (cag/generate-random-cases input-parameterization num-of-cases-used-for-trace-selection)
         random-for-output-anylysis (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
         all-cases (case counterexample-driven-case-generator
                     :hard-coded training-cases
                     :edge-cases edge-cases
                     :randomly-generated random
                     :selecting-new-cases-based-on-outputs random-for-output-anylysis
-                    :branch-coverage-test random
+                    :branch-coverage-test random-for-traces
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
                                       counterexample-driven-case-generator)))]
     (loop [best (first sorted-pop)
            pop (rest sorted-pop)
            new-cases '()]
       ;; (println "HERE'S THE BEST PROGRAM:" best)
-      (let [best-results-on-all-cases (run-best-on-all-cases best all-cases argmap)
+      (let [best-results-on-all-cases-trace-pair (run-best-on-all-cases best all-cases argmap)
+            training-set-traces (map second (run-best-on-all-cases best training-cases argmap))
+            best-results-on-all-cases (map first best-results-on-all-cases-trace-pair)
+            random-case-traces (map second best-results-on-all-cases-trace-pair)
+            sorted-input-output-pairs-by-traces (interesting/sort-cases-by-trace training-set-traces random-case-traces all-cases 
+                                                                                 best-results-on-all-cases num-of-cases-added-from-trace-selection)
             input-output-pairs-for-output-anlysis (if (= counterexample-driven-case-generator :selecting-new-cases-based-on-outputs)
-                                                    (interesting/output-analysis (map second training-cases) best-results-on-all-cases all-cases (first output-stacks) num-of-cases-added-from-output-selection)
+                                                    (interesting/output-analysis (map second training-cases) best-results-on-all-cases all-cases 
+                                                                                 (first output-stacks) num-of-cases-added-from-output-selection)
                                                     [])
             inputs (if (= counterexample-driven-case-generator :selecting-new-cases-based-on-outputs)
                      (interesting/get-chosen-inputs input-output-pairs-for-output-anlysis)
-                     all-cases)
+                     (interesting/get-chosen-inputs sorted-input-output-pairs-by-traces))
             outputs (if (= counterexample-driven-case-generator :selecting-new-cases-based-on-outputs)
                       (interesting/get-chosen-outputs input-output-pairs-for-output-anlysis)
-                      best-results-on-all-cases)
+                      (interesting/get-chosen-inputs sorted-input-output-pairs-by-traces))
             counterexample-cases (case counterexample-driven-case-checker
                                   :automatic (counterexample-check-results-automatic
                                               all-cases best-results-on-all-cases argmap)
@@ -189,7 +197,7 @@
           (prn "existing cases: " (:sub-training-cases @push-argmap))
           (prn "new case(s): " counterexample-cases)
           (prn "best individual: " best)
-          (prn "run it on new case:" (first (run-best-on-all-cases best counterexample-cases argmap)))
+          (prn "run it on new case:" (first (first (run-best-on-all-cases best counterexample-cases argmap))))
           (throw (Exception. "Added a new case already in training cases. See above.")))
         (cond
           ; Found a solution, return it
