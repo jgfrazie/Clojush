@@ -75,6 +75,12 @@
                  (vec (map + (first in) (second in)))))
        inputs))
 
+(defn vectors-summed-solver
+  "Given 2 vectors, return a vector of integers 
+   that sums the other two at each index."
+  [vec1 vec2] 
+  (vec (map + vec1 vec2)))
+
 (defn make-vectors-summed-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-vectors-summed-error-function
@@ -158,6 +164,12 @@
   {:error-function (make-vectors-summed-error-function-from-cases (first vectors-summed-train-and-test-cases)
                                                                   (second vectors-summed-train-and-test-cases))
    :training-cases (first vectors-summed-train-and-test-cases)
+   :sub-training-cases (list
+                        [[[1 4] [1 2]] [[2 6]]]
+                        [[[1] []] [[1]]]
+                        [[[] []] [[0]]]
+                        [[[109 23 3] [1 2 2]] [[110 25 5]]]
+                        [[[325 25] [25 25]] [350 50]])
    :atom-generators vectors-summed-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
@@ -170,6 +182,7 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5
                                     }
+   :oracle-function vectors-summed-solver
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01

@@ -30,22 +30,6 @@
 ;; Penalty error used if no answer is returned by program
 (def penalty-error 1000000)
 
-;; Atom generators
-;; This needs tons of work
-;; For example, the user should be able to specify the stacks to use for registered-for-stacks,
-;;   the number of inputs, and any constants (or ERCs?) to include.
-;; Also, if there are multiple outputs, need to have output instructions.
-(def human-driven-atom-generators
-  (concat (list
-            (fn [] (- (clojush.random/lrand-int 21) 10))
-           ""
-            ;;; end tag ERCs
-            'in1
-            'in2
-            ;;; end input instructions
-            )
-          (clojush.pushstate/registered-for-stacks [:integer :boolean :string :char :exec])))
-
 (def input-parameterization (cag/acquire-parameters-from-user))
 
 (def output-types (cag/acquire-outputs-from-user))
@@ -54,6 +38,17 @@
                              input-parameterization
                              output-types
                              5))
+
+;; Atom generators
+;; This needs tons of work
+;; For example, the user should be able to specify the stacks to use for registered-for-stacks,
+;;   the number of inputs, and any constants (or ERCs?) to include.
+;; Also, if there are multiple outputs, need to have output instructions.
+(def human-driven-atom-generators
+  (let [requested-stacks (cag/acquire-atom-generator-push-stacks)]
+    (concat (cag/acquire-input-instructions input-parameterization)
+            (cag/acquire-atom-generator-constants requested-stacks)
+            (clojush.pushstate/registered-for-stacks requested-stacks))))
 
 (defn human-driven-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
@@ -117,20 +112,19 @@
   {:error-function human-driven-error-function
    :input-parameterization input-parameterization
    :output-stacks output-types
-   :training-cases (list
-                    [[5 "Hamilton"] ["Hamil"]]
-                    [[17 "computer"] ["computer"]]
-                    [[2 "cheese"] ["ch"]]
-                    [[5 "gebna"] ["gebna"]])
+   :training-cases '() ;; These are ignored by human-driven GP
 
-   :sub-training-cases initial-training-cases
+   :sub-training-cases initial-training-cases ;; These are the cases given by the user.
    :atom-generators human-driven-atom-generators
 
    ;; TMH: Add some pushargs here to do the counterexamples correctly
    :counterexample-driven true
-   :counterexample-driven-case-generator :edge-cases ; :hard-coded ; :auto-generated
+   :counterexample-driven-case-generator :randomly-generated ; :hard-coded ; :auto-generated ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-checker :human ; :automatic ; :human
 
+   :num-of-cases-added-from-random 5
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
 
    :max-points 2000
    :max-genome-size-in-initial-program 250
