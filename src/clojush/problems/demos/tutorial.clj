@@ -25,10 +25,25 @@
 
 ;; Providing true as a third argument produces a trace of all stacks as it runs:
 
-;(run-push '(1 2 integer_add) 
-;          (make-push-state)
-;          true)          
-          
+(let [result-info (run-push '(1 2 integer_add 3 0 integer_add) 
+          (make-push-state))]
+  (get result-info :stack-trace))
+
+ (map = ['(0 0 0 0 0 0 0 0 0 1)
+     '(0 0 0 0 0 0 0 0 0 6)
+     '(1 0 0 0 0 0 0 0 0 5)
+     '(2 0 0 0 0 0 0 0 0 4)
+     '(1 0 0 0 0 0 0 0 0 3)
+     '(2 0 0 0 0 0 0 0 0 2)
+     '(3 0 0 0 0 0 0 0 0 1)] 
+    ['(0 0 0 0 0 0 0 0 0 9)
+     '(0 0 0 0 0 0 0 0 0 6)
+     '(1 0 0 0 0 0 0 0 0 5)
+     '(2 0 0 0 0 0 0 0 0 4)
+     '(1 0 0 0 0 0 0 0 0 3)
+     '(2 0 0 0 0 0 0 0 0 2)
+     '(3 0 0 0 0 0 0 0 0 1)])
+
 ;;;;;;;;;;;;
 ;; Integer symbolic regression of x^3 - 2x^2 - x (problem 5 from the 
 ;; trivial geography chapter) with minimal integer instructions and an 
