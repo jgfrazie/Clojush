@@ -710,25 +710,62 @@ ERROR: " invalid-stack " is not a recognized stack. Please correct this input
                     (recur (conj input-instructions (symbol (str "in" (inc input-index)))) (inc input-index))
                     input-instructions)))))
 
-(defn oracle-interpreter
-  "Given an oracle function and a vector of inputs, will translate to the oracle function
-   the inputs and give the output of the oracle function.
-   @param oracle-function A function which takes the same number of parameters
-                          as the count of inputs
-   @param inputs A vector of the exact count of parameters in the correct order as if being
-                 passed to the oracle function.
-   @return The results of the oracle function based on the parameters from inputs"
-  [oracle-function inputs]
-  ((reduce #(partial %1 %2) oracle-function inputs)))
+(defn acquire-atom-generator-constants
+  "Prompts the user to enter any constants the atom generator may use.
+   @param registered-stacks A vector of Push stacks being used
+   @return A vector of constants to use for atom generators"
+  [registered-stacks]
+  (let [constants {:integer [-1 0 1]
+                   :float [-1.0 0.0 1.0]
+                   :boolean [false true]
+                   :char [\space \newline]
+                   :string [""]
+                   :vector_integer [[] [0]]
+                   :vector_float [[] [0.0]]
+                   :vector_boolean [[]]
+                   :vector_string [[] [""]]}
+        suggested-constants (vec (filter #(not (nil? %)) (map #(second (find constants %)) registered-stacks)))]
+    (println "Here are a list of suggested constants based on the stacks registered for this GP run: ")
+    (doseq [consts suggested-constants]
+      (prn consts))
+    (let [user-input (process-user-input "Add all of these as constants? (Y/N)" :string)
+          constants-to-add (cond
+                             (or (= user-input "Y") (= user-input "y")) (apply concat suggested-constants)
+                             (or (= user-input "N") (= user-input "n")) [])]
+      (println "Please enter any other specific constants for this GP run
+(if entering a string or character, surround the string in
+quotes or add a \\ before the character respectively).")
+      (vec (concat constants-to-add (apply concat (for [current-stack registered-stacks]
+                                 (when (find constants current-stack)
+                                   (loop [stack-constants []
+                                          constant-count 1]
+                                     (if (not (= (last stack-constants) ""))
+                                       (do
+                                         (println current-stack " " constant-count ": ")
+                                         (recur (conj stack-constants (read-line)) (inc constant-count)))
+                                       (case current-stack
+                                         :integer (map #(Integer/parseInt %) (take (dec (count stack-constants)) stack-constants))
+                                         :float (map #(Float/parseFloat %) (take (dec (count stack-constants)) stack-constants))
+                                         :char (map #(read-string %) (take (dec (count stack-constants)) stack-constants))
+                                         :string (map #(read-string %) (take (dec (count stack-constants)) stack-constants))
+                                         :boolean (map #(if (or (= % "True") (= % "true") (= % "TRUE") (= % "t") (= % "T"))
+                                                          true
+                                                          false) (take (dec (count stack-constants)) stack-constants))
+                                         nil)))))))))))
 
-(comment
-  (acquire-outputs-from-user)
-  (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
-  (generate-random-cases (acquire-parameters-from-user) 5)
+  (comment
+    (acquire-outputs-from-user)
+    (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
+    (generate-random-cases (acquire-parameters-from-user) 5)
 
-  (acquire-atom-generator-push-stacks)
-  (acquire-input-instructions (acquire-parameters-from-user))
-  (concat '(1 2 3) '(4 5 6))
-  
-  (create-new-parameter :vector-integer 2 3 (create-new-parameter :integer 1 100))
-  ((oracle-interpreter str ["Heyo" " I think " "This" " should work lolololol"])))
+    (acquire-atom-generator-push-stacks)
+    (acquire-input-instructions (acquire-parameters-from-user))
+    (concat '(1 2 3) '(4 5 6))
+
+    (create-new-parameter :vector-integer 2 3 (create-new-parameter :integer 1 100))
+    (apply create-new-parameter [:integer 1 100])
+    (acquire-atom-generator-constants [:integer :boolean :float :string :char :exec])
+    (map #(println %) (vec '([0] [""])))
+
+    (let [s "\\space"]
+      (read-string s)))

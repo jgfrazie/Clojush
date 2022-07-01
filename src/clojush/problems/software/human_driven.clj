@@ -45,13 +45,10 @@
 ;;   the number of inputs, and any constants (or ERCs?) to include.
 ;; Also, if there are multiple outputs, need to have output instructions.
 (def human-driven-atom-generators
-  (concat (list
-           (fn [] (- (clojush.random/lrand-int 21) 10))
-           ""
-            ;;; end tag ERCs
-           )
-          (cag/acquire-input-instructions input-parameterization)
-          (clojush.pushstate/registered-for-stacks (cag/acquire-atom-generator-push-stacks))))
+  (let [requested-stacks (cag/acquire-atom-generator-push-stacks)]
+    (concat (cag/acquire-input-instructions input-parameterization)
+            (cag/acquire-atom-generator-constants requested-stacks)
+            (clojush.pushstate/registered-for-stacks requested-stacks))))
 
 (defn human-driven-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
