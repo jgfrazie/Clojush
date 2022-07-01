@@ -20,6 +20,8 @@
           ;;----------------------------------------
           ;; Clojush system arguments
           ;;----------------------------------------
+         :num-of-cases-used-for-output-selection 0
+         :num-of-cases-added-from-output-selection 0
 
          :use-single-thread false
           ;; When true, Clojush will only use a single thread.

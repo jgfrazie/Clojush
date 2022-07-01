@@ -5,6 +5,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; push interpreter
+(def stacks-used-to-trace '(:integer :float :boolean :char :string :vector_integer
+                                     :vector_float :vector_boolean :vector_string :exec))
 
 (defn execute-instruction
   "Executes a single Push instruction."
@@ -59,14 +61,17 @@
            s state
            time-limit (if (zero? @global-evalpush-time-limit)
                         0
-                        (+' @global-evalpush-time-limit (System/nanoTime)))]
-      (if (or (> iteration @global-evalpush-limit)
+                        (+' @global-evalpush-time-limit (System/nanoTime)))
+           trace-seq []]
+      (let [counting-arr (map #(count (% s)) stacks-used-to-trace)]
+       (if (or (> iteration @global-evalpush-limit)
               (and (empty? (:exec s)) (empty? (:environment s)))
               (and (not (zero? time-limit))
                    (> (System/nanoTime) time-limit)))
         (assoc s :termination (if (and (empty? (:exec s)) (empty? (:environment s)))
                                 :normal
-                                :abnormal))
+                                :abnormal)
+                 :stack-trace trace-seq)
         (if (empty? (:exec s))
           (let [s (end-environment s)]
             (when print-steps
@@ -75,7 +80,7 @@
               (state-pretty-print s))
             (when save-state-sequence
               (swap! saved-state-sequence #(conj % s)))
-            (recur (inc iteration) s time-limit))
+            (recur (inc iteration) s time-limit (conj trace-seq counting-arr)))
           (let [exec-top (top-item :exec s)
                 s (pop-item :exec s)]
             (let [s (if (seq? exec-top)
@@ -97,7 +102,7 @@
                 (state-pretty-print s))
               (when save-state-sequence
                 (swap! saved-state-sequence #(conj % s)))
-              (recur (inc iteration) s time-limit))))))))
+              (recur (inc iteration) s time-limit (conj trace-seq counting-arr))))))))))
 
 (defn run-push 
   "The top level of the push interpreter; calls eval-push between appropriate code/exec 

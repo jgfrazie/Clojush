@@ -30,22 +30,6 @@
 ;; Penalty error used if no answer is returned by program
 (def penalty-error 1000000)
 
-;; Atom generators
-;; This needs tons of work
-;; For example, the user should be able to specify the stacks to use for registered-for-stacks,
-;;   the number of inputs, and any constants (or ERCs?) to include.
-;; Also, if there are multiple outputs, need to have output instructions.
-(def human-driven-atom-generators
-  (concat (list
-            (fn [] (- (clojush.random/lrand-int 21) 10))
-            ""
-            ;;; end tag ERCs
-            'in1
-            ;'in2
-            ;;; end input instructions
-            )
-          (clojush.pushstate/registered-for-stacks [:integer :boolean :string :char :exec])))
-
 (def input-parameterization (cag/acquire-parameters-from-user))
 
 (def output-types (cag/acquire-outputs-from-user))
@@ -54,6 +38,20 @@
                              input-parameterization
                              output-types
                              5))
+
+;; Atom generators
+;; This needs tons of work
+;; For example, the user should be able to specify the stacks to use for registered-for-stacks,
+;;   the number of inputs, and any constants (or ERCs?) to include.
+;; Also, if there are multiple outputs, need to have output instructions.
+(def human-driven-atom-generators
+  (concat (list
+           (fn [] (- (clojush.random/lrand-int 21) 10))
+           ""
+            ;;; end tag ERCs
+           )
+          (cag/acquire-input-instructions input-parameterization)
+          (clojush.pushstate/registered-for-stacks (cag/acquire-atom-generator-push-stacks))))
 
 (defn human-driven-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
@@ -124,9 +122,11 @@
 
    ;; TMH: Add some pushargs here to do the counterexamples correctly
    :counterexample-driven true
-   :counterexample-driven-case-generator :randomly-generated ; :hard-coded ; :auto-generated ; randomly-generated
+   :counterexample-driven-case-generator :randomly-generated ; :hard-coded ; :auto-generated ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-checker :human ; :automatic ; :human
 
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
 
    :max-points 2000
    :max-genome-size-in-initial-program 250
