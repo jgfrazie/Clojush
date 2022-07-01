@@ -38,9 +38,10 @@
 (def human-driven-atom-generators
   (concat (list
             (fn [] (- (clojush.random/lrand-int 21) 10))
-           ""
+            ""
             ;;; end tag ERCs
             'in1
+            'in2
             ;;; end input instructions
             )
           (clojush.pushstate/registered-for-stacks [:integer :boolean :string :char :exec])))
@@ -116,13 +117,9 @@
   {:error-function human-driven-error-function
    :input-parameterization input-parameterization
    :output-stacks output-types
-   :training-cases (list
-                    [[5 "Hamilton"] ["Hamil"]]
-                    [[17 "computer"] ["computer"]]
-                    [[2 "cheese"] ["ch"]]
-                    [[5 "gebna"] ["gebna"]])
+   :training-cases '() ;; These are ignored by human-driven GP
 
-   :sub-training-cases initial-training-cases
+   :sub-training-cases initial-training-cases ;; These are the cases given by the user.
    :atom-generators human-driven-atom-generators
 
    ;; TMH: Add some pushargs here to do the counterexamples correctly
