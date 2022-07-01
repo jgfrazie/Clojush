@@ -18,7 +18,7 @@
 ;;  Date-Last-Edited: June 29, 2022
 
 (ns clojush.pushgp.case-auto-generation
-  (:require [clojure.math.numeric-tower :as math])
+  (:require [clojure.math.numeric-tower])
   (:require [clojure.string])
   (:require [clojush.globals]))
 
@@ -30,14 +30,15 @@
 ;; NOTE: The following functions are helper functions that are used throughout the file.
 
 (defn vector-of-number-difference
-  "Implements distances between vectors of numbers. Alg:
+  "[AUTHOR: PROF. HELMUTH]
+   Implements distances between vectors of numbers. Alg:
    Add the difference in length between the program's output vector and the
    correct vector times 1000 to the absolute difference between each integer
    and the corresponding integer in the correct vector."
   [vecA vecB]
-  (+ (* 1000 (math/abs (- (count vecA) (count vecB))))
+  (+ (* 1000 (clojure.math.numeric-tower/abs (- (count vecA) (count vecB))))
      (apply +
-            (map #(math/abs (- %1 %2))
+            (map #(clojure.math.numeric-tower/abs (- %1 %2))
                  vecA
                  vecB))))
 
@@ -64,12 +65,12 @@
           :specials - Adds a predetermined list of special characters
    @return A string with @string "
   [string groups]
-  (reduce #(cond
-             (= %2 :lower-case) (str %1 "abcdefghijklmnopqrstuvwxyz")
-             (= %2 :upper-case) (str %1 "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-             (= %2 :specials)   (str %1 " !@#$%^&*()_+-=`~,<.>/?]}[{")
-             (= %2 :digits)     (str %1 "0123456789")
-             :else              %1)
+  (reduce #(case %2
+             :lower-case (str %1 "abcdefghijklmnopqrstuvwxyz")
+             :upper-case (str %1 "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+             :specials   (str %1 " !@#$%^&*()_+-=`~,<.>/?]}[{")
+             :digits     (str %1 "0123456789")
+             %1)
           string
           groups))
 
@@ -84,11 +85,11 @@
                     :string
    @return The user input as the specified data type"
   [prompt type]
-  (prn prompt)
-  (cond
-    (= type :integer) (Integer/parseInt (read-line))
-    (= type :string)  (read-line)
-    (= type :float)   (Float/parseFloat (read-line))))
+  (println prompt)
+  (case type
+    :integer (Integer/parseInt (read-line))
+    :string  (read-line)
+    :float   (Float/parseFloat (read-line))))
 
 (defn get-char-sets
   "[HELPER FUNCTION]
@@ -104,12 +105,12 @@ If you wish to select none of the following options, select 0.
     (4) Special Characeters")
   (let [choices (clojure.string/split (read-line) #" ")]
     (for [choice choices]
-      (cond
-        (= choice "0") nil
-        (= choice "1") :lower-case
-        (= choice "2") :upper-case
-        (= choice "3") :digits
-        (= choice "4") :specials))))
+      (case choice
+        "0" nil
+        "1" :lower-case
+        "2" :upper-case
+        "3" :digits
+        "4" :specials))))
 
 (defn get-extra-chars
   "[HELPER FUNCTION]
@@ -249,6 +250,33 @@ If there are no extra characters, press enter.")
       :element-type element-type
       :element-range element-range})))
 
+(defn create-new-parameter
+  "[ABSTRACTION]
+   Creates a parameter generator function via hard-coded inputs (meant for use
+   in the creation of an Oracle program for human simulation).
+   @param type A keyword which signifies which data type to create a parameter data
+               type for.
+   @param &boundries All of the specifications for the given data type parameter
+                     for its creation.
+   @return A parameter data type of the specified type with the specified boundries."
+  [type & boundries]
+  (case type
+    :integer (let [lower (first boundries)
+                   upper (second boundries)]
+               (create-new-integer-param lower upper))
+    :float (let [lower (first boundries)
+                 upper (second boundries)]
+             (create-new-float-param lower upper))
+    :string (let [lower (first boundries)
+                  upper (second boundries)
+                  char-groups (nth boundries 2)
+                  unique-chars (nth boundries 3)]
+              (create-new-string-param lower upper char-groups unique-chars))
+    (let [lower (first boundries)
+          upper (second boundries)
+          element-parameter (nth boundries 2)]
+      (create-new-vectorof-param lower upper element-parameter))))
+
 (defn create-parameter-from-user
   "[ABSTRACTION]
    Creates a parameter generator function which is made via user input.
@@ -264,12 +292,12 @@ If there are no extra characters, press enter.")
     (2) Float
     (3) String
     (4) VectorOf
-Please choose a number from the options above.") :string))]
-     (cond
-       (= choice "1") (create-new-integer-param)
-       (= choice "2") (create-new-float-param)
-       (= choice "3") (create-new-string-param)
-       (= choice "4") (create-new-vectorof-param))))
+Please choose a number from the options above.") :integer))]
+     (case choice
+       1 (create-new-integer-param)
+       2 (create-new-float-param)
+       3 (create-new-string-param)
+       4 (create-new-vectorof-param))))
 
   ([prompt param-for?]
    (println prompt)
@@ -301,23 +329,23 @@ Please choose a number from the options above.") :string))]
     (3) String
     (4) Boolean
     (5) VectorOf
-Please choose a number from the options above") :string)]
-    (cond
-      (= choice "1") :integer
-      (= choice "2") :float
-      (= choice "3") :string
-      (= choice "4") :boolean
-      (= choice "5") (let [vector-elements (process-user-input "What is the data type of each element?
+Please choose a number from the options above") :integer)]
+    (case choice
+      1 :integer
+      2 :float
+      3 :string
+      4 :boolean
+      5 (let [vector-elements (process-user-input "What is the data type of each element?
     (1) Integer
     (2) Float
     (3) String                                                       
     (4) Boolean
-Please choose a number from the options above" :string)]
-                       (cond
-                         (= vector-elements "1") :vector_integer
-                         (= vector-elements "2") :vector_float
-                         (= vector-elements "3") :vector_string
-                         (= vector-elements "4") :vector_boolean)))))
+Please choose a number from the options above" :integer)]
+                       (case vector-elements
+                         1 :vector_integer
+                         2 :vector_float
+                         3 :vector_string
+                         4 :vector_boolean)))))
 
 (defn acquire-outputs-from-user
   "Inquires user to how many outputs there can be and then prompts user to
@@ -403,11 +431,11 @@ How many outputs there are: " :integer)]
      @return A random generation of the data type given"
   [parameter]
   (let [type (get parameter :type)]
-    (cond
-      (= type :integer) (generate-integer parameter)
-      (= type :float) (generate-float parameter)
-      (= type :string) (generate-string parameter)
-      (= type :vectorof) (generate-vectorof parameter))))
+    (case type
+      :integer (generate-integer parameter)
+      :float (generate-float parameter)
+      :string (generate-string parameter)
+      :vectorof (generate-vectorof parameter))))
 
 (defn generate-random-case-input
   "Generates a new case input given a sequence of parameter generator functions.
@@ -492,27 +520,27 @@ How many outputs there are: " :integer)]
    (let [user-choice (process-user-input (str "Boolean " parameter-number ": 
     (1) True
     (2) False") :integer)]
-     (cond
-       (= user-choice 1) true
-       (= user-choice 2) false
-       :else (do
-               (println "
+     (case user-choice
+       1 true
+       2 false
+       (do
+         (println "
     INVALID INPUT DETECTED. ONLY VALID CHOICES ARE (1) AND (2).
                      ")
-               (acquire-specific-input-boolean parameter parameter-number)))))
+         (acquire-specific-input-boolean parameter parameter-number)))))
 
   ([parameter]
    (let [user-choice (process-user-input "Boolean: 
     (1) True
     (2) False" :integer)]
-     (cond
-       (= user-choice 1) true
-       (= user-choice 2) false
-       :else (do
-               (println "
+     (case user-choice
+       1 true
+       2 false
+       (do
+         (println "
     INVALID INPUT DETECTED. ONLY VALID CHOICES ARE (1) AND (2).
                      ")
-               (acquire-specific-input-boolean parameter))))))
+         (acquire-specific-input-boolean parameter))))))
 
 (defn acquire-specific-input-vectorof
   "[HELPER FUNCTION]
@@ -525,11 +553,11 @@ How many outputs there are: " :integer)]
         type (if (keyword? parameter)
                (second (get-output-types parameter))
                (get parameter :element-type))
-        element-type (cond
-                       (= type :integer) (partial acquire-specific-input-integer parameter)
-                       (= type :float) (partial acquire-specific-input-float parameter)
-                       (= type :string) (partial acquire-specific-input-string parameter)
-                       (= type :boolean) (partial acquire-specific-input-boolean parameter))]
+        element-type (case type
+                       :integer (partial acquire-specific-input-integer parameter)
+                       :float (partial acquire-specific-input-float parameter)
+                       :string (partial acquire-specific-input-string parameter)
+                       :boolean (partial acquire-specific-input-boolean parameter))]
     (loop [vector []
            element-count 1]
       (if (<= element-count user-vector-length)
@@ -546,12 +574,12 @@ How many outputs there are: " :integer)]
   (let [type (if (= param-types "Inputs")
                (get parameter :type)
                parameter)]
-    (cond
-      (= type :integer) (acquire-specific-input-integer parameter)
-      (= type :float) (acquire-specific-input-float parameter)
-      (= type :string) (acquire-specific-input-string parameter)
-      (= type :boolean) (acquire-specific-input-boolean parameter)
-      :else (acquire-specific-input-vectorof parameter))))
+    (case type
+      :integer (acquire-specific-input-integer parameter)
+      :float (acquire-specific-input-float parameter)
+      :string (acquire-specific-input-string parameter)
+      :boolean (acquire-specific-input-boolean parameter)
+      (acquire-specific-input-vectorof parameter))))
 
 (defn acquire-multiple-params
   "[HELPER FUNCTION] [ABSTRACTION]
@@ -682,11 +710,62 @@ ERROR: " invalid-stack " is not a recognized stack. Please correct this input
                     (recur (conj input-instructions (symbol (str "in" (inc input-index)))) (inc input-index))
                     input-instructions)))))
 
-(comment
-  (acquire-outputs-from-user)
-  (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
-  (generate-random-cases (acquire-parameters-from-user) 5)
+(defn acquire-atom-generator-constants
+  "Prompts the user to enter any constants the atom generator may use.
+   @param registered-stacks A vector of Push stacks being used
+   @return A vector of constants to use for atom generators"
+  [registered-stacks]
+  (let [constants {:integer [-1 0 1]
+                   :float [-1.0 0.0 1.0]
+                   :boolean [false true]
+                   :char [\space \newline]
+                   :string [""]
+                   :vector_integer [[] [0]]
+                   :vector_float [[] [0.0]]
+                   :vector_boolean [[]]
+                   :vector_string [[] [""]]}
+        suggested-constants (vec (filter #(not (nil? %)) (map #(second (find constants %)) registered-stacks)))]
+    (println "Here are a list of suggested constants based on the stacks registered for this GP run: ")
+    (doseq [consts suggested-constants]
+      (prn consts))
+    (let [user-input (process-user-input "Add all of these as constants? (Y/N)" :string)
+          constants-to-add (cond
+                             (or (= user-input "Y") (= user-input "y")) (apply concat suggested-constants)
+                             (or (= user-input "N") (= user-input "n")) [])]
+      (println "Please enter any other specific constants for this GP run
+(if entering a string or character, surround the string in
+quotes or add a \\ before the character respectively).")
+      (vec (concat constants-to-add (apply concat (for [current-stack registered-stacks]
+                                 (when (find constants current-stack)
+                                   (loop [stack-constants []
+                                          constant-count 1]
+                                     (if (not (= (last stack-constants) ""))
+                                       (do
+                                         (println current-stack " " constant-count ": ")
+                                         (recur (conj stack-constants (read-line)) (inc constant-count)))
+                                       (case current-stack
+                                         :integer (map #(Integer/parseInt %) (take (dec (count stack-constants)) stack-constants))
+                                         :float (map #(Float/parseFloat %) (take (dec (count stack-constants)) stack-constants))
+                                         :char (map #(read-string %) (take (dec (count stack-constants)) stack-constants))
+                                         :string (map #(read-string %) (take (dec (count stack-constants)) stack-constants))
+                                         :boolean (map #(if (or (= % "True") (= % "true") (= % "TRUE") (= % "t") (= % "T"))
+                                                          true
+                                                          false) (take (dec (count stack-constants)) stack-constants))
+                                         nil)))))))))))
 
-  (acquire-atom-generator-push-stacks)
-  (acquire-input-instructions (acquire-parameters-from-user))
-  (concat '(1 2 3) '(4 5 6)))
+  (comment
+    (acquire-outputs-from-user)
+    (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
+    (generate-random-cases (acquire-parameters-from-user) 5)
+
+    (acquire-atom-generator-push-stacks)
+    (acquire-input-instructions (acquire-parameters-from-user))
+    (concat '(1 2 3) '(4 5 6))
+
+    (create-new-parameter :vector-integer 2 3 (create-new-parameter :integer 1 100))
+    (apply create-new-parameter [:integer 1 100])
+    (acquire-atom-generator-constants [:integer :boolean :float :string :char :exec])
+    (map #(println %) (vec '([0] [""])))
+
+    (let [s "\\space"]
+      (read-string s)))
