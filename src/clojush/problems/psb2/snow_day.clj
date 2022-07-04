@@ -7,7 +7,8 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
-        [clojure.math numeric-tower]))
+        [clojure.math numeric-tower])
+  :require [clojush.pushgp.case-auto-generation :as cag])
 
 ; Atom generators
 (def atom-generators
@@ -61,6 +62,20 @@
                            (+ (* total (- 1 (last %)))
                               (nth % 2))))))
        inputs))
+
+(defn snow-day-solver
+  [inputs]
+  (apply (fn [& pairs]
+           (for [pair pairs]
+             (second pair))) (map #(vector %
+                (loop [time (first %)
+                       total (second %)]
+                  (if (= time 0)
+                    total
+                    (recur (dec time)
+                           (+ (* total (- 1 (last %)))
+                              (nth % 2))))))
+       inputs)))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -150,6 +165,12 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                             (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :oracle-function snow-day-solver
+   :input-parameterization [(cag/create-new-parameter :integer 1 9998)
+                            (cag/create-new-parameter :float -9998 9998)
+                            (cag/create-new-parameter :float -9998 9998)
+                            (cag/create-new-parameter :float -9998 9998)]
+   :output-stacks [:float]
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

@@ -7,7 +7,8 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
-        [clojure.math numeric-tower]))
+        [clojure.math numeric-tower])
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def atom-generators
@@ -72,6 +73,23 @@
                    (= (mod in 5) 0) "Buzz"
                    :else (str in))))
        inputs))
+
+; Oracle function
+(defn fizz-buzz-solver
+  "Takes a sequence of inputs and gives IO test cases of the form
+   [input output]."
+  [inputs]
+  (apply (fn [& pairs]
+           (for [pair pairs]
+             (second pair))) (map (fn [in]
+                         (vector in
+                                 (cond
+                                   (and (= (mod in 3) 0)
+                                        (= (mod in 5) 0)) "FizzBuzz"
+                                   (= (mod in 3) 0) "Fizz"
+                                   (= (mod in 5) 0) "Buzz"
+                                   :else (str in))))
+                       inputs)))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -152,8 +170,11 @@
 ; Define the argmap
 (def argmap
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
-                                                             (second train-and-test-cases))
+                                                   (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :oracle-function fizz-buzz-solver
+   :input-parameterization [(cag/create-new-parameter :integer -32560 32559)]
+   :output-stacks [:string]
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

@@ -7,7 +7,8 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
-        [clojure.math numeric-tower]))
+        [clojure.math numeric-tower])
+  :require [clojush.pushgp.case-auto-generation :as cag])
 
 ; Atom generators
 (def atom-generators
@@ -54,6 +55,17 @@
                    (if (zero? b) a
                        (recur b (mod a b))))))
        inputs))
+
+(defn gcd-solver
+  [inputs]
+  (apply (fn [& pairs]
+           (for [pair pairs]
+             (second pair))) (map (fn [[in1 in2]]
+         (vector [in1 in2]
+                 (loop [a in1 b in2]
+                   (if (zero? b) a
+                       (recur b (mod a b))))))
+       inputs)))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -137,6 +149,9 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                        (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :oracle-function gcd-solver
+   :input-parameterization [(cag/create-new-parameter :vectorof 2 2 (cag/create-new-parameter :integer 1 9999999999999999))]
+   :output-stacks [:integer]
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

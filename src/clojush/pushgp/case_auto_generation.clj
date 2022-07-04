@@ -256,26 +256,20 @@ If there are no extra characters, press enter.")
    in the creation of an Oracle program for human simulation).
    @param type A keyword which signifies which data type to create a parameter data
                type for.
-   @param &boundries All of the specifications for the given data type parameter
+   @param & boundries All of the specifications for the given data type parameter
                      for its creation.
    @return A parameter data type of the specified type with the specified boundries."
   [type & boundries]
-  (case type
-    :integer (let [lower (first boundries)
-                   upper (second boundries)]
-               (create-new-integer-param lower upper))
-    :float (let [lower (first boundries)
-                 upper (second boundries)]
-             (create-new-float-param lower upper))
-    :string (let [lower (first boundries)
-                  upper (second boundries)
-                  char-groups (nth boundries 2)
+  (let [lower (first boundries)
+        upper (second boundries)]
+    (case type
+    :integer (create-new-integer-param lower upper)
+    :float (create-new-float-param lower upper)
+    :string (let [char-groups (nth boundries 2)
                   unique-chars (nth boundries 3)]
               (create-new-string-param lower upper char-groups unique-chars))
-    (let [lower (first boundries)
-          upper (second boundries)
-          element-parameter (nth boundries 2)]
-      (create-new-vectorof-param lower upper element-parameter))))
+    (let [element-parameter (nth boundries 2)]
+      (create-new-vectorof-param lower upper element-parameter)))))
 
 (defn create-parameter-from-user
   "[ABSTRACTION]
@@ -365,7 +359,7 @@ How many outputs there are: " :integer)]
 ;;-------------------------------------------------------------------------------------;;
 
 ;; NOTE: The following functions are responsible for generating a random case from the
-;;       acquired Input Parameters (it is not responsible for acquiring associated Output
+;;       acquired Input Parameters (it is not responsible for generating associated Output
 ;;       Parameters, however.)
 
 (defn generate-integer
@@ -461,8 +455,8 @@ How many outputs there are: " :integer)]
 ;; NOTE: The following functions are responsible for gathering Initial Training Cases
 ;;       from a human
 
-;; NOTE: The following 4 functions are made so the user can shoot themselves in the
-;;       foot. However, they are also made to easily change this fact for any choice in
+;; NOTE: The following 5 functions are made so the user can shoot themselves in the
+;;       foot. However, they are also made to easily change this fact if desired in
 ;;       in the future.
 
 (defn acquire-specific-input-integer
@@ -735,37 +729,20 @@ ERROR: " invalid-stack " is not a recognized stack. Please correct this input
       (println "Please enter any other specific constants for this GP run
 (if entering a string or character, surround the string in
 quotes or add a \\ before the character respectively).")
-      (vec (concat constants-to-add (apply concat (for [current-stack registered-stacks]
-                                 (when (find constants current-stack)
-                                   (loop [stack-constants []
-                                          constant-count 1]
-                                     (if (not (= (last stack-constants) ""))
-                                       (do
-                                         (println current-stack " " constant-count ": ")
-                                         (recur (conj stack-constants (read-line)) (inc constant-count)))
-                                       (case current-stack
-                                         :integer (map #(Integer/parseInt %) (take (dec (count stack-constants)) stack-constants))
-                                         :float (map #(Float/parseFloat %) (take (dec (count stack-constants)) stack-constants))
-                                         :char (map #(read-string %) (take (dec (count stack-constants)) stack-constants))
-                                         :string (map #(read-string %) (take (dec (count stack-constants)) stack-constants))
-                                         :boolean (map #(if (or (= % "True") (= % "true") (= % "TRUE") (= % "t") (= % "T"))
-                                                          true
-                                                          false) (take (dec (count stack-constants)) stack-constants))
-                                         nil)))))))))))
-
-  (comment
-    (acquire-outputs-from-user)
-    (get-initial-training-cases-from-user (acquire-parameters-from-user) (acquire-outputs-from-user) 2)
-    (generate-random-cases (acquire-parameters-from-user) 5)
-
-    (acquire-atom-generator-push-stacks)
-    (acquire-input-instructions (acquire-parameters-from-user))
-    (concat '(1 2 3) '(4 5 6))
-
-    (create-new-parameter :vector-integer 2 3 (create-new-parameter :integer 1 100))
-    (apply create-new-parameter [:integer 1 100])
-    (acquire-atom-generator-constants [:integer :boolean :float :string :char :exec])
-    (map #(println %) (vec '([0] [""])))
-
-    (let [s "\\space"]
-      (read-string s)))
+      (concat constants-to-add (apply concat (for [current-stack registered-stacks]
+                                               (when (find constants current-stack)
+                                                 (loop [stack-constants []
+                                                        constant-count 1]
+                                                   (if (not (= (last stack-constants) ""))
+                                                     (do
+                                                       (println current-stack " " constant-count ": ")
+                                                       (recur (conj stack-constants (read-line)) (inc constant-count)))
+                                                     (case current-stack
+                                                       :integer (map #(Integer/parseInt %) (take (dec (count stack-constants)) stack-constants))
+                                                       :float (map #(Float/parseFloat %) (take (dec (count stack-constants)) stack-constants))
+                                                       :char (map #(read-string %) (take (dec (count stack-constants)) stack-constants))
+                                                       :string (map #(read-string %) (take (dec (count stack-constants)) stack-constants))
+                                                       :boolean (map #(if (or (= % "True") (= % "true") (= % "TRUE") (= % "t") (= % "T"))
+                                                                        true
+                                                                        false) (take (dec (count stack-constants)) stack-constants))
+                                                       nil))))))))))

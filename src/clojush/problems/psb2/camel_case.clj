@@ -8,7 +8,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower)
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [clojush.pushgp.case-auto-generation :as cag]))
 
 (defn word-generator
   "Generates words at a nice distribution for Camel Case
@@ -86,6 +87,17 @@
                        (apply str (str/lower-case (first full-string)) (drop 1 full-string))))))
        inputs))
 
+(defn camel-case-solver
+  [inputs]
+  (apply (fn [& pairs]
+           (for [pair pairs]
+             (second pair))) (map (fn [in]
+         (vector in
+                 (if (or (= (str in) "") (every? #{\-} (str in))) ""
+                     (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
+                       (apply str (str/lower-case (first full-string)) (drop 1 full-string))))))
+       inputs)))
+
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
   [train-cases test-cases]
@@ -156,8 +168,7 @@
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
     (error-function best :train true)
-    (println ";;******************************")
-    )) ; To do validation, could have this function return an altered best individual
+    (println ";;******************************"))) ; To do validation, could have this function return an altered best individual
        ; with total-error > 0 if it had error of zero on train but not on validation
        ; set. Would need a third category of data cases, or a defined split of training cases.
 
@@ -165,8 +176,11 @@
 ; Define the argmap
 (def argmap
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
-                                                              (second train-and-test-cases))
+                                                   (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :oracle-function camel-case-solver
+   :input-parameterization (cag/create-new-parameter :string 2 9998 [:lower-case] ["-" "_"])
+   :output-stacks [:string]
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
