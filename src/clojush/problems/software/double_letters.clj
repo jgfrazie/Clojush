@@ -15,7 +15,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower
-        ))
+        )
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def double-letters-atom-generators
@@ -183,6 +184,8 @@
                                     [:alternation :uniform-mutation] 0.5
                                     }
    :oracle-function double-letters-solver
+   :input-parameterization (cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])
+   :output-stacks [:string]
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -191,5 +194,4 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 5000
-   :output-stacks :output
    })
