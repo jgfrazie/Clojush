@@ -159,7 +159,7 @@
     :randomly-generated (cag/generate-random-cases input-parameterization num-of-cases-added-from-random)
     :edge-cases (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge)
     :selecting-new-cases-based-on-outputs (interesting/choose-inputs-based-on-output-analysis best argmap)
-    :branch-coverage-test '(5) ;; TMH CHANGE LATER
+    :branch-coverage-test (interesting/sort-cases-by-trace-the-second-whole best argmap)
     :else (throw (str "Unrecognized option for :counterexample-driven-case-generators: "
                       counterexample-type))))
 

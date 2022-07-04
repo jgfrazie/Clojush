@@ -30,16 +30,15 @@
                (vector (clojush.pushstate/top-item output-stacks final-state)
                        (get final-state :stack-trace)))))))
 
-(defn getting-input-output-pairs
-  [num-of-cases sorted-indices inputs outputs]
+(defn getting-inputs
+  [num-of-cases sorted-indices inputs]
   (for [i (range num-of-cases)
         :let [current-index (nth sorted-indices i)
-              the-output-to-be-presented (nth outputs current-index)
               the-input-to-be-presenetd (nth inputs current-index)]]
-    (vector the-input-to-be-presenetd the-output-to-be-presented)))
+    the-input-to-be-presenetd))
 
 (defn sort-cases-by-trace
-  [training-set-traces new-cases-traces inputs outputs num-of-cases]
+  [training-set-traces new-cases-traces inputs num-of-cases]
   (let [bool-results (map (fn [the-new-case-traces]
                             (map (fn [the-training-case]
                                    (map = the-new-case-traces the-training-case))
@@ -53,11 +52,16 @@
         sorted-indices (map first (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))
         sorted-diff (map second (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))]
     (println sorted-diff)
-    (getting-input-output-pairs num-of-cases sorted-indices inputs outputs)))
+    (getting-inputs num-of-cases sorted-indices inputs)))
 
 (defn sort-cases-by-trace-the-second-whole
-  [training-set-traces new-cases-traces inputs outputs num-of-cases]
-  (let [bool-results (map (fn [the-new-case-traces]
+  [best {:keys [input-parameterization num-of-cases-used-for-branch-coverage
+                sub-training-cases num-of-cases-added-from-branch-coverage] :as argmap}]
+  (let [training-set-traces (map second (run-best-on-all-cases best sub-training-cases argmap))
+        random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-branch-coverage)
+        best-results-on-new-cases (run-best-on-all-cases best random-cases argmap)
+        new-cases-traces (map second best-results-on-new-cases)
+        bool-results (map (fn [the-new-case-traces]
                             (map (fn [the-training-case]
                                    (= the-new-case-traces the-training-case))
                                  training-set-traces))
@@ -67,7 +71,7 @@
         sorted-indices (map first (sort-by second (map-indexed vector count-results)))
         sorted-diff (map second (sort-by second (map-indexed vector count-results)))]
     (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff)
-    (getting-input-output-pairs num-of-cases sorted-indices inputs outputs)))
+    (getting-inputs num-of-cases-added-from-branch-coverage sorted-indices random-cases)))
 
 (comment
   (def training-trace [['(0 0 0 0 0 0 0 0 0 1)
@@ -172,10 +176,7 @@
                                                      new-outputs
                                                      separated-output-types)
         sorted-indices (map first (sort-by (comp #(apply min %) second) > (map-indexed vector result-difference)))]
-    (for [i (range num-of-cases-to-be-presented)
-          :let [current-index (nth sorted-indices i)
-                the-input-to-be-presented (nth new-inputs current-index)]]
-      the-input-to-be-presented)))
+    (getting-inputs num-of-cases-to-be-presented sorted-indices new-inputs)))
 
 (defn choose-inputs-based-on-output-analysis
   "Takes argmap and produces set of random cases, then analyzes them to pick

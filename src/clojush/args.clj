@@ -155,8 +155,6 @@
           ;; Human-driven GP
           ;;----------------------------------------
 
-         :num-of-cases-used-for-trace-selection 0
-         :num-of-cases-added-from-trace-selection 0
          :input-parameterization []
           ;; Information about inputs. Format: Vector containing maps, one per input
 
@@ -173,7 +171,13 @@
           ;; Number of cases to generate for maximally distant cases
 
          :num-of-cases-added-from-output-selection 0
-          ;; Number of cases whose outputs are maximally distant from current training set checked by user
+          ;; Number of cases whose outputs are maximally distant from current training set checked by user 
+
+         :num-of-cases-used-for-branch-coverage 0
+          ;; Number of cases to generate for branch coverage
+
+         :num-of-cases-added-from-branch-coverage 0
+          ;; Number of cases for branch coverage from current training set checked by user 
 
           ;;----------------------------------------
           ;; Genetic operator probabilities
