@@ -152,15 +152,15 @@
   "Will be mapped over all counterexample types to generate cases."
   [counterexample-type best
    {:keys [training-cases input-parameterization
-           num-of-cases-added-from-random]
+           num-of-cases-added-from-random max-num-of-cases-added-from-edge]
     :as argmap}]
   (case counterexample-type
     :hard-coded training-cases
     :randomly-generated (cag/generate-random-cases input-parameterization num-of-cases-added-from-random)
-    :edge-cases (interesting/forming-input-output-sets input-parameterization)
+    :edge-cases (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge)
     :selecting-new-cases-based-on-outputs (interesting/choose-inputs-based-on-output-analysis best argmap)
     :branch-coverage-test '(5) ;; TMH CHANGE LATER
-    :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
+    :else (throw (str "Unrecognized option for :counterexample-driven-case-generators: "
                       counterexample-type))))
 
 
@@ -171,13 +171,13 @@
   are correct with the given case checker.
   Returns solution individual if there is one.
   Returns set of new counterexample cases if not a solution."
-  [sorted-pop {:keys [counterexample-driven-case-generator counterexample-driven-case-checker
+  [sorted-pop {:keys [counterexample-driven-case-generators counterexample-driven-case-checker
                       error-threshold counterexample-driven-fitness-threshold-for-new-case 
                       output-stacks oracle-function] :as argmap}]
   (let [best (first sorted-pop)
         all-cases (apply concat
                          (map #(generate-counterexample-type % best argmap)
-                              counterexample-driven-case-generator))]
+                              counterexample-driven-case-generators))]
     (loop [best (first sorted-pop)
            pop (rest sorted-pop)
            new-cases '()]
@@ -278,12 +278,12 @@
 (defn generational-case-addition
   "Adds one case that best program doesn't pass to sub-training-cases.
   Returns nil."
-  [best population {:keys [counterexample-driven-case-generator training-cases
+  [best population {:keys [counterexample-driven-case-generators training-cases
                 counterexample-driven-case-checker] :as argmap}]
-  (let [all-cases (case counterexample-driven-case-generator
+  (let [all-cases (case counterexample-driven-case-generators
                     :hard-coded training-cases
-                    :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
-                                      counterexample-driven-case-generator)))
+                    :else (throw (str "Unrecognized option for :counterexample-driven-case-generators: "
+                                      counterexample-driven-case-generators)))
         best-results-on-all-cases (map first (interesting/run-best-on-all-cases best all-cases argmap))
         counterexample-cases (case counterexample-driven-case-checker
                               :automatic (counterexample-check-results-automatic

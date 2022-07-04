@@ -122,9 +122,10 @@
    :counterexample-driven-case-checker :human ; :automatic ; :human
 
    ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
-   :counterexample-driven-case-generator '(:edge-cases :selecting-new-cases-based-on-outputs :randomly-generated)
+   :counterexample-driven-case-generators '(:edge-cases :selecting-new-cases-based-on-outputs :randomly-generated)
 
 
+   :max-num-of-cases-added-from-edge 5
    :num-of-cases-added-from-random 5
    :num-of-cases-used-for-output-selection 1000
    :num-of-cases-added-from-output-selection 5
