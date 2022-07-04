@@ -120,7 +120,7 @@
    ;; TMH: Add some pushargs here to do the counterexamples correctly
    :counterexample-driven true
    :counterexample-driven-case-generator :randomly-generated ; :hard-coded ; :auto-generated ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
-   :counterexample-driven-case-checker :human ; :automatic ; :human
+   :counterexample-driven-case-checker :human ; :automatic ; :human ; :simulated-human
 
    :num-of-cases-added-from-random 5
    :num-of-cases-used-for-output-selection 1000

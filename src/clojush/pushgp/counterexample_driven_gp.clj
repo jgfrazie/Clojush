@@ -44,35 +44,37 @@
    the corresponding right answers from the user"
   [counterexample-cases-to-add wrong-cases output-types]
   (vec (map vector (loop [inputs []
-                     index 0]
-                (if (< index (count counterexample-cases-to-add))
-                  (recur (conj inputs (first (nth counterexample-cases-to-add index)))
-                         (inc index))
-                  inputs)) 
-       (loop [index 0 
-              right-answers []] 
-         (if (< index (count wrong-cases)) 
-           (do (println "What is the right answer for case" (nth wrong-cases index) "? Separate by spaces if it's a vector!" output-types) 
-               (recur (inc index) (apply conj right-answers (loop [outputs []
-                                                             index 0]
-                                                        (if (< index (count output-types))
-                                                          (recur (conj outputs 
-                                                                       (cond 
-                                                                         (= (nth output-types index) :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" "))) 
-                                                                         (= (nth output-types index) :float) (vec (map #(Float/parseFloat %) (clojure.string/split (read-line) #" "))) 
-                                                                         (= (nth output-types index) :string) (clojure.string/split (read-line) #" ")
-                                                                         (= (nth output-types index) :boolean) (do (println "Type in 0 for false or 1 for true:")
-                                                                                                                      (vec (loop [zeros-and-onex (map #(Integer/parseInt %) (clojure.string/split (read-line) #" "))
-                                                                                                                             boolean-outputs []
-                                                                                                                             index 0]
-                                                                                                                        (if (< index (count zeros-and-onex))
-                                                                                                                          (if (= (nth zeros-and-onex index) 0)
-                                                                                                                            (recur zeros-and-onex (conj boolean-outputs false) (inc index))
-                                                                                                                            (recur zeros-and-onex (conj boolean-outputs true) (inc index)))
-                                                                                                                          boolean-outputs))))))
-                                                                 (inc index))
-                                                          outputs))))) 
-           right-answers))))) 
+                          index 0]
+                     (if (< index (count counterexample-cases-to-add))
+                       (recur (conj inputs (first (nth counterexample-cases-to-add index)))
+                              (inc index))
+                       inputs))
+            (loop [index 0
+                   right-answers []]
+              (if (< index (count wrong-cases))
+                (do (println "What is the right answer for case" (nth wrong-cases index) 
+                             "with input" (first (nth counterexample-cases-to-add index)) 
+                             "? Separate by spaces if it's a vector!" output-types)
+                    (recur (inc index) (apply conj right-answers (loop [outputs []
+                                                                        index 0]
+                                                                   (if (< index (count output-types))
+                                                                     (recur (conj outputs
+                                                                                  (cond
+                                                                                    (= (nth output-types index) :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" ")))
+                                                                                    (= (nth output-types index) :float) (vec (map #(Float/parseFloat %) (clojure.string/split (read-line) #" ")))
+                                                                                    (= (nth output-types index) :string) (clojure.string/split (read-line) #" ")
+                                                                                    (= (nth output-types index) :boolean) (do (println "Type in 0 for false or 1 for true:")
+                                                                                                                              (vec (loop [zeros-and-onex (map #(Integer/parseInt %) (clojure.string/split (read-line) #" "))
+                                                                                                                                          boolean-outputs []
+                                                                                                                                          index 0]
+                                                                                                                                     (if (< index (count zeros-and-onex))
+                                                                                                                                       (if (= (nth zeros-and-onex index) 0)
+                                                                                                                                         (recur zeros-and-onex (conj boolean-outputs false) (inc index))
+                                                                                                                                         (recur zeros-and-onex (conj boolean-outputs true) (inc index)))
+                                                                                                                                       boolean-outputs))))))
+                                                                            (inc index))
+                                                                     outputs)))))
+                right-answers))))) 
 
 (defn counterexample-check-results-human
   "Checks if the best program passed all generated cases, returning true
@@ -91,7 +93,7 @@
   (println)
   (doseq [[i x] (map-indexed vector
                              (map vector random-cases best-results-on-all-cases))]
-    (println "Case" i ": Generated random input: " (pr-str (first (first x))) "; Output from best program:" (pr-str (second x))))
+    (println "Case" i ": Generated random input: " (pr-str (first (first x))) "; Output from best program:" (pr-str (second x)) "; Case" i))
   (prn "Are all these correct? Y for Yes, N for No, any other character to continue evolving: ")
   (let [answer (read-line)] answer
        (cond
