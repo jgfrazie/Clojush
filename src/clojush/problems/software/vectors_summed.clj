@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def vectors-summed-atom-generators
@@ -164,12 +165,7 @@
   {:error-function (make-vectors-summed-error-function-from-cases (first vectors-summed-train-and-test-cases)
                                                                   (second vectors-summed-train-and-test-cases))
    :training-cases (first vectors-summed-train-and-test-cases)
-   :sub-training-cases (list
-                        [[[1 4] [1 2]] [[2 6]]]
-                        [[[1] []] [[1]]]
-                        [[[] []] [[0]]]
-                        [[[109 23 3] [1 2 2]] [[110 25 5]]]
-                        [[[325 25] [25 25]] [350 50]])
+   :sub-training-cases '()
    :atom-generators vectors-summed-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
@@ -183,6 +179,9 @@
                                     [:alternation :uniform-mutation] 0.5
                                     }
    :oracle-function vectors-summed-solver
+   :input-parameterization [(cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))
+                            (cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))]
+   :output-stacks [:vector_integer]
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01

@@ -7,7 +7,8 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag)
-  (:require [clojure.math.numeric-tower :as nt]))
+  (:require [clojure.math.numeric-tower :as nt]
+            [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def atom-generators
@@ -75,6 +76,14 @@
                                    2)
                                in))))
        inputs))
+
+(defn fuel-cost-solver
+  "Based on mass, returns the fuel cost that is the
+   mass divided by 3, rounded down, and subtracted by 2."
+  [inputs]
+  (apply + (map #(- (quot % 3)
+                    2)
+                inputs)))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -157,6 +166,9 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :input-parameterization (cag/create-new-parameter :integer 6 9994)
+   :output-stacks [:integer]
+   :oracle-function fuel-cost-solver
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

@@ -14,7 +14,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower)
-    (:require [clojure.string :as string]))
+    (:require [clojure.string :as string]
+              [clojush.pushgp.case-auto-generation :as cag]))
 
 (def scrabble-letter-values
   (let [scrabble-map {\a 1
@@ -208,6 +209,8 @@
                                     [:alternation :uniform-mutation] 0.5
                                     }
    :oracle-function scrabble-score-calculator
+   :input-parameterization (cag/create-new-parameter :string 0 20 [:digits :lower-case :upper-case :specials] [])
+   :output-stacks [:integer]
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -216,5 +219,4 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1000
-   :output-stacks :integer
    })

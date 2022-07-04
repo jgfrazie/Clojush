@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def count-odds-atom-generators
@@ -158,12 +159,7 @@
   {:error-function (make-count-odds-error-function-from-cases (first count-odds-train-and-test-cases)
                                                               (second count-odds-train-and-test-cases))
    :training-cases (first count-odds-train-and-test-cases)
-   :sub-training-cases (list
-                        [[[1 2 3 4 5 6 7 8 9]] [5]]
-                        [[[]] [0]]
-                        [[[11]] [1]]
-                        [[[2 45]] [0]]
-                        [[[5 783]] [2]])
+   :sub-training-cases '()
    
    :atom-generators count-odds-atom-generators
    :max-points 2000
@@ -178,6 +174,8 @@
                                     [:alternation :uniform-mutation] 0.5
                                     }
    :oracle-function count-odds-solver
+   :input-parameterization (cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))
+   :output-stacks :integer
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01

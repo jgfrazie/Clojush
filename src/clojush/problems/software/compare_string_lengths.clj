@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def csl-atom-generators
@@ -166,9 +167,12 @@
    :genetic-operator-probabilities {:alternation 0.2
                                     :uniform-mutation 0.2
                                     :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5
-                                    }
+                                    [:alternation :uniform-mutation] 0.5}
    :oracle-function csl-solver
+   :input-parameterization [(cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])
+                            (cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])
+                            (cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])]
+   :output-stacks [:boolean]
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -177,5 +181,6 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1
-   :output-stacks :boolean
    })
+
+
