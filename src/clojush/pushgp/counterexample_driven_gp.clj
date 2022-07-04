@@ -148,29 +148,22 @@
         num-zero-errors (count (filter zero? errors))]
     (/ num-zero-errors (count errors))))
 
-(defn run-best-on-all-cases
-  "Runs the program best on all generated cases, and returns a list of the
-  behaviors/results of the program on those cases."
-  [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
-  (doall (for [[input correct-output] all-cases]
-           (let [inputs (if (or single-vector-input
-                                (not (coll? input)))
-                          (list input)
-                          input)
-                 start-state (reduce (fn [push-state in]
-                                       (push-item in :input push-state))
-                                     (push-item "" :output (make-push-state))
-                                     (reverse inputs))
-                 final-state (run-push (:program best)
-                                       start-state)]
-                                        ; Need to handle it this way for problems with more than one output.
-                                        ; Note: will break if problem requires multiple outputs from the same stack.
-             (if (coll? output-stacks)
-               (vector (vec (map #(top-item % final-state)
-                         output-stacks))
-                       (get final-state :stack-trace))
-               (vector (top-item output-stacks final-state)
-                       (get final-state :stack-trace)))))))
+(defn generate-counterexample-type
+  "Will be mapped over all counterexample types to generate cases."
+  [counterexample-type best
+   {:keys [training-cases input-parameterization
+           num-of-cases-added-from-random]
+    :as argmap}]
+  (case counterexample-type
+    :hard-coded training-cases
+    :randomly-generated (cag/generate-random-cases input-parameterization num-of-cases-added-from-random)
+    :edge-cases (interesting/forming-input-output-sets input-parameterization)
+    :selecting-new-cases-based-on-outputs (interesting/choose-inputs-based-on-output-analysis best argmap)
+    :branch-coverage-test '(5) ;; TMH CHANGE LATER
+    :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
+                      counterexample-type))))
+
+
 ;; how many cases to compare?
 ;; how many cases to add?
 (defn check-if-all-correct-and-return-new-cases-if-not
@@ -179,40 +172,22 @@
   Returns solution individual if there is one.
   Returns set of new counterexample cases if not a solution."
   [sorted-pop {:keys [counterexample-driven-case-generator counterexample-driven-case-checker
-                      training-cases error-threshold error-function
-                      counterexample-driven-fitness-threshold-for-new-case
-                      input-parameterization output-stacks num-of-cases-used-for-output-selection
-                      num-of-cases-added-from-output-selection oracle-function] :as argmap}]
-  (let [edge-cases (interesting/forming-input-output-sets input-parameterization)
-        random (cag/generate-random-cases input-parameterization 5)
-        random-for-output-anylysis (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
-        all-cases (case counterexample-driven-case-generator
-                    :hard-coded training-cases
-                    :edge-cases edge-cases
-                    :randomly-generated random
-                    :selecting-new-cases-based-on-outputs random-for-output-anylysis
-                    :branch-coverage-test random
-                    :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
-                                      counterexample-driven-case-generator)))]
+                      error-threshold counterexample-driven-fitness-threshold-for-new-case 
+                      output-stacks oracle-function] :as argmap}]
+  (let [best (first sorted-pop)
+        all-cases (apply concat
+                         (map #(generate-counterexample-type % best argmap)
+                              counterexample-driven-case-generator))]
     (loop [best (first sorted-pop)
            pop (rest sorted-pop)
            new-cases '()]
       ;; (println "HERE'S THE BEST PROGRAM:" best)
-      (let [best-results-on-all-cases (map first (run-best-on-all-cases best all-cases argmap))
-            input-output-pairs-for-output-anlysis (if (= counterexample-driven-case-generator :selecting-new-cases-based-on-outputs)
-                                                    (interesting/output-analysis (map second training-cases) best-results-on-all-cases all-cases (first output-stacks) num-of-cases-added-from-output-selection)
-                                                    [])
-            inputs (if (= counterexample-driven-case-generator :selecting-new-cases-based-on-outputs)
-                     (interesting/get-chosen-inputs input-output-pairs-for-output-anlysis)
-                     all-cases)
-            outputs (if (= counterexample-driven-case-generator :selecting-new-cases-based-on-outputs)
-                      (interesting/get-chosen-outputs input-output-pairs-for-output-anlysis)
-                      best-results-on-all-cases)
+      (let [best-results-on-all-cases (map first (interesting/run-best-on-all-cases best all-cases argmap))
             counterexample-cases (case counterexample-driven-case-checker
                                    :automatic (counterexample-check-results-automatic
                                                all-cases best-results-on-all-cases argmap)
                                    :human (counterexample-check-results-human
-                                           inputs outputs output-stacks)
+                                           all-cases best-results-on-all-cases output-stacks)
                                    :simulated-human (counterexample-check-results-simulated-human
                                                      all-cases best-results-on-all-cases oracle-function))
             new-cases-with-new-case (if (keyword? counterexample-cases)
@@ -224,7 +199,7 @@
           (prn "existing cases: " (:sub-training-cases @push-argmap))
           (prn "new case(s): " counterexample-cases)
           (prn "best individual: " best)
-          (prn "run it on new case:" (first (map first (run-best-on-all-cases best counterexample-cases argmap))))
+          (prn "run it on new case:" (first (map first (interesting/run-best-on-all-cases best counterexample-cases argmap))))
           (throw (Exception. "Added a new case already in training cases. See above.")))
         (cond
           ; Found a solution, return it
@@ -309,7 +284,7 @@
                     :hard-coded training-cases
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
                                       counterexample-driven-case-generator)))
-        best-results-on-all-cases (map first (run-best-on-all-cases best all-cases argmap))
+        best-results-on-all-cases (map first (interesting/run-best-on-all-cases best all-cases argmap))
         counterexample-cases (case counterexample-driven-case-checker
                               :automatic (counterexample-check-results-automatic
                                           all-cases best-results-on-all-cases argmap)

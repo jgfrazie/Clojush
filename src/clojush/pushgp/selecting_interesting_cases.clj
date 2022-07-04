@@ -1,8 +1,34 @@
 (ns clojush.pushgp.selecting-interesting-cases
   (:require [clojush.util :as util]
+            [clojush pushstate interpreter]
+            [clojush.pushgp.case-auto-generation :as cag]
             [clojure.set :as cset]
             [clojure.math.combinatorics :as combo]
             [clojure.string :as str]))
+
+(defn run-best-on-all-cases
+  "Runs the program best on all generated cases, and returns a list of the
+  behaviors/results of the program on those cases."
+  [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
+  (doall (for [[input correct-output] all-cases]
+           (let [inputs (if (or single-vector-input
+                                (not (coll? input)))
+                          (list input)
+                          input)
+                 start-state (reduce (fn [push-state in]
+                                       (clojush.pushstate/push-item in :input push-state))
+                                     (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))
+                                     (reverse inputs))
+                 final-state (clojush.interpreter/run-push (:program best)
+                                       start-state)]
+                                        ; Need to handle it this way for problems with more than one output.
+                                        ; Note: will break if problem requires multiple outputs from the same stack.
+             (if (coll? output-stacks)
+               (vector (vec (map #(clojush.pushstate/top-item % final-state)
+                                 output-stacks))
+                       (get final-state :stack-trace))
+               (vector (clojush.pushstate/top-item output-stacks final-state)
+                       (get final-state :stack-trace)))))))
 
 (defn measure-output-difference
   "Gives a value that states the difference between the current training set 
@@ -65,19 +91,24 @@
         sorted-indices (map first (sort-by (comp #(apply min %) second) > (map-indexed vector result-difference)))]
     (for [i (range num-of-cases-to-be-presented)
           :let [current-index (nth sorted-indices i)
-                the-output-to-be-presented (nth new-outputs current-index)
-                the-input-to-be-presenetd (nth new-inputs current-index)]]
-      (vector the-input-to-be-presenetd the-output-to-be-presented))))
+                the-input-to-be-presented (nth new-inputs current-index)]]
+      the-input-to-be-presented)))
 
-(defn get-chosen-inputs
-  "Deconstructing the output-input pair to get the inputs. Return a list of input sets"
-  [output-input-pairs]
-  (map first output-input-pairs))
+(defn choose-inputs-based-on-output-analysis
+  "Takes argmap and produces set of random cases, then analyzes them to pick
+   those that have the outputs most different from the training set."
+  [best {:keys [input-parameterization num-of-cases-used-for-output-selection
+                sub-training-cases output-stacks num-of-cases-added-from-output-selection] :as argmap}]
+  (let [random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
+        best-results-on-all-cases (map first (run-best-on-all-cases best random-cases argmap))
+        input-for-output-anlysis (output-analysis (map second sub-training-cases)
+                                                               best-results-on-all-cases
+                                                               random-cases
+                                                               (first output-stacks)
+                                                               num-of-cases-added-from-output-selection)]
+    input-for-output-anlysis))
 
-(defn get-chosen-outputs
-  "Deconstructing the output-input pair to get the outputs. Return a list of output sets"
-  [output-input-pairs]
-  (map second output-input-pairs))
+
 
 (comment
   ;; Output-analysis test
