@@ -30,6 +30,89 @@
                (vector (clojush.pushstate/top-item output-stacks final-state)
                        (get final-state :stack-trace)))))))
 
+(defn getting-input-output-pairs
+  [num-of-cases sorted-indices inputs outputs]
+  (for [i (range num-of-cases)
+        :let [current-index (nth sorted-indices i)
+              the-output-to-be-presented (nth outputs current-index)
+              the-input-to-be-presenetd (nth inputs current-index)]]
+    (vector the-input-to-be-presenetd the-output-to-be-presented)))
+
+(defn sort-cases-by-trace
+  [training-set-traces new-cases-traces inputs outputs num-of-cases]
+  (let [bool-results (map (fn [the-new-case-traces]
+                            (map (fn [the-training-case]
+                                   (map = the-new-case-traces the-training-case))
+                                 training-set-traces))
+                          new-cases-traces)
+        count-results (map (fn [bool-results-from-one-case]
+                             (map (fn [bool-results-from-one-training-case]
+                                    (count (filter #(identity %) bool-results-from-one-training-case)))
+                                  bool-results-from-one-case))
+                           bool-results)
+        sorted-indices (map first (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))
+        sorted-diff (map second (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))]
+    (println sorted-diff)
+    (getting-input-output-pairs num-of-cases sorted-indices inputs outputs)))
+
+(defn sort-cases-by-trace-the-second-whole
+  [training-set-traces new-cases-traces inputs outputs num-of-cases]
+  (let [bool-results (map (fn [the-new-case-traces]
+                            (map (fn [the-training-case]
+                                   (= the-new-case-traces the-training-case))
+                                 training-set-traces))
+                          new-cases-traces)
+        count-results (map (fn [the-list]
+                             (count (filter #(identity %) the-list))) bool-results)
+        sorted-indices (map first (sort-by second (map-indexed vector count-results)))
+        sorted-diff (map second (sort-by second (map-indexed vector count-results)))]
+    (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff)
+    (getting-input-output-pairs num-of-cases sorted-indices inputs outputs)))
+
+(comment
+  (def training-trace [['(0 0 0 0 0 0 0 0 0 1)
+                        '(0 0 0 0 0 0 0 0 0 6)
+                        '(1 0 0 0 0 0 0 0 0 5)
+                        '(2 0 0 0 0 0 0 0 0 4)
+                        '(1 0 0 0 0 0 0 0 0 3)
+                        '(2 0 0 0 0 0 0 0 0 2)
+                        '(3 0 0 0 0 0 0 0 0 1)]
+
+                       ['(0 0 0 0 0 0 0 0 0 9)
+                        '(3 0 0 0 0 0 0 0 0 8)
+                        '(1 0 0 0 0 0 0 1 0 5)
+                        '(2 0 0 2 0 0 0 0 0 4)
+                        '(1 0 0 0 0 0 0 0 0 3)
+                        '(2 0 0 0 0 0 0 0 3 2)
+                        '(2 0 0 0 0 0 0 0 0 1)]])
+  (def new-traces [['(0 0 0 0 0 0 0 0 0 1)
+                    '(0 0 0 0 0 0 0 0 0 6)
+                    '(1 0 0 0 0 0 0 0 0 5)
+                    '(2 0 0 0 0 0 0 0 0 4)
+                    '(1 0 0 0 0 0 0 0 0 3)
+                    '(2 0 0 0 0 0 0 0 0 2)
+                    '(3 0 0 0 0 0 0 0 0 1)]
+                   
+                   ['(0 0 0 0 0 0 0 0 0 2)
+                    '(0 0 0 0 0 0 1 0 0 6)
+                    '(1 0 0 0 0 0 0 0 0 5)
+                    '(2 0 0 4 0 0 0 0 0 4)
+                    '(1 0 0 0 0 0 3 0 0 3)
+                    '(2 0 0 0 0 0 0 0 0 2)
+                    '(3 0 0 0 4 0 0 0 0 1)]
+
+                   ['(1 0 0 0 0 0 0 0 0 9)
+                    '(3 0 0 0 0 0 0 0 0 8)
+                    '(1 0 0 0 0 0 0 1 0 5)
+                    '(2 0 0 2 0 0 0 0 0 4)
+                    '(1 0 0 0 0 0 0 0 0 3)
+                    '(2 0 0 0 0 0 0 0 3 2)
+                    '(2 0 0 0 0 0 0 0 0 1)]])
+  (def fake-randomly-generated-cases [[[1 4] []] [[2 3 4] []] [[1 4 3] []]])
+  (def new-output-seq '(["-1" "2" "3"] ["-2" "-209"] ["0" "-af" "2fq"]))
+  (sort-cases-by-trace-the-second-whole training-trace new-traces fake-randomly-generated-cases new-output-seq 3)
+  )
+
 (defn measure-output-difference
   "Gives a value that states the difference between the current training set 
    and the new generated input. The larger the value is, the more different two outputs are
