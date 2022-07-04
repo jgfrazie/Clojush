@@ -26,20 +26,23 @@
                            bool-results)
         sorted-indices (map first (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))
         sorted-diff (map second (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))]
-    (println (take 5 sorted-diff))
+    (println sorted-diff)
     (getting-input-output-pairs num-of-cases sorted-indices inputs outputs))
   )
 
 (defn sort-cases-by-trace-the-second-whole
-  [training-set-traces new-cases-traces]
+  [training-set-traces new-cases-traces inputs outputs num-of-cases]
   (let [bool-results (map (fn [the-new-case-traces]
                             (map (fn [the-training-case]
                                    (= the-new-case-traces the-training-case))
                                  training-set-traces))
                           new-cases-traces)
         count-results (map (fn [the-list]
-                             (count (filter #(identity (not %)) the-list)) bool-results))]
-   count-results))
+                             (count (filter #(identity %) the-list))) bool-results)
+        sorted-indices (map first (sort-by second (map-indexed vector count-results)))
+        sorted-diff (map second (sort-by second (map-indexed vector count-results)))]
+    (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff)
+    (getting-input-output-pairs num-of-cases sorted-indices inputs outputs)))
 
 (comment
   (def training-trace [['(0 0 0 0 0 0 0 0 0 1)
@@ -81,8 +84,8 @@
                     '(2 0 0 0 0 0 0 0 3 2)
                     '(2 0 0 0 0 0 0 0 0 1)]])
   (def fake-randomly-generated-cases [[[1 4] []] [[2 3 4] []] [[1 4 3] []]])
-  (def new-output-seq '([] ["-1" "2" "3"] ["-2" "-209"] ["0" "-af" "2fq"]))
-  (sort-cases-by-trace-the-second-whole training-trace new-traces)
+  (def new-output-seq '(["-1" "2" "3"] ["-2" "-209"] ["0" "-af" "2fq"]))
+  (sort-cases-by-trace-the-second-whole training-trace new-traces fake-randomly-generated-cases new-output-seq 3)
   )
 
 (defn measure-output-difference

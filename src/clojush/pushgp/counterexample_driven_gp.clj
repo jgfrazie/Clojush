@@ -138,15 +138,14 @@
                        (get final-state :stack-trace))
                (vector (top-item output-stacks final-state)
                        (get final-state :stack-trace)))))))
-;; how many cases to compare?
-;; how many cases to add?
+
 (defn check-if-all-correct-and-return-new-cases-if-not
   "Finds the best program's behavior on all generated cases and checks if all outputs
   are correct with the given case checker.
   Returns solution individual if there is one.
   Returns set of new counterexample cases if not a solution."
   [sorted-pop {:keys [counterexample-driven-case-generator counterexample-driven-case-checker
-                      training-cases error-threshold error-function
+                      training-cases sub-training-cases error-threshold error-function
                       counterexample-driven-fitness-threshold-for-new-case
                       input-parameterization output-stacks num-of-cases-used-for-output-selection
                       num-of-cases-added-from-output-selection num-of-cases-used-for-trace-selection
@@ -168,10 +167,10 @@
            new-cases '()]
       ;; (println "HERE'S THE BEST PROGRAM:" best)
       (let [best-results-on-all-cases-trace-pair (run-best-on-all-cases best all-cases argmap)
-            training-set-traces (map second (run-best-on-all-cases best training-cases argmap))
+            training-set-traces (map second (run-best-on-all-cases best sub-training-cases argmap))
             best-results-on-all-cases (map first best-results-on-all-cases-trace-pair)
             random-case-traces (map second best-results-on-all-cases-trace-pair)
-            sorted-input-output-pairs-by-traces (interesting/sort-cases-by-trace training-set-traces random-case-traces all-cases 
+            sorted-input-output-pairs-by-traces (interesting/sort-cases-by-trace-the-second-whole training-set-traces random-case-traces all-cases 
                                                                                  best-results-on-all-cases num-of-cases-added-from-trace-selection)
             input-output-pairs-for-output-anlysis (if (= counterexample-driven-case-generator :selecting-new-cases-based-on-outputs)
                                                     (interesting/output-analysis (map second training-cases) best-results-on-all-cases all-cases 
