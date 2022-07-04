@@ -85,10 +85,6 @@
   numbered, and have user enter the number of a wrong case or correct if
   they are all correct."
   [random-cases best-results-on-all-cases output-types]
-  (println)
-  (println "*** A program was found that passes all of the training cases! ***")
-  (println "*** Now it's time to check if the best program works on some new inputs: ***")
-  (println)
   (doseq [[i x] (map-indexed vector
                              (map vector random-cases best-results-on-all-cases))]
     (println "Case" i ": Generated random input: " (pr-str (first (first x))) "; Output from best program:" (pr-str (second x))))
@@ -172,8 +168,12 @@
   Returns solution individual if there is one.
   Returns set of new counterexample cases if not a solution."
   [sorted-pop {:keys [counterexample-driven-case-generators counterexample-driven-case-checker
-                      error-threshold counterexample-driven-fitness-threshold-for-new-case 
+                      error-threshold counterexample-driven-fitness-threshold-for-new-case
                       output-stacks oracle-function] :as argmap}]
+  (println)
+  (println "*** A program was found that passes all of the training cases! ***")
+  (println "*** Now it's time to check if the best program works on some new inputs: ***")
+  (println)
   (let [best (first sorted-pop)
         all-cases (apply concat
                          (map #(generate-counterexample-type % best argmap)

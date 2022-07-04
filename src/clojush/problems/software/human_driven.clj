@@ -117,13 +117,12 @@
    :sub-training-cases initial-training-cases ;; These are the cases given by the user.
    :atom-generators human-driven-atom-generators
 
-   ;; TMH: Add some pushargs here to do the counterexamples correctly
+   ;; Human-driven counterexamples
    :counterexample-driven true
    :counterexample-driven-case-checker :human ; :automatic ; :human
 
    ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
-
 
    :max-num-of-cases-added-from-edge 5
    :num-of-cases-added-from-random 5
