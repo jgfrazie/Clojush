@@ -12,21 +12,21 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
-        [clojure.math numeric-tower combinatorics]
-        ))
+        [clojure.math numeric-tower combinatorics])
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def mirror-image-atom-generators
   (concat (list
-            (fn [] (lrand-nth (list true false))) ;Boolean
+           (fn [] (lrand-nth (list true false))) ;Boolean
             ;;; end ERCs
-            (tag-instruction-erc [:integer :boolean :vector_integer :exec] 1000)
-            (tagged-instruction-erc 1000)
+           (tag-instruction-erc [:integer :boolean :vector_integer :exec] 1000)
+           (tagged-instruction-erc 1000)
             ;;; end tag ERCs
-            'in1
-            'in2
+           'in1
+           'in2
             ;;; end input instructions
-            )
+           )
           (registered-for-stacks [:integer :boolean :vector_integer :exec])))
 
 
@@ -40,12 +40,12 @@
 (defn change-a-few-elements
   "Takes a vector and changes from 1 to 5 elements in the vector."
   ([in-vec]
-    (change-a-few-elements in-vec (inc (lrand-int 5))))
+   (change-a-few-elements in-vec (inc (lrand-int 5))))
   ([in-vec num-to-change]
-    (if (>= 0 num-to-change)
-      in-vec
-      (change-a-few-elements (assoc in-vec (lrand-int (count in-vec)) (- (lrand-int 2001) 1000))
-                             (dec num-to-change)))))
+   (if (>= 0 num-to-change)
+     in-vec
+     (change-a-few-elements (assoc in-vec (lrand-int (count in-vec)) (- (lrand-int 2001) 1000))
+                            (dec num-to-change)))))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -91,8 +91,16 @@
    [input output]."
   [inputs]
   (map #(vector %
-                (= (first %) (vec (reverse (second %)))))
+                [(= (first %) (vec (reverse (second %))))])
        inputs))
+
+(defn mirror-image-solver
+  "Given two vectors returns true if they are
+   mirrored and false otherwise."
+  [vec1 vec2]
+  (= vec1 (reverse vec2)))
+
+(apply mirror-image-solver [[2] [2]])
 
 (defn get-mirror-image-train-and-test
   "Returns the train and test cases."
@@ -120,7 +128,7 @@
   "Takes a list of behaviors across the list of cases and finds the error
    for each of those behaviors, returning an error vector."
   [behaviors cases]
-  (map (fn [result correct-output]
+  (map (fn [result [correct-output]]
          (if (= result correct-output)
            0
            1))
@@ -160,7 +168,7 @@
         best-test-errors (:test-errors best-with-test)
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
-    (printf ";; -*- Mirror Image problem report - generation %s\n" generation)(flush)
+    (printf ";; -*- Mirror Image problem report - generation %s\n" generation) (flush)
     (println "Test total error for best:" best-total-test-error)
     (println (format "Test mean error for best: %.5f" (double (/ best-total-test-error (count best-test-errors)))))
     (when (zero? (:total-error best))
@@ -174,8 +182,7 @@
                                          (map second (first mirror-image-train-and-test-cases))
                                          (:behaviors best))]
       (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
-    (println ";;******************************")
-    )) ;; To do validation, could have this function return an altered best individual
+    (println ";;******************************"))) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
        ;; set. Would need a third category of data cases, or a defined split of training cases.
 
@@ -184,7 +191,7 @@
 (def argmap
   {:error-function mirror-image-error-function
    :training-cases (first mirror-image-train-and-test-cases)
-   :sub-training-cases '()
+   :sub-training-cases (take 5 (shuffle (first mirror-image-train-and-test-cases)))
    :atom-generators mirror-image-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150
@@ -195,8 +202,26 @@
    :genetic-operator-probabilities {:alternation 0.2
                                     :uniform-mutation 0.2
                                     :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5
-                                    }
+                                    [:alternation :uniform-mutation] 0.5}
+
+    ;; Human-driven counterexamples
+   :counterexample-driven true
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :max-num-of-cases-added-from-edge 5
+   :num-of-cases-added-from-random 5
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
+   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-added-from-branch-coverage 5
+   :input-parameterization [(cag/create-new-parameter :vector_integer 50 50 (cag/create-new-parameter :integer 1 9999))
+                            (cag/create-new-parameter :vector_integer 50 50 (cag/create-new-parameter :integer 1 9999))]
+   :output-stacks [:boolean]
+   :oracle-function mirror-image-solver
+
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -205,5 +230,6 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1
-   :output-stacks :boolean
    })
+
+

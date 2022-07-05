@@ -83,7 +83,7 @@
                             (remove-paren-pair program))
               new-errors (:errors 
                           (if (and (:counterexample-driven @push-argmap)
-                                   (= :human (:counterexample-driven-case-checker @push-argmap)))
+                                   (or (= :human (:counterexample-driven-case-checker @push-argmap)) (= :simulated-human (:counterexample-driven-case-checker @push-argmap))))
                             (error-function {:program new-program} (:sub-training-cases @push-argmap))
                             (error-function {:program new-program})))
               new-total-errors (compute-total-error new-errors)] ;simplification bases its decision on raw error; HAH-error could also be used here
