@@ -7,7 +7,8 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag)
-  (:require [clojure.math.numeric-tower :as nt]))
+  (:require [clojure.math.numeric-tower :as nt]
+            [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def atom-generators
@@ -196,6 +197,9 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :input-parameterization (cag/create-new-parameter :string 2 9998 [:digits] [])
+   :output-stacks [:integer]
+   :oracle-function solve-paired-digits
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

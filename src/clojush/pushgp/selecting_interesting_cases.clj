@@ -1,8 +1,121 @@
 (ns clojush.pushgp.selecting-interesting-cases
   (:require [clojush.util :as util]
+            [clojush pushstate interpreter]
+            [clojush.pushgp.case-auto-generation :as cag]
             [clojure.set :as cset]
             [clojure.math.combinatorics :as combo]
             [clojure.string :as str]))
+
+(defn run-best-on-all-cases
+  "Runs the program best on all generated cases, and returns a list of the
+  behaviors/results of the program on those cases."
+  [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
+  (doall (for [[input correct-output] all-cases]
+           (let [inputs (if (or single-vector-input
+                                (not (coll? input)))
+                          (list input)
+                          input)
+                 start-state (reduce (fn [push-state in]
+                                       (clojush.pushstate/push-item in :input push-state))
+                                     (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))
+                                     (reverse inputs))
+                 final-state (clojush.interpreter/run-push (:program best)
+                                       start-state)]
+                                        ; Need to handle it this way for problems with more than one output.
+                                        ; Note: will break if problem requires multiple outputs from the same stack.
+             (if (coll? output-stacks)
+               (vector (vec (map #(clojush.pushstate/top-item % final-state)
+                                 output-stacks))
+                       (get final-state :stack-trace))
+               (vector (clojush.pushstate/top-item output-stacks final-state)
+                       (get final-state :stack-trace)))))))
+
+(defn getting-inputs
+  [num-of-cases sorted-indices inputs]
+  (for [i (range num-of-cases)
+        :let [current-index (nth sorted-indices i)
+              the-input-to-be-presenetd (nth inputs current-index)]]
+    the-input-to-be-presenetd))
+
+(defn sort-cases-by-trace
+  [training-set-traces new-cases-traces inputs num-of-cases]
+  (let [bool-results (map (fn [the-new-case-traces]
+                            (map (fn [the-training-case]
+                                   (map = the-new-case-traces the-training-case))
+                                 training-set-traces))
+                          new-cases-traces)
+        count-results (map (fn [bool-results-from-one-case]
+                             (map (fn [bool-results-from-one-training-case]
+                                    (count (filter #(identity %) bool-results-from-one-training-case)))
+                                  bool-results-from-one-case))
+                           bool-results)
+        sorted-indices (map first (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))
+        sorted-diff (map second (sort-by (comp #(apply min %) second) (map-indexed vector count-results)))]
+    (println sorted-diff)
+    (getting-inputs num-of-cases sorted-indices inputs)))
+
+(defn sort-cases-by-trace-the-second-whole
+  [best {:keys [input-parameterization num-of-cases-used-for-branch-coverage
+                sub-training-cases num-of-cases-added-from-branch-coverage] :as argmap}]
+  (let [training-set-traces (map second (run-best-on-all-cases best sub-training-cases argmap))
+        random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-branch-coverage)
+        best-results-on-new-cases (run-best-on-all-cases best random-cases argmap)
+        new-cases-traces (map second best-results-on-new-cases)
+        bool-results (map (fn [the-new-case-traces]
+                            (map (fn [the-training-case]
+                                   (= the-new-case-traces the-training-case))
+                                 training-set-traces))
+                          new-cases-traces)
+        count-results (map (fn [the-list]
+                             (count (filter #(identity %) the-list))) bool-results)
+        sorted-indices (map first (sort-by second (map-indexed vector count-results)))
+        sorted-diff (map second (sort-by second (map-indexed vector count-results)))]
+    (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff)
+    (getting-inputs num-of-cases-added-from-branch-coverage sorted-indices random-cases)))
+
+(comment
+  (def training-trace [['(0 0 0 0 0 0 0 0 0 1)
+                        '(0 0 0 0 0 0 0 0 0 6)
+                        '(1 0 0 0 0 0 0 0 0 5)
+                        '(2 0 0 0 0 0 0 0 0 4)
+                        '(1 0 0 0 0 0 0 0 0 3)
+                        '(2 0 0 0 0 0 0 0 0 2)
+                        '(3 0 0 0 0 0 0 0 0 1)]
+
+                       ['(0 0 0 0 0 0 0 0 0 9)
+                        '(3 0 0 0 0 0 0 0 0 8)
+                        '(1 0 0 0 0 0 0 1 0 5)
+                        '(2 0 0 2 0 0 0 0 0 4)
+                        '(1 0 0 0 0 0 0 0 0 3)
+                        '(2 0 0 0 0 0 0 0 3 2)
+                        '(2 0 0 0 0 0 0 0 0 1)]])
+  (def new-traces [['(0 0 0 0 0 0 0 0 0 1)
+                    '(0 0 0 0 0 0 0 0 0 6)
+                    '(1 0 0 0 0 0 0 0 0 5)
+                    '(2 0 0 0 0 0 0 0 0 4)
+                    '(1 0 0 0 0 0 0 0 0 3)
+                    '(2 0 0 0 0 0 0 0 0 2)
+                    '(3 0 0 0 0 0 0 0 0 1)]
+                   
+                   ['(0 0 0 0 0 0 0 0 0 2)
+                    '(0 0 0 0 0 0 1 0 0 6)
+                    '(1 0 0 0 0 0 0 0 0 5)
+                    '(2 0 0 4 0 0 0 0 0 4)
+                    '(1 0 0 0 0 0 3 0 0 3)
+                    '(2 0 0 0 0 0 0 0 0 2)
+                    '(3 0 0 0 4 0 0 0 0 1)]
+
+                   ['(1 0 0 0 0 0 0 0 0 9)
+                    '(3 0 0 0 0 0 0 0 0 8)
+                    '(1 0 0 0 0 0 0 1 0 5)
+                    '(2 0 0 2 0 0 0 0 0 4)
+                    '(1 0 0 0 0 0 0 0 0 3)
+                    '(2 0 0 0 0 0 0 0 3 2)
+                    '(2 0 0 0 0 0 0 0 0 1)]])
+  (def fake-randomly-generated-cases [[[1 4] []] [[2 3 4] []] [[1 4 3] []]])
+  (def new-output-seq '(["-1" "2" "3"] ["-2" "-209"] ["0" "-af" "2fq"]))
+  (sort-cases-by-trace-the-second-whole training-trace new-traces fake-randomly-generated-cases new-output-seq 3)
+  )
 
 (defn measure-output-difference
   "Gives a value that states the difference between the current training set 
@@ -63,21 +176,23 @@
                                                      new-outputs
                                                      separated-output-types)
         sorted-indices (map first (sort-by (comp #(apply min %) second) > (map-indexed vector result-difference)))]
-    (for [i (range num-of-cases-to-be-presented)
-          :let [current-index (nth sorted-indices i)
-                the-output-to-be-presented (nth new-outputs current-index)
-                the-input-to-be-presenetd (nth new-inputs current-index)]]
-      (vector the-input-to-be-presenetd the-output-to-be-presented))))
+    (getting-inputs num-of-cases-to-be-presented sorted-indices new-inputs)))
 
-(defn get-chosen-inputs
-  "Deconstructing the output-input pair to get the inputs. Return a list of input sets"
-  [output-input-pairs]
-  (map first output-input-pairs))
+(defn choose-inputs-based-on-output-analysis
+  "Takes argmap and produces set of random cases, then analyzes them to pick
+   those that have the outputs most different from the training set."
+  [best {:keys [input-parameterization num-of-cases-used-for-output-selection
+                sub-training-cases output-stacks num-of-cases-added-from-output-selection] :as argmap}]
+  (let [random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
+        best-results-on-all-cases (map first (run-best-on-all-cases best random-cases argmap))
+        input-for-output-anlysis (output-analysis (map second sub-training-cases)
+                                                               best-results-on-all-cases
+                                                               random-cases
+                                                               (first output-stacks)
+                                                               num-of-cases-added-from-output-selection)]
+    input-for-output-anlysis))
 
-(defn get-chosen-outputs
-  "Deconstructing the output-input pair to get the outputs. Return a list of output sets"
-  [output-input-pairs]
-  (map second output-input-pairs))
+
 
 (comment
   ;; Output-analysis test
@@ -193,16 +308,17 @@
   "Return all the combinations of edge cases and format them so that they have fake outputs
      @param vector-of-inputs a vector of two edge cases
      @return a list of vectors where each vector contains a input-output pair(fake output is [])"
-  [vector-of-inputs]
-  (map #(vector % [])
-       (let [edge (apply mapv
-                         vector
-                         (generate-edge-cases vector-of-inputs))
-             edge-1 (get edge 0)
-             edge-2 (get edge 1)
-             cols (count (first edge))
-             subsets (combo/subsets (range cols))]
-         (map #(swap-it edge-1 edge-2 %) subsets))))
+  [vector-of-inputs max-num-of-cases-added-from-edge]
+  (take max-num-of-cases-added-from-edge
+        (map #(vector % [])
+             (let [edge (apply mapv
+                               vector
+                               (generate-edge-cases vector-of-inputs))
+                   edge-1 (get edge 0)
+                   edge-2 (get edge 1)
+                   cols (count (first edge))
+                   subsets (combo/subsets (range cols))]
+               (map #(swap-it edge-1 edge-2 %) subsets)))))
 
 (comment
   ;; edge-cases test
@@ -218,5 +334,5 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets training-set))
+  (forming-input-output-sets training-set 6))
 

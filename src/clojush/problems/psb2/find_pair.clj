@@ -7,7 +7,8 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag)
-  (:require [clojure.math.numeric-tower :as nt]))
+  (:require [clojure.math.numeric-tower :as nt] 
+            [clojush.pushgp.case-auto-generation :as cag]))
 
 (define-registered
   output_integer1
@@ -115,6 +116,12 @@
                  (first (all-pairs-sum-to-target in1 in2))))
        inputs))
 
+(defn find-pair-solver
+  "Based on a sequence of inputs, return the two numbers that add up
+   to a target."
+  [sequence target]
+  (first (all-pairs-sum-to-target sequence target)))
+
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
   [train-cases test-cases]
@@ -207,6 +214,10 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :input-parameterization [(cag/create-new-parameter :vector_integer 2 9998 (cag/create-new-parameter :integer 1 9999)) 
+                            (cag/create-new-parameter :integer 2 (* 9999 2) )]
+   :output-stacks [:vector_integer]
+   :oracle-function find-pair-solver
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

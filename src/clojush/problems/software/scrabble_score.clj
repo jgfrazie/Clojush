@@ -14,7 +14,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower)
-    (:require [clojure.string :as string]))
+    (:require [clojure.string :as string]
+              [clojush.pushgp.case-auto-generation :as cag]))
 
 (def scrabble-letter-values
   (let [scrabble-map {\a 1
@@ -105,8 +106,8 @@
    [input output]."
   [inputs]
   (map (fn [in]
-         (vector in
-                 (apply + (map #(nth scrabble-letter-values (int %)) in))))
+         (vector [in]
+                 [(apply + (map #(nth scrabble-letter-values (int %)) in))]))
        inputs))
 
 (defn scrabble-score-calculator
@@ -124,7 +125,7 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[input1 correct-output] (case data-cases
+                     (for [[[input1] [correct-output]] (case data-cases
                                                      :train train-cases
                                                      :test test-cases
                                                      data-cases)]
@@ -194,7 +195,6 @@
   {:error-function (make-scrabble-score-error-function-from-cases (first scrabble-score-train-and-test-cases)
                                                                   (second scrabble-score-train-and-test-cases))
    :training-cases (first scrabble-score-train-and-test-cases)
-   :sub-training-cases '()
    :atom-generators scrabble-score-atom-generators
    :max-points 4000
    :max-genome-size-in-initial-program 500
@@ -205,9 +205,7 @@
    :genetic-operator-probabilities {:alternation 0.2
                                     :uniform-mutation 0.2
                                     :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5
-                                    }
-   :oracle-function scrabble-score-calculator
+                                    [:alternation :uniform-mutation] 0.5}
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -216,5 +214,22 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1000
-   :output-stacks :integer
+
+   :sub-training-cases (take 5 (shuffle (first scrabble-score-train-and-test-cases)))
+   :oracle-function scrabble-score-calculator
+   :input-parameterization (cag/create-new-parameter :string 0 20 [:digits :lower-case :upper-case :specials] [])
+   :output-stacks [:integer]
+  ;; Human-driven counterexamples
+   :counterexample-driven true
+   :counterexample-driven-case-checker :human ; :automatic ; :human ; :simulated-human
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :max-num-of-cases-added-from-edge 5
+   :num-of-cases-added-from-random 5
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
+   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-added-from-branch-coverage 5
    })

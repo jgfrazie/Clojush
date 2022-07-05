@@ -107,11 +107,10 @@
           ;; set of training cases each time a program is found that passes all
           ;; training cases, until one is found that passes all available cases.
 
-         :counterexample-driven-case-generator :hard-coded
-          ;; Method for generating cases for checker to check when a program is
-          ;; found that passes all current sub-cases.
-          ;; Options: :hard-coded
-          ;; Possible future options: auto-generated
+         :counterexample-driven-case-generators '(:hard-coded)
+          ;; Methods for generating cases for checker to check when a program is
+          ;; found that passes all current sub-cases. Should be a list of keywords.
+          ;; Options: :hard-coded, :randomly-generated, :edge-cases, :selecting-new-cases-based-on-outputs, :branch-coverage-test
 
          :counterexample-driven-case-checker :automatic
           ;; Method for checking whether a program passes all cases.
@@ -165,11 +164,20 @@
          :num-of-cases-added-from-random 0
           ;; Number of random cases checked by user 
 
+         :max-num-of-cases-added-from-edge 0
+          ;; Maximum number of edge cases to add. If total number of edge cases is less than this, will add all of them
+
          :num-of-cases-used-for-output-selection 0
           ;; Number of cases to generate for maximally distant cases
 
          :num-of-cases-added-from-output-selection 0
-          ;; Number of cases whose outputs are maximally distant from current training set checked by user
+          ;; Number of cases whose outputs are maximally distant from current training set checked by user 
+
+         :num-of-cases-used-for-branch-coverage 0
+          ;; Number of cases to generate for branch coverage
+
+         :num-of-cases-added-from-branch-coverage 0
+          ;; Number of cases for branch coverage from current training set checked by user 
 
           ;;----------------------------------------
           ;; Genetic operator probabilities
