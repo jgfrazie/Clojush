@@ -322,6 +322,7 @@
   If not individuals pass all cases, check if need to add a generational case."
   [sorted-pop {:keys [error-threshold counterexample-driven-add-case-every-X-generations
                       counterexample-driven-fitness-threshold-for-new-case] :as argmap}]
+  
   (swap! generations-since-last-case-addition inc)
   (if (if (>= counterexample-driven-fitness-threshold-for-new-case 1.0)
         (> (:total-error (first sorted-pop)) error-threshold)
