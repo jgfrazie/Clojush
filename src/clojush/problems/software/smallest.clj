@@ -58,12 +58,12 @@
    [[input1 input2 input3] output]."
   [inputs]
   (map #(vector %
-                (str (apply min %)))
+                [(str (apply min %))])
        inputs))
 
 (defn smallest-solver
-  [input]
-  (str (apply min input)))
+  [in1 in2 in3 in4]
+  (str (min in1 in2 in3 in4)))
 
 (defn make-smallest-error-function-from-cases
   [train-cases test-cases]
@@ -76,7 +76,7 @@
 
       (let [behavior (atom '())
             errors (doall
-                    (for [[[input1 input2 input3 input4] correct-output] (case data-cases
+                    (for [[[input1 input2 input3 input4] [correct-output]] (case data-cases
                                                                            :train train-cases
                                                                            :test test-cases
                                                                            data-cases)]

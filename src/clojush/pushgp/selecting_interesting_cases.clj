@@ -237,7 +237,7 @@
           (= output-type-1 :boolean)
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (- (get {false 0 true 1} training-set-output) (get {false 0 true 1} new-output)))) current-training-set-output)) new-output-seq)
+                        (Math/abs (- (if training-set-output 1 0) (if new-output 1 0)))) current-training-set-output)) new-output-seq)
 
           (or (= output-type-1 :string) (= output-type-1 :output))
           (map (fn [new-output]
