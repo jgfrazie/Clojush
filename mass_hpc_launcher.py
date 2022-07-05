@@ -1,15 +1,15 @@
 import os
 
-name = "-AdSr"
+name = "-HumanDS"
 
-problems = ["number-io",
-             "small-or-large",
-             "for-loop-index",
-             "compare-string-lengths",
-             "double-letters",
-             "replace-space-with-newline",
-             "string-lengths-backwards",
-            "last-index-of-zero",
+problems = [#"number-io",
+            #  "small-or-large",
+            #  "for-loop-index",
+            #  "compare-string-lengths",
+            #  "double-letters",
+            #  "replace-space-with-newline",
+            #  "string-lengths-backwards",
+            #  "last-index-of-zero",
             # "vector-average",
             # "count-odds",
             # "mirror-image",
@@ -23,8 +23,8 @@ problems = ["number-io",
             # "digits",
             # "grade",
             # "median",
-            # "smallest",
-            # "syllables"]
+            "smallest",
+            # "syllables"
 ]
 
 with open('hpc_launcher.template', 'r') as hpc_template:
