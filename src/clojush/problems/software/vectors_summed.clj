@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def vectors-summed-atom-generators
@@ -74,6 +75,12 @@
          (vector in
                  (vec (map + (first in) (second in)))))
        inputs))
+
+(defn vectors-summed-solver
+  "Given 2 vectors, return a vector of integers 
+   that sums the other two at each index."
+  [vec1 vec2] 
+  (vec (map + vec1 vec2)))
 
 (defn make-vectors-summed-error-function-from-cases
   [train-cases test-cases]
@@ -158,6 +165,7 @@
   {:error-function (make-vectors-summed-error-function-from-cases (first vectors-summed-train-and-test-cases)
                                                                   (second vectors-summed-train-and-test-cases))
    :training-cases (first vectors-summed-train-and-test-cases)
+   :sub-training-cases '()
    :atom-generators vectors-summed-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
@@ -170,6 +178,10 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5
                                     }
+   :oracle-function vectors-summed-solver
+   :input-parameterization [(cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))
+                            (cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))]
+   :output-stacks [:vector_integer]
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01

@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def count-odds-atom-generators
@@ -73,6 +74,12 @@
   (map #(vector %
                 (count (filter odd? %)))
        inputs))
+
+(defn count-odds-solver
+  "Given a vetor, it returns the count of 
+   odd integers inside that vector."
+  [input]
+  (count (filter odd? input)))
 
 (defn make-count-odds-error-function-from-cases
   [train-cases test-cases]
@@ -152,6 +159,8 @@
   {:error-function (make-count-odds-error-function-from-cases (first count-odds-train-and-test-cases)
                                                               (second count-odds-train-and-test-cases))
    :training-cases (first count-odds-train-and-test-cases)
+   :sub-training-cases '()
+   
    :atom-generators count-odds-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
@@ -164,6 +173,9 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5
                                     }
+   :oracle-function count-odds-solver
+   :input-parameterization (cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))
+   :output-stacks :integer
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01

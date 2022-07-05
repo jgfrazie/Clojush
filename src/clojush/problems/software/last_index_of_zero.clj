@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def last-index-of-zero-atom-generators
@@ -75,6 +76,12 @@
   [inputs]
   (map #(vector % (.lastIndexOf % 0))
        inputs))
+
+(defn last-index-of-zero-getter
+  "Given a vector of integers, it returns the last index in which 
+   zero appears."
+  [input]
+  (.lastIndexOf input 0))
 
 (defn make-last-index-of-zero-error-function-from-cases
   [train-cases test-cases]
@@ -168,8 +175,11 @@
    :genetic-operator-probabilities {:alternation 0.2
                                     :uniform-mutation 0.2
                                     :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5
-                                    }
+                                    [:alternation :uniform-mutation] 0.5}
+   :oracle-function last-index-of-zero-getter
+   ;;need to add 0 to the vector or it will break
+   :input-parameterization (cag/create-new-parameter :vector_integer 1 50 (cag/create-new-parameter :integer -50 50))
+   :output-stacks [:integer]
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -179,5 +189,4 @@
    :final-report-simplifications 5000
    :max-error 1000000
    :output-stacks :integer
-   :single-vector-input true
-   })
+   :single-vector-input true})

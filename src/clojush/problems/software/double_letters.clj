@@ -15,7 +15,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower
-        ))
+        )
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def double-letters-atom-generators
@@ -78,6 +79,18 @@
                                              :else %)
                                           in)))))
        inputs))
+
+(defn double-letters-solver
+  "Given a string, print the string, doubling every letter character, and
+   trippling every exclamation point. All other non-alphabetic 
+   and non-exclamation characters should be printed a single 
+   time each."
+  [input]
+  (apply str (flatten (map #(cond
+                              (Character/isLetter %) (list % %)
+                              (= % \!) (list % % %)
+                              :else %)
+                           input))))
 
 (defn make-double-letters-error-function-from-cases
   [train-cases test-cases]
@@ -170,6 +183,9 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5
                                     }
+   :oracle-function double-letters-solver
+   :input-parameterization (cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])
+   :output-stacks [:string]
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -178,5 +194,4 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 5000
-   :output-stacks :output
    })
