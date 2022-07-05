@@ -15,7 +15,8 @@
         clojush.instructions.tag
         clojure.math.numeric-tower)
     (:require [clojure.string :as string]
-              [clojush.pushgp.case-auto-generation :as cag]))
+              [clojush.pushgp.case-auto-generation :as cag]
+              [clojush.pushgp.selecting-interesting-cases :as interesting]))
 
 (def scrabble-letter-values
   (let [scrabble-map {\a 1
@@ -189,7 +190,6 @@
        ;; with total-error > 0 if it had error of zero on train but not on validation
        ;; set. Would need a third category of data cases, or a defined split of training cases.
 
-
 ; Define the argmap
 (def argmap
   {:error-function (make-scrabble-score-error-function-from-cases (first scrabble-score-train-and-test-cases)
@@ -215,13 +215,16 @@
    :final-report-simplifications 5000
    :max-error 1000
 
-   :sub-training-cases (take 5 (shuffle (first scrabble-score-train-and-test-cases)))
+   :sub-training-cases-selection :random ; :random ; :intelligent
+   :num-of-cases-in-sub-training-cases 5
+   :sub-training-cases '()
+   
    :oracle-function scrabble-score-calculator
    :input-parameterization (cag/create-new-parameter :string 0 20 [:digits :lower-case :upper-case :specials] [])
    :output-stacks [:integer]
   ;; Human-driven counterexamples
    :counterexample-driven true
-   :counterexample-driven-case-checker :human ; :automatic ; :human ; :simulated-human
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
 
    ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
@@ -231,5 +234,4 @@
    :num-of-cases-used-for-output-selection 1000
    :num-of-cases-added-from-output-selection 5
    :num-of-cases-used-for-branch-coverage 1000
-   :num-of-cases-added-from-branch-coverage 5
-   })
+   :num-of-cases-added-from-branch-coverage 5})
