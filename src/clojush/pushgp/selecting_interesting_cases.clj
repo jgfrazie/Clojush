@@ -54,40 +54,40 @@
    @return a vector of vectors where each vector contains the extreme values of a single input"
   [a-training-case]
   (map (fn [input]
-            (let [input-type (get input :type)
-                  input-range (get input :range)]
-              (cond (or (= input-type :integer) (= input-type :float))
-                    (let [edge-case-1 (add-edge-number-cases [] input-range :lower)]
-                      (add-edge-number-cases edge-case-1 input-range :upper))
+         (let [input-type (get input :type)
+               input-range (get input :range)]
+           (cond (or (= input-type :integer) (= input-type :float))
+                 (let [edge-case-1 (add-edge-number-cases [] input-range :lower)]
+                   (add-edge-number-cases edge-case-1 input-range :upper))
 
-                    (= input-type :string)
-                    (let [all-possible-chars (get input-range :available-characters)
-                          lower (get input-range :lower)
-                          upper (get input-range :upper)
-                          edge-case-1 (add-edge-string-cases [] lower all-possible-chars)]
-                      (add-edge-string-cases edge-case-1 upper all-possible-chars))
+                 (= input-type :string)
+                 (let [all-possible-chars (get input-range :available-characters)
+                       lower (get input-range :lower)
+                       upper (get input-range :upper)
+                       edge-case-1 (add-edge-string-cases [] lower all-possible-chars)]
+                   (add-edge-string-cases edge-case-1 upper all-possible-chars))
 
-                    :else
-                    (let [smallest-vector (get input-range :lower)
-                          largest-vector (get input-range :upper)
-                          element-type (get input :element-type)
-                          element-upper (get-in input [:element-range :upper])
-                          element-lower (get-in input [:element-range :lower])
-                          element-range (- element-upper element-lower)
-                          element-characters (get-in input [:element-range :available-characters])]
-                      (if (= element-type :string)
-                        (formating-vectorof-input smallest-vector
-                                                  largest-vector
-                                                  #(add-edge-string-cases []
-                                                                          (+ (rand-int element-range) element-lower)
-                                                                          element-characters))
-                        (formating-vectorof-input smallest-vector
-                                                  largest-vector
-                                                  #(add-edge-number-cases []
-                                                                          element-type
-                                                                          element-range
-                                                                          element-lower)))))))
-          a-training-case))
+                 :else
+                 (let [smallest-vector (get input-range :lower)
+                       largest-vector (get input-range :upper)
+                       element-type (get input :element-type)
+                       element-upper (get-in input [:element-range :upper])
+                       element-lower (get-in input [:element-range :lower])
+                       element-range (- element-upper element-lower)
+                       element-characters (get-in input [:element-range :available-characters])]
+                   (if (= element-type :string)
+                     (formating-vectorof-input smallest-vector
+                                               largest-vector
+                                               #(add-edge-string-cases []
+                                                                       (+ (rand-int element-range) element-lower)
+                                                                       element-characters))
+                     (formating-vectorof-input smallest-vector
+                                               largest-vector
+                                               #(add-edge-number-cases []
+                                                                       element-type
+                                                                       element-range
+                                                                       element-lower)))))))
+       a-training-case))
 
 (defn swap-it
   "Swap the values in the first vector with the values in the second vector at corresponding indices
@@ -148,10 +148,7 @@
    oracle-function]
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
-    :intelligent (let [edited-input-parameterization (if (vector? input-parameterization)
-                                                       input-parameterization
-                                                       (vector (input-parameterization)))
-                       edge-cases (forming-input-output-sets edited-input-parameterization num-of-edge-cases-in-sub-training-set)
+    :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
                        num-edge-cases (count edge-cases)]
                   (concat (map (fn [pair]
                                  (let [input (first pair)]
@@ -226,6 +223,12 @@
     (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff)
     (getting-inputs num-of-cases-added-from-branch-coverage sorted-indices random-cases)))
 
+(defn getting-input-outside-the-vector
+  [a-input]
+  (if (vector? a-input)
+    (first a-input)
+    a-input))
+
 (defn measure-output-difference
   "Gives a value that states the difference between the current training set 
    and the new generated input. The larger the value is, the more different two outputs are
@@ -237,21 +240,25 @@
    string difference: Levenshtein distance, with 0 indicating identity and 1 indicating no similarity
    vectorof difference: depends on the data type inside the vector"
   [current-training-set-output new-output-seq output-type]
-  (let [output-type-1 (nth output-type 0)] 
+  (let [output-type-1 (nth output-type 0)]
     (cond (or (= output-type-1 :integer) (= output-type-1 :float))
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (- training-set-output new-output))) current-training-set-output)) new-output-seq)
-          
+                        (Math/abs (- (getting-input-outside-the-vector training-set-output)
+                                     (getting-input-outside-the-vector new-output)))) current-training-set-output)) new-output-seq)
+
           (= output-type-1 :boolean)
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (- (if training-set-output 1 0) (if new-output 1 0)))) current-training-set-output)) new-output-seq)
+                        (Math/abs (- (if (getting-input-outside-the-vector training-set-output) 1 0) 
+                                     (if (getting-input-outside-the-vector new-output) 1 0)))) current-training-set-output)) new-output-seq)
 
           (or (= output-type-1 :string) (= output-type-1 :output))
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (util/levenshtein-distance training-set-output new-output)) current-training-set-output)) new-output-seq)
+                        (let [checked-new (getting-input-outside-the-vector new-output)
+                              checked-training (getting-input-outside-the-vector training-set-output)]
+                         (util/levenshtein-distance checked-training checked-new))) current-training-set-output)) new-output-seq)
 
           :else
           (map (fn [new-output]
