@@ -1,0 +1,5 @@
+Steps to fix problem files:
+
+1. If not multiple inputs, make input a vector in "Helper function for error function"
+2. If not multiple outputs, make output a vector in "Helper function for error function"
+3. In error function, if 1 input, make a vector. Same with output.
