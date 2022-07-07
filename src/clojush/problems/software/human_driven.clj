@@ -34,11 +34,6 @@
 
 (def output-types (cag/acquire-outputs-from-user))
 
-(def initial-training-cases (cag/get-initial-training-cases-from-user
-                             input-parameterization
-                             output-types
-                             5))
-
 ;; Atom generators
 ;; This needs tons of work
 ;; For example, the user should be able to specify the stacks to use for registered-for-stacks,
@@ -49,6 +44,13 @@
     (concat (cag/acquire-input-instructions input-parameterization)
             (cag/acquire-atom-generator-constants requested-stacks)
             (clojush.pushstate/registered-for-stacks requested-stacks))))
+
+(def initial-training-cases (cag/get-initial-training-cases-from-user
+                             input-parameterization
+                             output-types
+                             (cag/process-user-input "
+*** How many cases would you like to input?***
+                                                      " :integer)))
 
 (defn human-driven-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
@@ -116,10 +118,15 @@
 
    :sub-training-cases initial-training-cases ;; These are the cases given by the user.
    :atom-generators human-driven-atom-generators
+   :oracle-function (fn string-soln
+                      [integer string]
+                      (if (< integer (count string))
+                        (subs string 0 integer)
+                        string))
 
    ;; Human-driven counterexamples
    :counterexample-driven true
-   :counterexample-driven-case-checker :human ; :automatic ; :human
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
 
    ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
@@ -188,6 +195,12 @@
 
   (human-driven-error-function {:program prog} some-cases)
   
+  (defn oracle
+    [num s]
+    (loop [substring ]))
+  
+  (apply oracle '(20 ">m*o)"))
+
   )
 
 

@@ -15,7 +15,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower
-        ))
+        )
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def smallest-atom-generators
@@ -57,8 +58,12 @@
    [[input1 input2 input3] output]."
   [inputs]
   (map #(vector %
-                (str (apply min %)))
+                [(str (apply min %))])
        inputs))
+
+(defn smallest-solver
+  [in1 in2 in3 in4]
+  (str (min in1 in2 in3 in4)))
 
 (defn make-smallest-error-function-from-cases
   [train-cases test-cases]
@@ -71,7 +76,7 @@
 
       (let [behavior (atom '())
             errors (doall
-                    (for [[[input1 input2 input3 input4] correct-output] (case data-cases
+                    (for [[[input1 input2 input3 input4] [correct-output]] (case data-cases
                                                                            :train train-cases
                                                                            :test test-cases
                                                                            data-cases)]
@@ -144,10 +149,26 @@
   {:error-function (make-smallest-error-function-from-cases (first smallest-train-and-test-cases)
                                                             (second smallest-train-and-test-cases))
    :training-cases (first smallest-train-and-test-cases)
-   :sub-training-cases '()
+   :sub-training-cases (take 5 (shuffle (first smallest-train-and-test-cases)))
 
    :counterexample-driven true
-   :counterexample-driven-case-checker :human
+   :counterexample-driven-case-checker :simulated-human
+   :input-parameterization [(cag/create-new-parameter :integer -100 100)
+                            (cag/create-new-parameter :integer -100 100)
+                            (cag/create-new-parameter :integer -100 100)
+                            (cag/create-new-parameter :integer -100 100)]
+   :output-stacks [:output]
+   :oracle-function smallest-solver
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :max-num-of-cases-added-from-edge 5
+   :num-of-cases-added-from-random 5
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
+   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-added-from-branch-coverage 5
 
    :atom-generators smallest-atom-generators
    :max-points 800
@@ -161,6 +182,8 @@
                                     :uniform-mutation 0.2
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5}
+
+
    :alternation-rate 0.01
    :alignment-deviation 5
    :uniform-mutation-rate 0.01
@@ -169,5 +192,4 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1
-   :output-stacks :output
    })

@@ -113,31 +113,40 @@
   [random-cases best-results-on-all-cases oracle-function]
 
   (println)
-  (println "*** A program was found that passes all of the training cases! ***")
-  (println "*** Now it's time for the simulated-human to check if the best program works on some new inputs: ***")
+  (println "*** The foolowing are the randomly generated test cases along  ***")
+  (println "*** with its corresponding output from the best program we have so far! ***")
   (println)
 
   (doseq [[i x] (map-indexed vector
                              (map vector random-cases best-results-on-all-cases))]
-    (println "Case" i ": Generated random input: " (pr-str (first (first x))) ", Output from best program:" (pr-str (second x))))
+    (println "Case" i ": Generated random input: " (pr-str (first (first x))) ", Output from best program:" (pr-str (second x)) "; Case" i))
   (println)
   (loop [input random-cases
          output best-results-on-all-cases
          cases-to-add []
          index 0]
-      ;(println (first (first input)))
+    ;(println)
+    ;(pr-str "I am here!!!!!!!!!!!!!!!!!!!!!!" (first (nth input 0)))
+    ;(pr-str "I am here!!!!!!!!!!!!!!!!!!!!!!" (first (nth input 1)))
+    ;(pr-str "I am here!!!!!!!!!!!!!!!!!!!!!!" (first (nth input 3)))
+    ;(pr-str "I am here!!!!!!!!!!!!!!!!!!!!!!" (first (nth input 4)))
+    ;(println)
     (if (< index (count random-cases))
       (let [right-answer (apply oracle-function (first (nth random-cases index)))]
-            ;(println "The right answer is: " right-answer)
-            ;(println "The nth output is: " (nth output index))
-        (if (= right-answer (nth output index))
+        ;(println)
+        ;(println "The right answer is: " right-answer)
+        ;(println "The nth output is: " (nth output index))
+        ;(println)
+        (if (= (vector right-answer) (nth output index))
           (recur random-cases best-results-on-all-cases cases-to-add (inc index))
           (recur random-cases best-results-on-all-cases
                  (into cases-to-add
                        (vec (map vector (vector (first (nth input index))) (vector (vector right-answer)))))
                  (inc index))))
-      (do (println "Cases to add are: ")
-          cases-to-add))))
+      (do (println "Number of cases to add are: " (count cases-to-add))
+          (if (= (count cases-to-add) 0)
+            :passes-all-cases ; program passes all randomly generated cases
+            cases-to-add)))))
 
 (defn proportion-of-passed-cases
   "Returns the proportion of cases with 0 error for this individual."
@@ -341,4 +350,6 @@
         (do
           (add-cases-to-sub-training-cases sorted-pop best-or-new-cases argmap)
           false)))))
+
+(count [false false true])
 
