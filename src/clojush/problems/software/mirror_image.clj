@@ -234,6 +234,5 @@
    :problem-specific-initial-report mirror-image-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :max-error 1})
-
-(pushgp argmap)
+   :max-error 1
+   })
