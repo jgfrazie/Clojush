@@ -9,24 +9,25 @@
 
 1
 3
+integer string char boolean
+y
+
+
+
+
+5
+1
+Hello
+H
 4
-Basketball
-Bask
-2
-Hello World
-He
+Goodbye People
+Good
 0
-Rjr3fjQ#FJF3f332
+Nothing to see here
 
-20
-Integer
-Integer
-10
-hope this works!!!! yay!
-hope this 
-integer string boolean char
-Y
-
-
-
-
+16
+Yeet
+Yeet
+12
+Ahmed says hello everyone
+Ahmed says h

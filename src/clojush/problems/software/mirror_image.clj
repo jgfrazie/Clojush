@@ -231,5 +231,3 @@
    :final-report-simplifications 5000
    :max-error 1
    })
-
-(pushgp argmap)
