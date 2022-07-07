@@ -136,6 +136,9 @@
                       :range {:lower 1.001
                               :upper 10.999}}])
   (forming-input-output-sets (vector lala) 2)
+  (def dodo [{:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}} 
+             {:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}}])
+  (forming-input-output-sets dodo 2)
   (map (fn [pair]
          (vector (first pair) (apply + (first pair)))) [[[1 2] 0] [[1 1] 0]]))
 
@@ -145,7 +148,10 @@
    oracle-function]
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
-    :intelligent (let [edge-cases (forming-input-output-sets (vector input-parameterization) num-of-edge-cases-in-sub-training-set)
+    :intelligent (let [edited-input-parameterization (if (vector? input-parameterization)
+                                                       input-parameterization
+                                                       (vector (input-parameterization)))
+                       edge-cases (forming-input-output-sets edited-input-parameterization num-of-edge-cases-in-sub-training-set)
                        num-edge-cases (count edge-cases)]
                   (concat (map (fn [pair]
                                  (let [input (first pair)]
