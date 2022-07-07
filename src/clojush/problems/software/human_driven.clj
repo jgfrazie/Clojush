@@ -118,7 +118,7 @@
 
    :sub-training-cases initial-training-cases ;; These are the cases given by the user.
    :atom-generators human-driven-atom-generators
-   :oracle-function (defn string-soln
+   :oracle-function (fn string-soln
                       [integer string]
                       (if (< integer (count string))
                         (subs string 0 integer)
