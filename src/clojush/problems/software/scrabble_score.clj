@@ -221,7 +221,7 @@
    :output-stacks [:integer]
   ;; Human-driven counterexamples
    :counterexample-driven true
-   :counterexample-driven-case-checker :human ; :automatic ; :human ; :simulated-human
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
 
    ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)

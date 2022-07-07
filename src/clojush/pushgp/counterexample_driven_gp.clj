@@ -143,7 +143,7 @@
                  (into cases-to-add
                        (vec (map vector (vector (first (nth input index))) (vector (vector right-answer)))))
                  (inc index))))
-      (do (println "Cases to add are: " cases-to-add)
+      (do (println "Number of cases to add are: " (count cases-to-add))
           (if (= (count cases-to-add) 0)
             :passes-all-cases ; program passes all randomly generated cases
             cases-to-add)))))
@@ -349,4 +349,6 @@
         (do
           (add-cases-to-sub-training-cases sorted-pop best-or-new-cases argmap)
           false)))))
+
+(count [false false true])
 
