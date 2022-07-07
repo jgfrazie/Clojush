@@ -37,7 +37,9 @@
 (def initial-training-cases (cag/get-initial-training-cases-from-user
                              input-parameterization
                              output-types
-                             5))
+                             (cag/process-user-input "
+*** How many cases would you like to input?***
+                                                      " :integer)))
 
 ;; Atom generators
 ;; This needs tons of work
