@@ -53,21 +53,19 @@
    @param a-training-case the information of the inputs in the training set
    @return a vector of vectors where each vector contains the extreme values of a single input"
   [a-training-case]
-  (reduce (fn [result-vec input]
+  (map (fn [input]
             (let [input-type (get input :type)
                   input-range (get input :range)]
               (cond (or (= input-type :integer) (= input-type :float))
                     (let [edge-case-1 (add-edge-number-cases [] input-range :lower)]
-                      (conj result-vec
-                            (add-edge-number-cases edge-case-1 input-range :upper)))
+                      (add-edge-number-cases edge-case-1 input-range :upper))
 
                     (= input-type :string)
                     (let [all-possible-chars (get input-range :available-characters)
                           lower (get input-range :lower)
                           upper (get input-range :upper)
                           edge-case-1 (add-edge-string-cases [] lower all-possible-chars)]
-                      (conj result-vec
-                            (add-edge-string-cases edge-case-1 upper all-possible-chars)))
+                      (add-edge-string-cases edge-case-1 upper all-possible-chars))
 
                     :else
                     (let [smallest-vector (get input-range :lower)
@@ -78,20 +76,17 @@
                           element-range (- element-upper element-lower)
                           element-characters (get-in input [:element-range :available-characters])]
                       (if (= element-type :string)
-                        (conj result-vec
-                              (formating-vectorof-input smallest-vector
-                                                        largest-vector
-                                                        #(add-edge-string-cases []
-                                                                                (+ (rand-int element-range) element-lower)
-                                                                                element-characters)))
-                        (conj result-vec
-                              (formating-vectorof-input smallest-vector
-                                                        largest-vector
-                                                        #(add-edge-number-cases []
-                                                                                element-type
-                                                                                element-range
-                                                                                element-lower))))))))
-          []
+                        (formating-vectorof-input smallest-vector
+                                                  largest-vector
+                                                  #(add-edge-string-cases []
+                                                                          (+ (rand-int element-range) element-lower)
+                                                                          element-characters))
+                        (formating-vectorof-input smallest-vector
+                                                  largest-vector
+                                                  #(add-edge-number-cases []
+                                                                          element-type
+                                                                          element-range
+                                                                          element-lower)))))))
           a-training-case))
 
 (defn swap-it
@@ -124,6 +119,10 @@
 
 (comment
   ;; edge-cases test
+  (def lala {:type :string 
+             :range {:lower 0 
+                     :upper 20 
+                     :available-characters "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ! @#$% ^&*() _+-= ` ~,<.>/?]}[{"}})
   (def training-set [{:type :integer
                       :range {:lower 0
                               :upper 10}}
@@ -136,18 +135,22 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets training-set 6))
+  (forming-input-output-sets (vector lala) 2)
+  (map (fn [pair]
+         (vector (first pair) (apply + (first pair)))) [[[1 2] 0] [[1 1] 0]]))
 
 (defn selecting-sub-training-cases
-  [sub-training-cases-selection num-of-cases-in-sub-training-cases original-training-set & input-parameterization]
+  [sub-training-cases-selection num-of-cases-in-sub-training-cases 
+   original-training-set input-parameterization num-of-edge-cases-in-sub-training-set
+   oracle-function]
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
-    :intelligent (let [edge-cases (map #(vector % []) (apply mapv
-                                                             vector
-                                                             (generate-edge-cases input-parameterization)))]
-                  (if (> 1 num-of-cases-in-sub-training-cases)
-                    edge-cases
-                    (take num-of-cases-in-sub-training-cases edge-cases))) ; need input parameter 
+    :intelligent (let [edge-cases (forming-input-output-sets (vector input-parameterization) num-of-edge-cases-in-sub-training-set)
+                       num-edge-cases (count edge-cases)]
+                  (concat (map (fn [pair]
+                                 (let [input (first pair)]
+                                   (vector input (vector (apply oracle-function input))))) edge-cases)
+                          (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
     :else "NOO"))
 
 (defn run-best-on-all-cases
