@@ -145,7 +145,7 @@
    oracle-function]
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
-    :intelligent (let [edge-cases (forming-input-output-sets (vector input-parameterization) num-of-edge-cases-in-sub-training-set)
+    :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
                        num-edge-cases (count edge-cases)]
                   (concat (map (fn [pair]
                                  (let [input (first pair)]

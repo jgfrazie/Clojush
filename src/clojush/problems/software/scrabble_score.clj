@@ -215,13 +215,8 @@
    :final-report-simplifications 5000
    :max-error 1000
 
-   :sub-training-cases-selection :intelligent ; :random ; :intelligent
-   :num-of-cases-in-sub-training-set 10
-   :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
-   :sub-training-cases '()
-
    :oracle-function scrabble-score-calculator
-   :input-parameterization (cag/create-new-parameter :string 0 20 [:digits :lower-case :upper-case :specials] [])
+   :input-parameterization [(cag/create-new-parameter :string 0 20 [:digits :lower-case :upper-case :specials] [])]
    :output-stacks [:integer]
   ;; Human-driven counterexamples
    :counterexample-driven true
@@ -229,6 +224,11 @@
 
    ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-in-sub-training-set 10
+   :num-of-edge-cases-in-sub-training-set 1 ; probably not 5 since there's only 1 input
+   :sub-training-cases '()
 
    :max-num-of-cases-added-from-edge 5
    :num-of-cases-added-from-random 5
