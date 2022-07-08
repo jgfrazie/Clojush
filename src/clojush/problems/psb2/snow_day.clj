@@ -50,39 +50,21 @@
 
 (defn create-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
-   [[input1 input2 input3 input4] output]."
-  [inputs]
-  (map #(vector %
-                (loop [time (first %)
-                       total (second %)]
-                  (if (= time 0)
-                    total
-                    (recur (dec time)
-                           (+ (* total (- 1 (last %)))
-                              (nth % 2))))))
-       inputs))
-
-; Helper function for error function
-(defn snow-day-solver-helper
-  "Takes a sequence of inputs and gives IO test cases of the form
    [[input1 input2 input3 input4] [output]]."
   [inputs]
-  (let [answer (map #(vector %
-                             (loop [time (first %)
-                                    total (second %)]
-                               (if (= time 0)
-                                 total
-                                 (recur (dec time)
-                                        (+' (*' total (- 1 (last %)))
-                                           (nth % 2))))))
-                    inputs)]
-    [(first answer) [(second answer)]]))
-
-(snow-day-solver-helper [[1.1 2.2 3.3 4.4]])
+  (map #(vector %
+                (vector (loop [time (first %)
+                               total (second %)]
+                          (if (= time 0)
+                            total
+                            (recur (dec time)
+                                   (+' (*' total (- 1 (last %)))
+                                       (nth % 2)))))))
+       inputs))
 
 (defn snow-day-solver
-  [& inputs]
-  (second (first (snow-day-solver-helper [inputs]))))
+  [input1 input2 input3 input4]
+  (first (second (first (create-test-cases (vector (vector input1 input2 input3 input4)))))))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -128,7 +110,7 @@
 (defn get-train-and-test
   "Returns the train and test cases."
   [data-domains]
-  (map snow-day-solver-helper
+  (map create-test-cases
        (test-and-train-data-from-domains data-domains)))
 
 ; Define train and test cases
@@ -169,8 +151,7 @@
 
 ; Define the argmap
 (def argmap
-  {:
-   :error-function (make-error-function-from-cases (first train-and-test-cases)
+  {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
 
@@ -182,8 +163,8 @@
    :output-stacks [:float]
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
-   :num-of-cases-in-sub-training-set 10
-   :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
+   :num-of-cases-in-sub-training-set 5
+   :num-of-edge-cases-in-sub-training-set 2 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
 
        ;; Human-driven counterexamples

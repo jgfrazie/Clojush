@@ -156,7 +156,6 @@
   {:error-function (make-compare-string-lengths-error-function-from-cases (first compare-string-lengths-train-and-test-cases)
                                                                           (second compare-string-lengths-train-and-test-cases))
    :training-cases (first compare-string-lengths-train-and-test-cases)
-   :sub-training-cases '()
    :atom-generators csl-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
@@ -173,6 +172,19 @@
                             (cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])
                             (cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])]
    :output-stacks [:boolean]
+
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-in-sub-training-set 5
+   :num-of-edge-cases-in-sub-training-set 3 ; probably not 5 since there's only 1 input
+   :sub-training-cases '()
+
+   ;; Human-driven counterexamples
+   :counterexample-driven true
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -180,7 +192,6 @@
    :problem-specific-initial-report compare-string-lengths-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :max-error 1
-   })
+   :max-error 1})
 
 

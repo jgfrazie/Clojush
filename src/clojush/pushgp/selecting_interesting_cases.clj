@@ -117,11 +117,28 @@
                    subsets (combo/subsets (range cols))]
                (map #(swap-it edge-1 edge-2 %) subsets)))))
 
+(defn camel-case-solver
+  [inputs]
+  (apply (fn [& pairs]
+           (for [pair pairs]
+             (second pair))) (map (fn [in]
+                                    (vector in
+                                            (if (or (= (str in) "") (every? #{\-} (str in))) ""
+                                                (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
+                                                  (apply str (str/lower-case (first full-string)) (drop 1 full-string))))))
+                                  inputs)))
+
+(defn violet's-solver
+  [in]
+  (if (or (= (str in) "") (every? #{\-} (str in))) ""
+      (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
+        (apply str (str/lower-case (first full-string)) (drop 1 full-string)))))
+
 (comment
   ;; edge-cases test
-  (def lala {:type :string 
-             :range {:lower 0 
-                     :upper 20 
+  (def lala {:type :string
+             :range {:lower 0
+                     :upper 20
                      :available-characters "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ! @#$% ^&*() _+-= ` ~,<.>/?]}[{"}})
   (def training-set [{:type :integer
                       :range {:lower 0
@@ -136,7 +153,7 @@
                       :range {:lower 1.001
                               :upper 10.999}}])
   (forming-input-output-sets (vector lala) 2)
-  (def dodo [{:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}} 
+  (def dodo [{:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}}
              {:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}}])
   (forming-input-output-sets dodo 2)
   (map (fn [pair]
@@ -146,8 +163,13 @@
                                         {:type :float :range {:lower -9998 :upper 9998}}
                                         {:type :float :range {:lower -9998 :upper 9998}}]
                                        5))
-  
-)
+  (def caca (forming-input-output-sets [{:type :string
+                                         :range {:lower 2
+                                                 :upper 9998
+                                                 :available-characters "-_abcdefghijklmnopqrstuvwxyz"}}]
+                                       2))
+  (violet's-solver "oefq-a-z")
+  )
 
 (defn selecting-sub-training-cases
   [sub-training-cases-selection num-of-cases-in-sub-training-cases 
@@ -159,7 +181,7 @@
                        num-edge-cases (count edge-cases)]
                   (concat (map (fn [pair]
                                  (let [input (first pair)]
-                                   (vector input (apply oracle-function input)))) edge-cases)
+                                   (vector input (vector (apply oracle-function input))))) edge-cases)
                           (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
     :else "NOO"))
 
@@ -167,7 +189,7 @@
   "Runs the program best on all generated cases, and returns a list of the
   behaviors/results of the program on those cases."
   [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
-  (doall (for [[input correct-output] all-cases]
+  (doall (for [[[input] [correct-output]] all-cases]
            (let [inputs (if (or single-vector-input
                                 (not (coll? input)))
                           (list input)

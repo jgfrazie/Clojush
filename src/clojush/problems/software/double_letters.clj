@@ -170,7 +170,6 @@
   {:error-function (make-double-letters-error-function-from-cases (first double-letters-train-and-test-cases)
                                                                   (second double-letters-train-and-test-cases))
    :training-cases (first double-letters-train-and-test-cases)
-   :sub-training-cases '()
    :atom-generators double-letters-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400
@@ -181,11 +180,23 @@
    :genetic-operator-probabilities {:alternation 0.2
                                     :uniform-mutation 0.2
                                     :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5
-                                    }
+                                    [:alternation :uniform-mutation] 0.5}
    :oracle-function double-letters-solver
-   :input-parameterization (cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])
+   :input-parameterization [(cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])]
    :output-stacks [:string]
+
+      ;; Human-driven counterexamples
+   :counterexample-driven true
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-in-sub-training-set 5
+   :num-of-edge-cases-in-sub-training-set 3 ; probably not 5 since there's only 1 input
+   :sub-training-cases '()
+
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -193,5 +204,4 @@
    :problem-specific-initial-report double-letters-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :max-error 5000
-   })
+   :max-error 5000})
