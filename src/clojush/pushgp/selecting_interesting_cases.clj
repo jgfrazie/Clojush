@@ -140,7 +140,14 @@
              {:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}}])
   (forming-input-output-sets dodo 2)
   (map (fn [pair]
-         (vector (first pair) (apply + (first pair)))) [[[1 2] 0] [[1 1] 0]]))
+         (vector (first pair) (apply + (first pair)))) [[[1 2] 0] [[1 1] 0]])
+  (def edge (forming-input-output-sets [{:type :integer :range {:lower 1 :upper 9998}}
+                                        {:type :float :range {:lower -9998 :upper 9998}}
+                                        {:type :float :range {:lower -9998 :upper 9998}}
+                                        {:type :float :range {:lower -9998 :upper 9998}}]
+                                       5))
+  
+)
 
 (defn selecting-sub-training-cases
   [sub-training-cases-selection num-of-cases-in-sub-training-cases 
@@ -152,7 +159,7 @@
                        num-edge-cases (count edge-cases)]
                   (concat (map (fn [pair]
                                  (let [input (first pair)]
-                                   (vector input (vector (apply oracle-function input))))) edge-cases)
+                                   (vector input (apply oracle-function input)))) edge-cases)
                           (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
     :else "NOO"))
 
