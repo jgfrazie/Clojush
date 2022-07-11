@@ -156,7 +156,12 @@
   {:error-function (make-compare-string-lengths-error-function-from-cases (first compare-string-lengths-train-and-test-cases)
                                                                           (second compare-string-lengths-train-and-test-cases))
    :training-cases (first compare-string-lengths-train-and-test-cases)
-   :sub-training-cases (take 5 (shuffle (first compare-string-lengths-train-and-test-cases)))
+   
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-in-sub-training-set 10
+   :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
+   :sub-training-cases '()
+   
    :atom-generators csl-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
@@ -187,7 +192,7 @@
                             (cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])]
    :output-stacks [:boolean]
    :oracle-function csl-solver
-   
+
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
