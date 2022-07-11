@@ -179,7 +179,7 @@
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
    :oracle-function fizz-buzz-solver
-   :input-parameterization [(cag/create-new-parameter :vector_integer 1 9 (cag/create-new-parameter :integer 1 9))]
+   :input-parameterization [(cag/create-new-parameter :vector_integer 1 999 (cag/create-new-parameter :integer 1 999999999))]
    :output-stacks [:string]
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
