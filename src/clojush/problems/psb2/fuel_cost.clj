@@ -73,6 +73,7 @@
   (map (fn [in]
          (vector [in]
                  [(apply + (map #(- (quot % 3)
+
                                     2)
                                 in))]))
        inputs))
@@ -84,10 +85,6 @@
   (apply + (map #(- (quot % 3)
                     2)
                 inputs)))
-
-(comment
-  (create-test-cases [[27]])
-  (apply fuel-cost-solver [[27]]))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
