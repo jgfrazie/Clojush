@@ -23,8 +23,8 @@
   ([case-to-be-added input-type input-range input-lower]
    (conj case-to-be-added
          (if (= input-type :integer)
-           (+ (rand-int input-range) input-lower)
-           (+ (rand input-range) input-lower)))))
+           (+' (rand-int input-range) input-lower)
+           (+' (rand input-range) input-lower)))))
 
 (defn add-edge-string-cases
   "Helper functions to added a new edge case with string data type
@@ -273,13 +273,13 @@
     (cond (or (= output-type-1 :integer) (= output-type-1 :float))
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (- (getting-input-outside-the-vector training-set-output)
+                        (Math/abs (-' (getting-input-outside-the-vector training-set-output)
                                      (getting-input-outside-the-vector new-output)))) current-training-set-output)) new-output-seq)
 
           (= output-type-1 :boolean)
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (- (if (getting-input-outside-the-vector training-set-output) 1 0) 
+                        (Math/abs (-' (if (getting-input-outside-the-vector training-set-output) 1 0) 
                                      (if (getting-input-outside-the-vector new-output) 1 0)))) current-training-set-output)) new-output-seq)
 
           (or (= output-type-1 :string) (= output-type-1 :output))
