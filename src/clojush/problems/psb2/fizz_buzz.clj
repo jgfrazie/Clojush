@@ -92,7 +92,10 @@
 
 (comment
   (create-test-cases [3 5 15])
-  (fizz-buzz-solver [3 5 15]))
+  (fizz-buzz-solver [3 5 15])
+  
+  (for [[[[input]] [[output]]] (create-test-cases [3 5 15])]
+    (println input " ---- " output)))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -105,10 +108,10 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors (doall
-                   (for [[[input1] [correct-output]] (case data-cases
-                                                   :train train-cases
-                                                   :test test-cases
-                                                   data-cases)]
+                   (for [[[[input1]] [[correct-output]]] (case data-cases
+                                                           :train train-cases
+                                                           :test test-cases
+                                                           data-cases)]
                      (let [final-state (run-push (:program individual)
                                                  (->> (make-push-state)
                                                       (push-item input1 :input)))
