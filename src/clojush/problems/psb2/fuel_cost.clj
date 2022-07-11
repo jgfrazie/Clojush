@@ -73,8 +73,9 @@
   (map (fn [in]
          (vector [in]
                  [(apply + (map #(- (quot % 3)
-                                   2)
-                               in))]))
+
+                                    2)
+                                in))]))
        inputs))
 
 (defn fuel-cost-solver
@@ -84,8 +85,6 @@
   (apply + (map #(- (quot % 3)
                     2)
                 inputs)))
-
-(apply fuel-cost-solver [[3 3]])
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -168,11 +167,16 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :input-parameterization [(cag/create-new-parameter :vector_integer 1 99 (cag/create-new-parameter :integer 6 9994))]
+   :output-stacks [:integer]
+   :oracle-function fuel-cost-solver
+
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
    :num-of-cases-in-sub-training-set 10
    :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
-   ;; Human-driven counterexamples
+
+    ;; Human-driven counterexamples
    :counterexample-driven true
    :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
 
@@ -185,9 +189,6 @@
    :num-of-cases-added-from-output-selection 5
    :num-of-cases-used-for-branch-coverage 1000
    :num-of-cases-added-from-branch-coverage 5
-   :input-parameterization [(cag/create-new-parameter :vector_integer 1 99 (cag/create-new-parameter :integer 1 9999))]
-   :output-stacks [:integer]
-   :oracle-function fuel-cost-solver
 
    :atom-generators atom-generators
    :max-points 2000
