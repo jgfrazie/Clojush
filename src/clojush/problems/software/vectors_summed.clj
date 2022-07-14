@@ -196,8 +196,8 @@
    :num-of-cases-added-from-output-selection 5
    :num-of-cases-used-for-branch-coverage 1000
    :num-of-cases-added-from-branch-coverage 5
-   :input-parameterization [(cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))
-                            (cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))]
+   :input-parameterization [(cag/create-new-parameter :vector_integer 50 50 (cag/create-new-parameter :integer -1000 1000))
+                            (cag/create-new-parameter :vector_integer 50 50 (cag/create-new-parameter :integer -1000 1000))]
    :output-stacks [:vector_integer]
    :oracle-function vectors-summed-solver
 
