@@ -81,10 +81,10 @@
    [input output]."
   [inputs]
   (map (fn [in]
-         (vector in
-                 (if (or (= (str in) "") (every? #{\-} (str in))) ""
-                     (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
-                       (apply str (str/lower-case (first full-string)) (drop 1 full-string))))))
+         (vector (vector in)
+                 (vector (if (or (= (str in) "") (every? #{\-} (str in))) ""
+                             (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
+                               (apply str (str/lower-case (first full-string)) (drop 1 full-string)))))))
        inputs))
 
 (defn camel-case-solver
@@ -98,6 +98,12 @@
                        (apply str (str/lower-case (first full-string)) (drop 1 full-string))))))
        inputs)))
 
+(defn violet's-solver
+  [in]
+  (if (or (= (str in) "") (every? #{\-} (str in))) ""
+      (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
+        (apply str (str/lower-case (first full-string)) (drop 1 full-string)))))
+
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
   [train-cases test-cases]
@@ -109,7 +115,7 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors (doall
-                   (for [[input correct-output] (case data-cases
+                   (for [[[input] [correct-output]] (case data-cases
                                                   :train train-cases
                                                   :test test-cases
                                                   data-cases)]
@@ -179,8 +185,28 @@
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
    :oracle-function camel-case-solver
-   :input-parameterization (cag/create-new-parameter :string 2 9998 [:lower-case] ["-" "_"])
+   :input-parameterization [(cag/create-new-parameter :string 2 9998 [:lower-case] ["-" "_"])]
    :output-stacks [:string]
+
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-in-sub-training-set 5
+   :num-of-edge-cases-in-sub-training-set 2 ; probably not 5 since there's only 1 input
+   :sub-training-cases '()
+
+       ;; Human-driven counterexamples
+   :counterexample-driven true
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :max-num-of-cases-added-from-edge 5
+   :num-of-cases-added-from-random 5
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
+   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-added-from-branch-coverage 5
+
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

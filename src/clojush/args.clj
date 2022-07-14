@@ -157,6 +157,8 @@
 
          :input-parameterization []
           ;; Information about inputs. Format: Vector containing maps, one per input
+         
+         :input-constrains nil
 
          :oracle-function nil
           ;; Oracle function used for simulating human-driven GP
@@ -171,7 +173,7 @@
 
          :num-of-edge-cases-in-sub-training-set 0
           ;; Number of edge cases in the initial sub training set
-         
+
          :num-of-cases-added-from-random 0
           ;; Number of random cases checked by user 
 

@@ -48,7 +48,6 @@
    [(fn [] (vector (rand-int 21) (rand 20) (rand 10) (rand))) 188 2000] ; Random cases
    ])
 
-; Helper function for error function
 (defn create-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
    [[input1 input2 input3 input4] [output]]."
@@ -162,6 +161,7 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+
    :oracle-function snow-day-solver
    :input-parameterization [(cag/create-new-parameter :integer 1 9998)
                             (cag/create-new-parameter :float -9998 9998)

@@ -159,20 +159,17 @@
   "Will be mapped over all counterexample types to generate cases."
   [counterexample-type best
    {:keys [training-cases input-parameterization
-           num-of-cases-added-from-random max-num-of-cases-added-from-edge]
+           num-of-cases-added-from-random max-num-of-cases-added-from-edge input-constrains]
     :as argmap}]
   (case counterexample-type
     :hard-coded training-cases
-    :randomly-generated (cag/generate-random-cases input-parameterization num-of-cases-added-from-random)
-    :edge-cases (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge)
-    :selecting-new-cases-based-on-outputs (interesting/choose-inputs-based-on-output-analysis best argmap)
-    :branch-coverage-test (interesting/sort-cases-by-trace-the-second-whole best argmap)
+    :randomly-generated (interesting/check-for-input-constraints input-constrains (cag/generate-random-cases input-parameterization num-of-cases-added-from-random))
+    :edge-cases (interesting/check-for-input-constraints input-constrains (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge))
+    :selecting-new-cases-based-on-outputs (interesting/check-for-input-constraints input-constrains (interesting/choose-inputs-based-on-output-analysis best argmap))
+    :branch-coverage-test (interesting/check-for-input-constraints input-constrains (interesting/sort-cases-by-trace-the-second-whole best argmap))
     :else (throw (str "Unrecognized option for :counterexample-driven-case-generators: "
                       counterexample-type))))
 
-
-;; how many cases to compare?
-;; how many cases to add?
 (defn check-if-all-correct-and-return-new-cases-if-not
   "Finds the best program's behavior on all generated cases and checks if all outputs
   are correct with the given case checker.

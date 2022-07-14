@@ -143,7 +143,7 @@
 (def argmap
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
-   :training-cases (first train-and-test-cases)
+   :training-cases (first train-and-test-cases
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
    :num-of-cases-in-sub-training-set 5
@@ -166,7 +166,6 @@
    :input-parameterization [(cag/create-new-parameter :vector_integer 2 2 (cag/create-new-parameter :integer 1 999999))]
    :output-stacks [:integer]
    :oracle-function gcd-solution
-
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

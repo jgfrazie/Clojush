@@ -161,7 +161,6 @@
    :num-of-cases-in-sub-training-set 10
    :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
-   
    :atom-generators csl-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200

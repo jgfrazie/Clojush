@@ -23,8 +23,8 @@
   ([case-to-be-added input-type input-range input-lower]
    (conj case-to-be-added
          (if (= input-type :integer)
-           (+ (rand-int input-range) input-lower)
-           (+ (rand input-range) input-lower)))))
+           (+' (rand-int input-range) input-lower)
+           (+' (rand input-range) input-lower)))))
 
 (defn add-edge-string-cases
   "Helper functions to added a new edge case with string data type
@@ -119,10 +119,6 @@
 
 (comment
   ;; edge-cases test
-  (def lala {:type :string 
-             :range {:lower 0 
-                     :upper 20 
-                     :available-characters "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ! @#$% ^&*() _+-= ` ~,<.>/?]}[{"}})
   (def training-set [{:type :integer
                       :range {:lower 0
                               :upper 10}}
@@ -135,20 +131,29 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets (vector lala) 2)
-  (def dodo [{:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}} 
-             {:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}}])
-  (forming-input-output-sets dodo 2)
+  (forming-input-output-sets training-set 2)
+  )
+
+(defn adding-zero-to-input-vector
+  [input-output-pairs]
   (map (fn [pair]
-         (vector (first pair) (apply + (first pair)))) [[[1 2] 0] [[1 1] 0]]))
+         (vector (vector (conj (first (first pair)) 0))
+                 [])) input-output-pairs))
+
+(defn check-for-input-constraints
+  [input-constrains cases]
+  (if (= input-constrains "last-index-of-zero")
+    (adding-zero-to-input-vector cases)
+    cases))
 
 (defn selecting-sub-training-cases
   [sub-training-cases-selection num-of-cases-in-sub-training-cases 
    original-training-set input-parameterization num-of-edge-cases-in-sub-training-set
-   oracle-function]
+   oracle-function input-constrains]
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
     :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
+                       edited-edge-case (check-for-input-constraints input-constrains edge-cases)
                        num-edge-cases (count edge-cases)]
                   (concat (map (fn [pair]
                                  (let [input (first pair)] 
@@ -160,7 +165,7 @@
   "Runs the program best on all generated cases, and returns a list of the
   behaviors/results of the program on those cases."
   [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
-  (doall (for [[input correct-output] all-cases]
+  (doall (for [[[input] [correct-output]] all-cases]
            (let [inputs (if (or single-vector-input
                                 (not (coll? input)))
                           (list input)
@@ -244,13 +249,13 @@
     (cond (or (= output-type-1 :integer) (= output-type-1 :float))
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (- (getting-input-outside-the-vector training-set-output)
+                        (Math/abs (-' (getting-input-outside-the-vector training-set-output)
                                      (getting-input-outside-the-vector new-output)))) current-training-set-output)) new-output-seq)
 
           (= output-type-1 :boolean)
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (- (if (getting-input-outside-the-vector training-set-output) 1 0) 
+                        (Math/abs (-' (if (getting-input-outside-the-vector training-set-output) 1 0) 
                                      (if (getting-input-outside-the-vector new-output) 1 0)))) current-training-set-output)) new-output-seq)
 
           (or (= output-type-1 :string) (= output-type-1 :output))
