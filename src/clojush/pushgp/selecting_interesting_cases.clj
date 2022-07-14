@@ -131,8 +131,7 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets training-set 2)
-  )
+  (forming-input-output-sets training-set 2))
 
 (defn adding-zero-to-input-vector
   [input-output-pairs]
@@ -147,7 +146,7 @@
     cases))
 
 (defn selecting-sub-training-cases
-  [sub-training-cases-selection num-of-cases-in-sub-training-cases 
+  [sub-training-cases-selection num-of-cases-in-sub-training-cases
    original-training-set input-parameterization num-of-edge-cases-in-sub-training-set
    oracle-function input-constrains]
   (case sub-training-cases-selection
@@ -155,10 +154,10 @@
     :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
                        edited-edge-case (check-for-input-constraints input-constrains edge-cases)
                        num-edge-cases (count edge-cases)]
-                  (concat (map (fn [pair]
-                                 (let [input (first pair)] 
-                                   (vector input (vector (apply oracle-function input))))) edge-cases)
-                          (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
+                   (concat (map (fn [pair]
+                                  (let [input (first pair)]
+                                    (vector input (vector (apply oracle-function input))))) edited-edge-case)
+                           (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
     :else "NOO"))
 
 (defn run-best-on-all-cases
@@ -175,7 +174,7 @@
                                      (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))
                                      (reverse inputs))
                  final-state (clojush.interpreter/run-push (:program best)
-                                       start-state)]
+                                                           start-state)]
                                         ; Need to handle it this way for problems with more than one output.
                                         ; Note: will break if problem requires multiple outputs from the same stack.
              (if (coll? output-stacks)
@@ -250,20 +249,20 @@
           (map (fn [new-output]
                  (map (fn [training-set-output]
                         (Math/abs (-' (getting-input-outside-the-vector training-set-output)
-                                     (getting-input-outside-the-vector new-output)))) current-training-set-output)) new-output-seq)
+                                      (getting-input-outside-the-vector new-output)))) current-training-set-output)) new-output-seq)
 
           (= output-type-1 :boolean)
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (-' (if (getting-input-outside-the-vector training-set-output) 1 0) 
-                                     (if (getting-input-outside-the-vector new-output) 1 0)))) current-training-set-output)) new-output-seq)
+                        (Math/abs (-' (if (getting-input-outside-the-vector training-set-output) 1 0)
+                                      (if (getting-input-outside-the-vector new-output) 1 0)))) current-training-set-output)) new-output-seq)
 
           (or (= output-type-1 :string) (= output-type-1 :output))
           (map (fn [new-output]
                  (map (fn [training-set-output]
                         (let [checked-new (getting-input-outside-the-vector new-output)
                               checked-training (getting-input-outside-the-vector training-set-output)]
-                         (util/levenshtein-distance checked-training checked-new))) current-training-set-output)) new-output-seq)
+                          (util/levenshtein-distance checked-training checked-new))) current-training-set-output)) new-output-seq)
 
           :else
           (map (fn [new-output]
@@ -312,10 +311,10 @@
   (let [random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
         best-results-on-all-cases (map first (run-best-on-all-cases best random-cases argmap))
         input-for-output-anlysis (output-analysis (map second sub-training-cases)
-                                                               best-results-on-all-cases
-                                                               random-cases
-                                                               (first output-stacks)
-                                                               num-of-cases-added-from-output-selection)]
+                                                  best-results-on-all-cases
+                                                  random-cases
+                                                  (first output-stacks)
+                                                  num-of-cases-added-from-output-selection)]
     input-for-output-anlysis))
 
 

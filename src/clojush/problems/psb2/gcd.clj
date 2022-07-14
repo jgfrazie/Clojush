@@ -50,17 +50,20 @@
    [[input1 input2] output]."
   [inputs]
   (map (fn [[in1 in2]]
-         (vector [in1 in2]
-                 [(loop [a in1 b in2]
-                    (if (zero? b) a
-                        (recur b (mod a b))))]))
+         (vector [[in1 in2]]
+                 (vector  (loop [a in1 b in2]
+                            (if (zero? b) a
+                                (recur b (mod a b)))))))
        inputs))
 
-(defn gcd-solution
-  [in1 in2]
-  (loop [a in1 b in2]
-    (if (zero? b) a
-        (recur b (mod a b)))))
+(defn gcd-solver
+  [inputs]
+  (let [[in1 in2] inputs]
+    (loop [a in1 b in2]
+      (if (zero? b) a
+          (recur b (mod a b))))))
+
+(gcd-solver [1 2])
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -73,10 +76,10 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors (doall
-                   (for [[[input1 input2] [correct-output]] (case data-cases
-                                                            :train train-cases
-                                                            :test test-cases
-                                                            data-cases)]
+                   (for [[[[input1 input2]] [correct-output]] (case data-cases
+                                                                :train train-cases
+                                                                :test test-cases
+                                                                data-cases)]
                      (let [final-state (run-push (:program individual)
                                                  (->> (make-push-state)
                                                       (push-item input1 :input)
@@ -133,8 +136,7 @@
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
     (error-function best :train true)
-    (println ";;******************************")
-    )) ; To do validation, could have this function return an altered best individual
+    (println ";;******************************"))) ; To do validation, could have this function return an altered best individual
        ; with total-error > 0 if it had error of zero on train but not on validation
        ; set. Would need a third category of data cases, or a defined split of training cases.
 
@@ -144,13 +146,16 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+   :oracle-function gcd-solver
+   :input-parameterization [(cag/create-new-parameter :vectorof 2 2 (cag/create-new-parameter :integer 1 2147483647))]
+   :output-stacks [:integer]
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
    :num-of-cases-in-sub-training-set 5
    :num-of-edge-cases-in-sub-training-set 2 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
 
-   ;; Human-driven counterexamples
+       ;; Human-driven counterexamples
    :counterexample-driven true
    :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
 
@@ -163,9 +168,7 @@
    :num-of-cases-added-from-output-selection 5
    :num-of-cases-used-for-branch-coverage 1000
    :num-of-cases-added-from-branch-coverage 5
-   :input-parameterization [(cag/create-new-parameter :vector_integer 2 2 (cag/create-new-parameter :integer 1 999999))]
-   :output-stacks [:integer]
-   :oracle-function gcd-solution
+
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
