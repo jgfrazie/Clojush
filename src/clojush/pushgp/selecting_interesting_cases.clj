@@ -117,29 +117,8 @@
                    subsets (combo/subsets (range cols))]
                (map #(swap-it edge-1 edge-2 %) subsets)))))
 
-(defn camel-case-solver
-  [inputs]
-  (apply (fn [& pairs]
-           (for [pair pairs]
-             (second pair))) (map (fn [in]
-                                    (vector in
-                                            (if (or (= (str in) "") (every? #{\-} (str in))) ""
-                                                (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
-                                                  (apply str (str/lower-case (first full-string)) (drop 1 full-string))))))
-                                  inputs)))
-
-(defn violet's-solver
-  [in]
-  (if (or (= (str in) "") (every? #{\-} (str in))) ""
-      (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
-        (apply str (str/lower-case (first full-string)) (drop 1 full-string)))))
-
 (comment
   ;; edge-cases test
-  (def lala {:type :string
-             :range {:lower 0
-                     :upper 20
-                     :available-characters "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ! @#$% ^&*() _+-= ` ~,<.>/?]}[{"}})
   (def training-set [{:type :integer
                       :range {:lower 0
                               :upper 10}}
@@ -152,28 +131,7 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets (vector lala) 2)
-  (def dodo [{:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}}
-             {:type :vectorof :range {:lower 50 :upper 50} :element-type :integer :element-range {:lower 1 :upper 9999}}])
-  (forming-input-output-sets dodo 2)
-  (map (fn [pair]
-         (vector (first pair) (apply + (first pair)))) [[[1 2] 0] [[1 1] 0]])
-  (def edge (forming-input-output-sets [{:type :integer :range {:lower 1 :upper 9998}}
-                                        {:type :float :range {:lower -9998 :upper 9998}}
-                                        {:type :float :range {:lower -9998 :upper 9998}}
-                                        {:type :float :range {:lower -9998 :upper 9998}}]
-                                       5))
-  (def caca (forming-input-output-sets [{:type :vectorof :range {:lower 1 :upper 50} :element-type :integer :element-range {:lower -50 :upper 50}}]
-                                       2))
-  caca
-  (map (fn [pair]
-         (vector (conj (first (first pair)) 0)
-                 [])) caca)
-  (violet's-solver "oefq-a-z")
-  (conj '(1) 0)
-  (cag/generate-random-cases [{:type :vectorof :range {:lower 1 :upper 50} :element-type :integer :element-range {:lower -50 :upper 50}}] 2)
-  (def lala '([[1 2]] [3 4]))
-  (conj (first (first lala)) 0)
+  (forming-input-output-sets training-set 2)
   )
 
 (defn adding-zero-to-input-vector
@@ -182,6 +140,12 @@
          (vector (vector (conj (first (first pair)) 0))
                  [])) input-output-pairs))
 
+(defn check-for-input-constraints
+  [input-constrains cases]
+  (if (= input-constrains "last-index-of-zero")
+    (adding-zero-to-input-vector cases)
+    cases))
+
 (defn selecting-sub-training-cases
   [sub-training-cases-selection num-of-cases-in-sub-training-cases 
    original-training-set input-parameterization num-of-edge-cases-in-sub-training-set
@@ -189,9 +153,7 @@
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
     :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
-                       edited-edge-case (if (= "last-index-of-zero" input-constrains)
-                                          (adding-zero-to-input-vector edge-cases)
-                                          edge-cases)
+                       edited-edge-case (check-for-input-constraints input-constrains edge-cases)
                        num-edge-cases (count edge-cases)]
                    (concat (map (fn [pair]
                                   (let [input (first pair)]

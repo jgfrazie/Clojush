@@ -163,28 +163,13 @@
     :as argmap}]
   (case counterexample-type
     :hard-coded training-cases
-    :randomly-generated (let [random-cases (cag/generate-random-cases input-parameterization num-of-cases-added-from-random)]
-                          (if (= input-constrains "last-index-of-zero")
-                            (interesting/adding-zero-to-input-vector random-cases)
-                            random-cases))
-    :edge-cases (let [edge-cases (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge)]
-                  (if (= input-constrains "last-index-of-zero")
-                    (interesting/adding-zero-to-input-vector edge-cases)
-                    edge-cases))
-    :selecting-new-cases-based-on-outputs (let [output-analysis-cases (interesting/choose-inputs-based-on-output-analysis best argmap)]
-                                            (if (= input-constrains "last-index-of-zero")
-                                              (interesting/adding-zero-to-input-vector output-analysis-cases)
-                                              output-analysis-cases))
-    :branch-coverage-test (let [branch-coverage-cases (interesting/sort-cases-by-trace-the-second-whole best argmap)]
-                            (if (= input-constrains "last-index-of-zero")
-                              (interesting/adding-zero-to-input-vector branch-coverage-cases)
-                              branch-coverage-cases))
+    :randomly-generated (interesting/check-for-input-constraints input-constrains (cag/generate-random-cases input-parameterization num-of-cases-added-from-random))
+    :edge-cases (interesting/check-for-input-constraints input-constrains (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge))
+    :selecting-new-cases-based-on-outputs (interesting/check-for-input-constraints input-constrains (interesting/choose-inputs-based-on-output-analysis best argmap))
+    :branch-coverage-test (interesting/check-for-input-constraints input-constrains (interesting/sort-cases-by-trace-the-second-whole best argmap))
     :else (throw (str "Unrecognized option for :counterexample-driven-case-generators: "
                       counterexample-type))))
 
-
-;; how many cases to compare?
-;; how many cases to add?
 (defn check-if-all-correct-and-return-new-cases-if-not
   "Finds the best program's behavior on all generated cases and checks if all outputs
   are correct with the given case checker.
