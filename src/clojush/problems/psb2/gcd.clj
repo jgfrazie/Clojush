@@ -143,7 +143,7 @@
 (def argmap
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
-   :training-cases (first train-and-test-cases
+   :training-cases (first train-and-test-cases)
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
    :num-of-cases-in-sub-training-set 5
