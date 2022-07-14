@@ -73,9 +73,15 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
-  (map #(vector [%] 
-                [(.lastIndexOf % 0)])
-       inputs))
+  (map (fn [parameter]
+         (map (fn [specific-parameter]
+                (vector specific-parameter)) parameter)) (map #(vector % (.lastIndexOf % 0))
+       inputs)))
+
+(comment
+  (last-index-of-zero-test-cases [[1 2 0 3]])
+  (for [[[input] [output]] (last-index-of-zero-test-cases [[1 2 0 3]])]
+    (println input " --- " output)))
 
 (defn last-index-of-zero-getter
   "Given a vector of integers, it returns the last index in which 
@@ -180,11 +186,10 @@
    :output-stacks [:integer]
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
-   :num-of-cases-in-sub-training-set 5
-   :num-of-edge-cases-in-sub-training-set 2 ; probably not 5 since there's only 1 input
-   :sub-training-cases '()
+   :num-of-cases-in-sub-training-set 10
+   :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
 
-       ;; Human-driven counterexamples
+   ;; Human-driven counterexamples
    :counterexample-driven true
    :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
 
@@ -197,7 +202,6 @@
    :num-of-cases-added-from-output-selection 5
    :num-of-cases-used-for-branch-coverage 1000
    :num-of-cases-added-from-branch-coverage 5
-   
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01

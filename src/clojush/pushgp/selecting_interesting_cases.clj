@@ -155,10 +155,10 @@
     :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
                        edited-edge-case (check-for-input-constraints input-constrains edge-cases)
                        num-edge-cases (count edge-cases)]
-                   (concat (map (fn [pair]
-                                  (let [input (first pair)]
-                                    (vector input (vector (apply oracle-function input))))) edited-edge-case)
-                           (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
+                  (concat (map (fn [pair]
+                                 (let [input (first pair)] 
+                                   (vector input (vector (apply oracle-function input))))) edge-cases)
+                          (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
     :else "NOO"))
 
 (defn run-best-on-all-cases

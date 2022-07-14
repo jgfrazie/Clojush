@@ -4,9 +4,9 @@
 ;; Problem inspired by our introductory level programming course
 
 (ns clojush.problems.psb2.snow-day
-  (:use clojush.pushgp.pushgp
+  (:use [clojush.pushgp.pushgp]
         [clojush pushstate interpreter random util globals]
-        clojush.instructions.tag
+        [clojush.instructions.tag]
         [clojure.math numeric-tower])
   (:require [clojush.pushgp.case-auto-generation :as cag]))
 
@@ -52,19 +52,26 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [[input1 input2 input3 input4] [output]]."
   [inputs]
-  (map #(vector %
-                (vector (loop [time (first %)
-                               total (second %)]
-                          (if (= time 0)
-                            total
-                            (recur (dec time)
-                                   (+' (*' total (- 1 (last %)))
-                                       (nth % 2)))))))
-       inputs))
+  (map #(if (not (vector? %))
+          (vector %)
+          %) (first (let [answer (map #(vector %
+                (loop [time (first %)
+                       total (second %)]
+                  (if (= time 0)
+                    total
+                    (recur (dec time)
+                           (+' (*' total (-' 1 (last %)))
+                              (nth % 2))))))
+       inputs)]
+    [(first answer) (second answer)]))))
 
 (defn snow-day-solver
-  [input1 input2 input3 input4]
-  (first (second (first (create-test-cases (vector (vector input1 input2 input3 input4)))))))
+  [& inputs]
+  (first (second (create-test-cases [inputs]))))
+
+(comment
+  (snow-day-solver 2 2.3 3.4 -1.2)
+  (create-test-cases [[2 2.3 3.4 -1.2]]))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -75,7 +82,7 @@
     ([individual data-cases] ; data-cases should be :train or :test
      (the-actual-error-function individual data-cases false))
     ([individual data-cases print-outputs]
-     (let [behavior (atom '())
+     (let [behavior (atom '()) 
            errors (doall
                    (for [[[input1 input2 input3 input4] [correct-output]] (case data-cases
                                                                           :train train-cases
@@ -98,7 +105,7 @@
                            ; Error is float error rounded to 3 decimal places
                        (round-to-n-decimal-places
                         (if (number? result)
-                          (abs (- result correct-output)) ; distance from correct float
+                          (abs (-' result correct-output)) ; distance from correct float
                           1000000.0) ; penalty for no return value
                         3))))]
        (if (= data-cases :test)
@@ -163,11 +170,11 @@
    :output-stacks [:float]
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
-   :num-of-cases-in-sub-training-set 5
-   :num-of-edge-cases-in-sub-training-set 2 ; probably not 5 since there's only 1 input
+   :num-of-cases-in-sub-training-set 10
+   :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
 
-       ;; Human-driven counterexamples
+   ;; Human-driven counterexamples
    :counterexample-driven true
    :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
 

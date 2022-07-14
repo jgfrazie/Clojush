@@ -73,7 +73,7 @@
   [inputs]
   (map (fn [in]
          (vector in
-                 (vec (map + (first in) (second in)))))
+                 [(vec (map + (first in) (second in)))]))
        inputs))
 
 (defn vectors-summed-solver
@@ -92,7 +92,7 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[[input1 input2] correct-output] (case data-cases
+                     (for [[[input1 input2] [correct-output]] (case data-cases
                                                               :train train-cases
                                                               :test test-cases
                                                               data-cases)]
@@ -165,7 +165,12 @@
   {:error-function (make-vectors-summed-error-function-from-cases (first vectors-summed-train-and-test-cases)
                                                                   (second vectors-summed-train-and-test-cases))
    :training-cases (first vectors-summed-train-and-test-cases)
+
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-in-sub-training-set 10
+   :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
+
    :atom-generators vectors-summed-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
@@ -176,12 +181,26 @@
    :genetic-operator-probabilities {:alternation 0.2
                                     :uniform-mutation 0.2
                                     :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5
-                                    }
-   :oracle-function vectors-summed-solver
-   :input-parameterization [(cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))
-                            (cag/create-new-parameter :vector_integer 0 50 (cag/create-new-parameter :integer -1000 1000))]
+                                    [:alternation :uniform-mutation] 0.5}
+
+   ;; Human-driven counterexamples
+   :counterexample-driven true
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :max-num-of-cases-added-from-edge 5
+   :num-of-cases-added-from-random 5
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
+   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-added-from-branch-coverage 5
+   :input-parameterization [(cag/create-new-parameter :vector_integer 50 50 (cag/create-new-parameter :integer -1000 1000))
+                            (cag/create-new-parameter :vector_integer 50 50 (cag/create-new-parameter :integer -1000 1000))]
    :output-stacks [:vector_integer]
+   :oracle-function vectors-summed-solver
+
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
@@ -189,5 +208,4 @@
    :problem-specific-initial-report vectors-summed-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :max-error 1000000000
-   })
+   :max-error 1000000000})
