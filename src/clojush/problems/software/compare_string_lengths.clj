@@ -12,23 +12,22 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
-        [clojure.math numeric-tower combinatorics]
-        )
+        [clojure.math numeric-tower combinatorics])
   (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def csl-atom-generators
   (concat (list
-            (fn [] (lrand-nth (list true false))) ;Boolean ERC
+           (fn [] (lrand-nth (list true false))) ;Boolean ERC
             ;;; end ERCs
-            (tag-instruction-erc [:integer :boolean :string :exec] 1000)
-            (tagged-instruction-erc 1000)
+           (tag-instruction-erc [:integer :boolean :string :exec] 1000)
+           (tagged-instruction-erc 1000)
             ;;; end tag ERCs
-            'in1
-            'in2
-            'in3
+           'in1
+           'in2
+           'in3
             ;;; end input instructions
-            )
+           )
           (registered-for-stacks [:integer :boolean :string :exec])))
 
 
@@ -73,41 +72,40 @@
    lenth(in1) < length(in2) < length(in3), 
    and false otherwise."
   [in1 in2 in3]
-  (let [input (vector in1 in2 in3)] 
+  (let [input (vector in1 in2 in3)]
     (apply < (map count input))))
 
 (defn make-compare-string-lengths-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-csl-error-function
     ([individual]
-      (the-actual-csl-error-function individual :train))
+     (the-actual-csl-error-function individual :train))
     ([individual data-cases] ;; data-cases should be :train or :test
      (the-actual-csl-error-function individual data-cases false))
     ([individual data-cases print-outputs]
-      (let [behavior (atom '())
-            errors (doall
-                     (for [[[input1 input2 input3] correct-output] (case data-cases
-                                                                     :train train-cases
-                                                                     :test test-cases
-                                                                     data-cases)]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)))
-                             result (top-item :boolean final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+     (let [behavior (atom '())
+           errors (doall
+                   (for [[[input1 input2 input3] correct-output] (case data-cases
+                                                                   :train train-cases
+                                                                   :test test-cases
+                                                                   data-cases)]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input3 :input)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)))
+                           result (top-item :boolean final-state)]
+                       (when print-outputs
+                         (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
                          ; Record the behavior
-                         (swap! behavior conj result)
+                       (swap! behavior conj result)
                          ; Error is boolean error
-                         (if (= result correct-output)
-                           0
-                           1))))]
-        (if (= data-cases :test)
-          (assoc individual :test-errors errors)
-          (assoc individual :behaviors @behavior :errors errors)
-          )))))
+                       (if (= result correct-output)
+                         0
+                         1))))]
+       (if (= data-cases :test)
+         (assoc individual :test-errors errors)
+         (assoc individual :behaviors @behavior :errors errors))))))
 
 (defn get-compare-string-lengths-train-and-test
   "Returns the train and test cases."
@@ -134,7 +132,7 @@
   (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
-    (printf ";; -*- Compare String Lengths problem report - generation %s\n" generation)(flush)
+    (printf ";; -*- Compare String Lengths problem report - generation %s\n" generation) (flush)
     (println "Test total error for best:" best-total-test-error)
     (println (format "Test mean error for best: %.5f" (double (/ best-total-test-error (count best-test-errors)))))
     (when (zero? (:total-error best))
@@ -145,8 +143,7 @@
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
     (error-function best :train true)
-    (println ";;******************************")
-    )) ;; To do validation, could have this function return an altered best individual
+    (println ";;******************************"))) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
        ;; set. Would need a third category of data cases, or a defined split of training cases.
 

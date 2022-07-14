@@ -78,9 +78,9 @@
      (let [behavior (atom '())
            errors (doall
                    (for [[[input1 input2 input3 input4] [correct-output]] (case data-cases
-                                                                          :train train-cases
-                                                                          :test test-cases
-                                                                          data-cases)]
+                                                                            :train train-cases
+                                                                            :test test-cases
+                                                                            data-cases)]
                      (let [final-state (run-push (:program individual)
                                                  (->> (make-push-state)
                                                       (push-item input4 :input)
@@ -143,8 +143,7 @@
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
     (error-function best :train true)
-    (println ";;******************************")
-    )) ; To do validation, could have this function return an altered best individual
+    (println ";;******************************"))) ; To do validation, could have this function return an altered best individual
        ; with total-error > 0 if it had error of zero on train but not on validation
        ; set. Would need a third category of data cases, or a defined split of training cases.
 

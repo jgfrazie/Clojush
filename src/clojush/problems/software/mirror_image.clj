@@ -209,7 +209,7 @@
                                     :uniform-close-mutation 0.1
                                     [:alternation :uniform-mutation] 0.5}
 
-    ;; Human-driven counterexamples
+   ;; Human-driven counterexamples
    :counterexample-driven true
    :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
 

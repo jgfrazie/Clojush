@@ -73,7 +73,7 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
-  (map #(vector [%] 
+  (map #(vector [%]
                 [(.lastIndexOf % 0)])
        inputs))
 
@@ -94,9 +94,9 @@
      (let [behavior (atom '())
            errors (doall
                    (for [[[input] [correct-output]] (case data-cases
-                                                  :train train-cases
-                                                  :test test-cases
-                                                  data-cases)]
+                                                      :train train-cases
+                                                      :test test-cases
+                                                      data-cases)]
                      (let [final-state (run-push (:program individual)
                                                  (->> (make-push-state)
                                                       (push-item input :input)))
@@ -197,7 +197,7 @@
    :num-of-cases-added-from-output-selection 5
    :num-of-cases-used-for-branch-coverage 1000
    :num-of-cases-added-from-branch-coverage 5
-   
+
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
