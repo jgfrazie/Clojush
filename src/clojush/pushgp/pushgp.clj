@@ -338,7 +338,8 @@
                                                         (:training-cases @push-argmap)
                                                         (:input-parameterization @push-argmap)
                                                         (:num-of-edge-cases-in-sub-training-set @push-argmap)
-                                                        (:oracle-function @push-argmap))))
+                                                        (:oracle-function @push-argmap)
+                                                        (:input-constrains @push-argmap))))
      (initial-report @push-argmap) ;; Print the inital report
      (r/uuid! (:run-uuid @push-argmap))
      (print-params (r/config-data! [:argmap] (dissoc @push-argmap :run-uuid)))

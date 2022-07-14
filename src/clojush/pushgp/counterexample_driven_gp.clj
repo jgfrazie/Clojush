@@ -159,14 +159,26 @@
   "Will be mapped over all counterexample types to generate cases."
   [counterexample-type best
    {:keys [training-cases input-parameterization
-           num-of-cases-added-from-random max-num-of-cases-added-from-edge]
+           num-of-cases-added-from-random max-num-of-cases-added-from-edge input-constrains]
     :as argmap}]
   (case counterexample-type
     :hard-coded training-cases
-    :randomly-generated (cag/generate-random-cases input-parameterization num-of-cases-added-from-random)
-    :edge-cases (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge)
-    :selecting-new-cases-based-on-outputs (interesting/choose-inputs-based-on-output-analysis best argmap)
-    :branch-coverage-test (interesting/sort-cases-by-trace-the-second-whole best argmap)
+    :randomly-generated (let [random-cases (cag/generate-random-cases input-parameterization num-of-cases-added-from-random)]
+                          (if (= input-constrains "last-index-of-zero")
+                            (interesting/adding-zero-to-input-vector random-cases)
+                            random-cases))
+    :edge-cases (let [edge-cases (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge)]
+                  (if (= input-constrains "last-index-of-zero")
+                    (interesting/adding-zero-to-input-vector edge-cases)
+                    edge-cases))
+    :selecting-new-cases-based-on-outputs (let [output-analysis-cases (interesting/choose-inputs-based-on-output-analysis best argmap)]
+                                            (if (= input-constrains "last-index-of-zero")
+                                              (interesting/adding-zero-to-input-vector output-analysis-cases)
+                                              output-analysis-cases))
+    :branch-coverage-test (let [branch-coverage-cases (interesting/sort-cases-by-trace-the-second-whole best argmap)]
+                            (if (= input-constrains "last-index-of-zero")
+                              (interesting/adding-zero-to-input-vector branch-coverage-cases)
+                              branch-coverage-cases))
     :else (throw (str "Unrecognized option for :counterexample-driven-case-generators: "
                       counterexample-type))))
 

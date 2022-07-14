@@ -163,26 +163,40 @@
                                         {:type :float :range {:lower -9998 :upper 9998}}
                                         {:type :float :range {:lower -9998 :upper 9998}}]
                                        5))
-  (def caca (forming-input-output-sets [{:type :string
-                                         :range {:lower 2
-                                                 :upper 9998
-                                                 :available-characters "-_abcdefghijklmnopqrstuvwxyz"}}]
+  (def caca (forming-input-output-sets [{:type :vectorof :range {:lower 1 :upper 50} :element-type :integer :element-range {:lower -50 :upper 50}}]
                                        2))
+  caca
+  (map (fn [pair]
+         (vector (conj (first (first pair)) 0)
+                 [])) caca)
   (violet's-solver "oefq-a-z")
+  (conj '(1) 0)
+  (cag/generate-random-cases [{:type :vectorof :range {:lower 1 :upper 50} :element-type :integer :element-range {:lower -50 :upper 50}}] 2)
+  (def lala '([[1 2]] [3 4]))
+  (conj (first (first lala)) 0)
   )
+
+(defn adding-zero-to-input-vector
+  [input-output-pairs]
+  (map (fn [pair]
+         (vector (vector (conj (first (first pair)) 0))
+                 [])) input-output-pairs))
 
 (defn selecting-sub-training-cases
   [sub-training-cases-selection num-of-cases-in-sub-training-cases 
    original-training-set input-parameterization num-of-edge-cases-in-sub-training-set
-   oracle-function]
+   oracle-function input-constrains]
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
     :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
+                       edited-edge-case (if (= "last-index-of-zero" input-constrains)
+                                          (adding-zero-to-input-vector edge-cases)
+                                          edge-cases)
                        num-edge-cases (count edge-cases)]
-                  (concat (map (fn [pair]
-                                 (let [input (first pair)]
-                                   (vector input (vector (apply oracle-function input))))) edge-cases)
-                          (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
+                   (concat (map (fn [pair]
+                                  (let [input (first pair)]
+                                    (vector input (vector (apply oracle-function input))))) edited-edge-case)
+                           (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
     :else "NOO"))
 
 (defn run-best-on-all-cases

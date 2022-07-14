@@ -184,7 +184,7 @@
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
-   :oracle-function violet's-solver
+   :oracle-function camel-case-solver
    :input-parameterization [(cag/create-new-parameter :string 2 9998 [:lower-case] ["-" "_"])]
    :output-stacks [:string]
 
