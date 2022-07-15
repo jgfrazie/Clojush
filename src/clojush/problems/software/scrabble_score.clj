@@ -226,6 +226,7 @@
    :parent-selection :lexicase
    :genetic-operator-probabilities {:uniform-addition-and-deletion 1.0}
    :uniform-addition-and-deletion-rate 0.09
+   
    :problem-specific-report scrabble-score-report
    :problem-specific-initial-report scrabble-score-initial-report
    :report-simplifications 0

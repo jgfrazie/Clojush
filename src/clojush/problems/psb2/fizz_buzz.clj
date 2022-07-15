@@ -78,17 +78,13 @@
 (defn fizz-buzz-solver
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
-  [inputs]
-  (vec (let [answer (map (fn [in]
-                      (vector in
-                              (cond
-                                (and (= (mod in 3) 0)
-                                     (= (mod in 5) 0)) "FizzBuzz"
-                                (= (mod in 3) 0) "Fizz"
-                                (= (mod in 5) 0) "Buzz"
-                                :else (str in))))
-                    inputs)]
-    (map #(second %) answer))))
+  [in]
+  (cond
+    (and (= (mod in 3) 0)
+         (= (mod in 5) 0)) "FizzBuzz"
+    (= (mod in 3) 0) "Fizz"
+    (= (mod in 5) 0) "Buzz"
+    :else (str in)))
 
 (comment
   (create-test-cases [3 5 15])
@@ -108,7 +104,7 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors (doall
-                   (for [[[[input1]] [[correct-output]]] (case data-cases
+                   (for [[[input1] [correct-output]] (case data-cases
                                                            :train train-cases
                                                            :test test-cases
                                                            data-cases)]

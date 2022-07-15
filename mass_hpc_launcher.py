@@ -10,6 +10,8 @@ problems = [
             "software.last-index-of-zero",
             "software.compare-string-lengths",
             "software.double-letters",
+            "software.x-word-lines", #DONE
+            "software.negative-to-zero",
             "software.scrabble-score",
             "software.count-odds",
             #  "software.replace-space-with-newline",
@@ -19,8 +21,6 @@ problems = [
             # "software.super-anagrams",
             # "software.sum-of-squares",
             # "software.vectors-summed",
-            # "software.x-word-lines",
-            # "software.negative-to-zero",
             # "software.checksum",
             # "software.digits",
             # "software.grade",
@@ -28,12 +28,14 @@ problems = [
             # "software.smallest",
             # "software.syllables"
 
+    ###### NOTE: GO CHECK THE num-of-cases-in-sub-training-set and num-of-edge-cases-in-sub-training-set for all problems when done
+
             ### PSB2
             "psb2.fuel-cost",
-            "psb2.fizz-buzz",
-            "psb2.gcd",
+            "psb2.fizz-buzz", #DONE
+            "psb2.gcd", #DONE
             "psb2.paired-digits",
-            "psb2.snow-day",
+            "psb2.snow-day", #DONE
             "psb2.camel-case",
             # "psb2.find-pair",
 ]

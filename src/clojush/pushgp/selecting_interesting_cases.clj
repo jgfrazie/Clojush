@@ -172,11 +172,12 @@
   "Runs the program best on all generated cases, and returns a list of the
   behaviors/results of the program on those cases."
   [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
-  (doall (for [[[input] [correct-output]] all-cases]
-           (let [inputs (if (or single-vector-input
+  (doall (for [[input [correct-output]] all-cases]
+           (let [inputs input #_(if (or single-vector-input
                                 (not (coll? input)))
                           (list input)
                           input)
+                 aaaaa (prn "HERE IS INPUT:" inputs)
                  start-state (reduce (fn [push-state in]
                                        (clojush.pushstate/push-item in :input push-state))
                                      (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))

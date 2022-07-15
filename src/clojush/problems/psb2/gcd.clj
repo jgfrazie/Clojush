@@ -57,13 +57,11 @@
        inputs))
 
 (defn gcd-solver
-  [inputs]
-  (let [[in1 in2] inputs]
-    (loop [a in1 b in2]
-      (if (zero? b) a
-          (recur b (mod a b))))))
+  [in1 in2]
+  (loop [a in1 b in2]
+    (if (zero? b) a
+        (recur b (mod a b)))))
 
-(gcd-solver [1 2])
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -76,7 +74,7 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors (doall
-                   (for [[[[input1 input2]] [correct-output]] (case data-cases
+                   (for [[[input1 input2] [correct-output]] (case data-cases
                                                                 :train train-cases
                                                                 :test test-cases
                                                                 data-cases)]
