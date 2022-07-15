@@ -65,13 +65,13 @@
    [input output]."
   [inputs]
   (map (fn [in]
-         (vector in
-                 (cond
+         (vector [[in]]
+                 [[(cond
                    (and (= (mod in 3) 0)
                         (= (mod in 5) 0)) "FizzBuzz"
                    (= (mod in 3) 0) "Fizz"
                    (= (mod in 5) 0) "Buzz"
-                   :else (str in))))
+                   :else (str in))]]))
        inputs))
 
 ; Oracle function
@@ -79,17 +79,23 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
-  (apply (fn [& pairs]
-           (for [pair pairs]
-             (second pair))) (map (fn [in]
-                         (vector in
-                                 (cond
-                                   (and (= (mod in 3) 0)
-                                        (= (mod in 5) 0)) "FizzBuzz"
-                                   (= (mod in 3) 0) "Fizz"
-                                   (= (mod in 5) 0) "Buzz"
-                                   :else (str in))))
-                       inputs)))
+  (vec (let [answer (map (fn [in]
+                      (vector in
+                              (cond
+                                (and (= (mod in 3) 0)
+                                     (= (mod in 5) 0)) "FizzBuzz"
+                                (= (mod in 3) 0) "Fizz"
+                                (= (mod in 5) 0) "Buzz"
+                                :else (str in))))
+                    inputs)]
+    (map #(second %) answer))))
+
+(comment
+  (create-test-cases [3 5 15])
+  (fizz-buzz-solver [3 5 15])
+  
+  (for [[[[input]] [[output]]] (create-test-cases [3 5 15])]
+    (println input " ---- " output)))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -102,10 +108,10 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors (doall
-                   (for [[input1 correct-output] (case data-cases
-                                                   :train train-cases
-                                                   :test test-cases
-                                                   data-cases)]
+                   (for [[[[input1]] [[correct-output]]] (case data-cases
+                                                           :train train-cases
+                                                           :test test-cases
+                                                           data-cases)]
                      (let [final-state (run-push (:program individual)
                                                  (->> (make-push-state)
                                                       (push-item input1 :input)))
@@ -173,8 +179,28 @@
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
    :oracle-function fizz-buzz-solver
-   :input-parameterization [(cag/create-new-parameter :integer -32560 32559)]
+   :input-parameterization [(cag/create-new-parameter :vector_integer 1 999 (cag/create-new-parameter :integer 1 999999999))]
    :output-stacks [:string]
+
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-in-sub-training-set 10
+   :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
+   :sub-training-cases '()
+
+    ;; Human-driven counterexamples
+   :counterexample-driven true
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :max-num-of-cases-added-from-edge 5
+   :num-of-cases-added-from-random 5
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
+   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-added-from-branch-coverage 5
+
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
