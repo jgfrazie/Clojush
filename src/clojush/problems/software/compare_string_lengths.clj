@@ -64,7 +64,7 @@
    [input output]."
   [inputs]
   (map #(vector %
-                (apply < (map count %)))
+                [(apply < (map count %))])
        inputs))
 
 (defn csl-solver
@@ -85,7 +85,7 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors (doall
-                   (for [[[input1 input2 input3] correct-output] (case data-cases
+                   (for [[[input1 input2 input3] [correct-output]] (case data-cases
                                                                    :train train-cases
                                                                    :test test-cases
                                                                    data-cases)]

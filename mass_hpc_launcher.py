@@ -7,11 +7,11 @@ problems = [
             #"software.number-io",
             #  "software.small-or-large",
             #  "software.for-loop-index",
-            "software.last-index-of-zero",
-            "software.compare-string-lengths",
+            # "software.last-index-of-zero", ### TMH: Not adding zeros to added cases for some reason
+            "software.compare-string-lengths", #DONE
             "software.double-letters",
             "software.x-word-lines", #DONE
-            "software.negative-to-zero",
+            "software.negative-to-zero", #DONE
             "software.scrabble-score",
             "software.count-odds",
             #  "software.replace-space-with-newline",
@@ -28,6 +28,7 @@ problems = [
             # "software.smallest",
             # "software.syllables"
 
+    ###### NOTE: Need to check at aaaaa in interesting
     ###### NOTE: GO CHECK THE num-of-cases-in-sub-training-set and num-of-edge-cases-in-sub-training-set for all problems when done
 
             ### PSB2
