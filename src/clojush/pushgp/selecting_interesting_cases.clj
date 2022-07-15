@@ -131,21 +131,13 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets training-set 2)
-  
-  )
+  (forming-input-output-sets training-set 2))
 
 (defn adding-zero-to-input-vector
   [input-output-pairs]
   (map (fn [pair]
-         (let [c (count (first (first pair)))]
-           (-> pair
-               first
-               first
-               (assoc (rand-int c) 0)
-               vector
-               (vector []))))
-       input-output-pairs))
+         (vector (vector (shuffle (conj (first (first pair)) 0)))
+                 [])) input-output-pairs))
 
 (defn check-for-input-constraints
   [input-constrains cases]
@@ -174,9 +166,9 @@
   [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
   (doall (for [[input [correct-output]] all-cases]
            (let [inputs input #_(if (or single-vector-input
-                                (not (coll? input)))
-                          (list input)
-                          input)
+                                        (not (coll? input)))
+                                  (list input)
+                                  input)
                  aaaaa (prn "HERE IS INPUT:" inputs)
                  start-state (reduce (fn [push-state in]
                                        (clojush.pushstate/push-item in :input push-state))
@@ -259,9 +251,9 @@
                  (map (fn [training-set-output]
                         (let [training-output (getting-input-outside-the-vector training-set-output)
                               new-new-output (getting-input-outside-the-vector new-output)]
-                         (if (keyword? new-new-output)
-                           1000
-                           (Math/abs (-' training-output new-new-output))))) 
+                          (if (keyword? new-new-output)
+                            1000
+                            (Math/abs (-' training-output new-new-output)))))
                       current-training-set-output)) new-output-seq)
 
           (= output-type-1 :boolean)
@@ -269,10 +261,10 @@
                  (map (fn [training-set-output]
                         (let [training-output (getting-input-outside-the-vector training-set-output)
                               new-new-output (getting-input-outside-the-vector new-output)]
-                         (if (keyword? new-new-output) 
-                           1000
-                           (Math/abs (-' (if (identity training-output) 1 0)
-                                         (if (identity new-new-output) 1 0)))))) 
+                          (if (keyword? new-new-output)
+                            1000
+                            (Math/abs (-' (if (identity training-output) 1 0)
+                                          (if (identity new-new-output) 1 0))))))
                       current-training-set-output)) new-output-seq)
 
           (or (= output-type-1 :string) (= output-type-1 :output))
@@ -280,9 +272,9 @@
                  (map (fn [training-set-output]
                         (let [checked-new (getting-input-outside-the-vector new-output)
                               checked-training (getting-input-outside-the-vector training-set-output)]
-                         (if (keyword? checked-new)
-                           1000
-                           (util/levenshtein-distance checked-training checked-new)))) current-training-set-output)) new-output-seq)
+                          (if (keyword? checked-new)
+                            1000
+                            (util/levenshtein-distance checked-training checked-new)))) current-training-set-output)) new-output-seq)
 
           :else
           (map (fn [new-output]
