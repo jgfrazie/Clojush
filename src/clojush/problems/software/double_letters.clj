@@ -72,12 +72,12 @@
    [input output]."
   [inputs]
   (map (fn [in]
-         (vector in
-                 (apply str (flatten (map #(cond
+         (vector [in]
+                 [(apply str (flatten (map #(cond
                                              (Character/isLetter %) (list % %)
                                              (= % \!) (list % % %)
                                              :else %)
-                                          in)))))
+                                          in)))]))
        inputs))
 
 (defn double-letters-solver
@@ -102,7 +102,7 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[input correct-output] (case data-cases
+                     (for [[[input] [correct-output]] (case data-cases
                                                     :train train-cases
                                                     :test test-cases
                                                     data-cases)]
@@ -170,28 +170,40 @@
   {:error-function (make-double-letters-error-function-from-cases (first double-letters-train-and-test-cases)
                                                                   (second double-letters-train-and-test-cases))
    :training-cases (first double-letters-train-and-test-cases)
+
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-in-sub-training-set 5
+   :num-of-edge-cases-in-sub-training-set 2 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
    :atom-generators double-letters-atom-generators
-   :max-points 3200
-   :max-genome-size-in-initial-program 400
-   :evalpush-limit 1600
+
+    ;; Human-driven counterexamples
+   :counterexample-driven true
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :max-num-of-cases-added-from-edge 2
+   :num-of-cases-added-from-random 8
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
+   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-added-from-branch-coverage 5
+   :input-parameterization [(cag/create-new-parameter :string 0 20 [:digits :lower-case :upper-case :specials] [])]
+   :output-stacks [:string]
+   :oracle-function double-letters-solver
+
+   :max-points 2000
+   :max-genome-size-in-initial-program 250
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase
-   :genetic-operator-probabilities {:alternation 0.2
-                                    :uniform-mutation 0.2
-                                    :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5
-                                    }
-   :oracle-function double-letters-solver
-   :input-parameterization (cag/create-new-parameter :string 1 9999 [:digits :lower-case :upper-case :specials] [])
-   :output-stacks [:string]
-   :alternation-rate 0.01
-   :alignment-deviation 10
-   :uniform-mutation-rate 0.01
+   :genetic-operator-probabilities {:uniform-addition-and-deletion 1.0}
+   :uniform-addition-and-deletion-rate 0.09
    :problem-specific-report double-letters-report
    :problem-specific-initial-report double-letters-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :max-error 5000
-   })
+   :max-error 5000})

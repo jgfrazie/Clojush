@@ -8,7 +8,7 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower])
-  :require [clojush.pushgp.case-auto-generation :as cag])
+  (:require [clojush.pushgp.case-auto-generation :as cag]))
 
 ; Atom generators
 (def atom-generators
@@ -48,34 +48,23 @@
    [(fn [] (vector (rand-int 21) (rand 20) (rand 10) (rand))) 188 2000] ; Random cases
    ])
 
-; Helper function for error function
 (defn create-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
-   [[input1 input2 input3 input4] output]."
+   [[input1 input2 input3 input4] [output]]."
   [inputs]
   (map #(vector %
-                (loop [time (first %)
-                       total (second %)]
-                  (if (= time 0)
-                    total
-                    (recur (dec time)
-                           (+ (* total (- 1 (last %)))
-                              (nth % 2))))))
+                (vector (loop [time (first %)
+                               total (second %)]
+                          (if (= time 0)
+                            total
+                            (recur (dec time)
+                                   (+' (*' total (- 1 (last %)))
+                                       (nth % 2)))))))
        inputs))
 
 (defn snow-day-solver
-  [inputs]
-  (apply (fn [& pairs]
-           (for [pair pairs]
-             (second pair))) (map #(vector %
-                (loop [time (first %)
-                       total (second %)]
-                  (if (= time 0)
-                    total
-                    (recur (dec time)
-                           (+ (* total (- 1 (last %)))
-                              (nth % 2))))))
-       inputs)))
+  [input1 input2 input3 input4]
+  (first (second (first (create-test-cases (vector (vector input1 input2 input3 input4)))))))
 
 (defn make-error-function-from-cases
   "Creates and returns the error function based on the train/test cases."
@@ -88,10 +77,10 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors (doall
-                   (for [[[input1 input2 input3 input4] correct-output] (case data-cases
-                                                                          :train train-cases
-                                                                          :test test-cases
-                                                                          data-cases)]
+                   (for [[[input1 input2 input3 input4] [correct-output]] (case data-cases
+                                                                            :train train-cases
+                                                                            :test test-cases
+                                                                            data-cases)]
                      (let [final-state (run-push (:program individual)
                                                  (->> (make-push-state)
                                                       (push-item input4 :input)
@@ -154,8 +143,7 @@
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
     (error-function best :train true)
-    (println ";;******************************")
-    )) ; To do validation, could have this function return an altered best individual
+    (println ";;******************************"))) ; To do validation, could have this function return an altered best individual
        ; with total-error > 0 if it had error of zero on train but not on validation
        ; set. Would need a third category of data cases, or a defined split of training cases.
 
@@ -163,14 +151,35 @@
 ; Define the argmap
 (def argmap
   {:error-function (make-error-function-from-cases (first train-and-test-cases)
-                                                            (second train-and-test-cases))
+                                                   (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
+
    :oracle-function snow-day-solver
-   :input-parameterization [(cag/create-new-parameter :integer 1 9998)
-                            (cag/create-new-parameter :float -9998 9998)
-                            (cag/create-new-parameter :float -9998 9998)
-                            (cag/create-new-parameter :float -9998 9998)]
+   :input-parameterization [(cag/create-new-parameter :integer 1 20)
+                            (cag/create-new-parameter :float 0.0 20.0)
+                            (cag/create-new-parameter :float 0.0 10.0)
+                            (cag/create-new-parameter :float 0.0 1.0)]
    :output-stacks [:float]
+
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-in-sub-training-set 5
+   :num-of-edge-cases-in-sub-training-set 2
+   :sub-training-cases '()
+
+       ;; Human-driven counterexamples
+   :counterexample-driven true
+   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
+
+   ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
+   :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
+
+   :max-num-of-cases-added-from-edge 5
+   :num-of-cases-added-from-random 5
+   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-added-from-output-selection 5
+   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-added-from-branch-coverage 5
+
    :atom-generators atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
@@ -178,13 +187,8 @@
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase
-   :genetic-operator-probabilities {:alternation 0.2
-                                    :uniform-mutation 0.2
-                                    :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5}
-   :alternation-rate 0.01
-   :alignment-deviation 10
-   :uniform-mutation-rate 0.01
+   :genetic-operator-probabilities {:uniform-addition-and-deletion 1.0}
+   :uniform-addition-and-deletion-rate 0.09
    :problem-specific-report custom-report
    :problem-specific-initial-report initial-report
    :report-simplifications 0

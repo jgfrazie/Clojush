@@ -23,8 +23,8 @@
   ([case-to-be-added input-type input-range input-lower]
    (conj case-to-be-added
          (if (= input-type :integer)
-           (+ (rand-int input-range) input-lower)
-           (+ (rand input-range) input-lower)))))
+           (+' (rand-int input-range) input-lower)
+           (+' (rand input-range) input-lower)))))
 
 (defn add-edge-string-cases
   "Helper functions to added a new edge case with string data type
@@ -53,46 +53,41 @@
    @param a-training-case the information of the inputs in the training set
    @return a vector of vectors where each vector contains the extreme values of a single input"
   [a-training-case]
-  (reduce (fn [result-vec input]
-            (let [input-type (get input :type)
-                  input-range (get input :range)]
-              (cond (or (= input-type :integer) (= input-type :float))
-                    (let [edge-case-1 (add-edge-number-cases [] input-range :lower)]
-                      (conj result-vec
-                            (add-edge-number-cases edge-case-1 input-range :upper)))
+  (map (fn [input]
+         (let [input-type (get input :type)
+               input-range (get input :range)]
+           (cond (or (= input-type :integer) (= input-type :float))
+                 (let [edge-case-1 (add-edge-number-cases [] input-range :lower)]
+                   (add-edge-number-cases edge-case-1 input-range :upper))
 
-                    (= input-type :string)
-                    (let [all-possible-chars (get input-range :available-characters)
-                          lower (get input-range :lower)
-                          upper (get input-range :upper)
-                          edge-case-1 (add-edge-string-cases [] lower all-possible-chars)]
-                      (conj result-vec
-                            (add-edge-string-cases edge-case-1 upper all-possible-chars)))
+                 (= input-type :string)
+                 (let [all-possible-chars (get input-range :available-characters)
+                       lower (get input-range :lower)
+                       upper (get input-range :upper)
+                       edge-case-1 (add-edge-string-cases [] lower all-possible-chars)]
+                   (add-edge-string-cases edge-case-1 upper all-possible-chars))
 
-                    :else
-                    (let [smallest-vector (get input-range :lower)
-                          largest-vector (get input-range :upper)
-                          element-type (get input :element-type)
-                          element-upper (get-in input [:element-range :upper])
-                          element-lower (get-in input [:element-range :lower])
-                          element-range (- element-upper element-lower)
-                          element-characters (get-in input [:element-range :available-characters])]
-                      (if (= element-type :string)
-                        (conj result-vec
-                              (formating-vectorof-input smallest-vector
-                                                        largest-vector
-                                                        #(add-edge-string-cases []
-                                                                                (+ (rand-int element-range) element-lower)
-                                                                                element-characters)))
-                        (conj result-vec
-                              (formating-vectorof-input smallest-vector
-                                                        largest-vector
-                                                        #(add-edge-number-cases []
-                                                                                element-type
-                                                                                element-range
-                                                                                element-lower))))))))
-          []
-          a-training-case))
+                 :else
+                 (let [smallest-vector (get input-range :lower)
+                       largest-vector (get input-range :upper)
+                       element-type (get input :element-type)
+                       element-upper (get-in input [:element-range :upper])
+                       element-lower (get-in input [:element-range :lower])
+                       element-range (- element-upper element-lower)
+                       element-characters (get-in input [:element-range :available-characters])]
+                   (if (= element-type :string)
+                     (formating-vectorof-input smallest-vector
+                                               largest-vector
+                                               #(add-edge-string-cases []
+                                                                       (+ (rand-int element-range) element-lower)
+                                                                       element-characters))
+                     (formating-vectorof-input smallest-vector
+                                               largest-vector
+                                               #(add-edge-number-cases []
+                                                                       element-type
+                                                                       element-range
+                                                                       element-lower)))))))
+       a-training-case))
 
 (defn swap-it
   "Swap the values in the first vector with the values in the second vector at corresponding indices
@@ -112,15 +107,15 @@
      @return a list of vectors where each vector contains a input-output pair(fake output is [])"
   [vector-of-inputs max-num-of-cases-added-from-edge]
   (take max-num-of-cases-added-from-edge
-        (map #(vector % [])
-             (let [edge (apply mapv
-                               vector
-                               (generate-edge-cases vector-of-inputs))
-                   edge-1 (get edge 0)
-                   edge-2 (get edge 1)
-                   cols (count (first edge))
-                   subsets (combo/subsets (range cols))]
-               (map #(swap-it edge-1 edge-2 %) subsets)))))
+        (shuffle (map #(vector % [])
+                      (let [edge (apply mapv
+                                        vector
+                                        (generate-edge-cases vector-of-inputs))
+                            edge-1 (get edge 0)
+                            edge-2 (get edge 1)
+                            cols (count (first edge))
+                            subsets (combo/subsets (range cols))]
+                        (map #(swap-it edge-1 edge-2 %) subsets))))))
 
 (comment
   ;; edge-cases test
@@ -136,25 +131,48 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets training-set 6))
+  (forming-input-output-sets training-set 2)
+  
+  )
+
+(defn adding-zero-to-input-vector
+  [input-output-pairs]
+  (map (fn [pair]
+         (let [c (count (first (first pair)))]
+           (-> pair
+               first
+               first
+               (assoc (rand-int c) 0)
+               vector
+               (vector []))))
+       input-output-pairs))
+
+(defn check-for-input-constraints
+  [input-constrains cases]
+  (if (= input-constrains "last-index-of-zero")
+    (adding-zero-to-input-vector cases)
+    cases))
 
 (defn selecting-sub-training-cases
-  [sub-training-cases-selection num-of-cases-in-sub-training-cases original-training-set & input-parameterization]
+  [sub-training-cases-selection num-of-cases-in-sub-training-cases
+   original-training-set input-parameterization num-of-edge-cases-in-sub-training-set
+   oracle-function input-constrains]
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
-    :intelligent (let [edge-cases (map #(vector % []) (apply mapv
-                                                             vector
-                                                             (generate-edge-cases input-parameterization)))]
-                  (if (> 1 num-of-cases-in-sub-training-cases)
-                    edge-cases
-                    (take num-of-cases-in-sub-training-cases edge-cases))) ; need input parameter 
+    :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
+                       edited-edge-case (check-for-input-constraints input-constrains edge-cases)
+                       num-edge-cases (count edge-cases)]
+                   (concat (map (fn [pair]
+                                  (let [input (first pair)]
+                                    (vector input (vector (apply oracle-function input))))) edited-edge-case)
+                           (take (- num-of-cases-in-sub-training-cases num-edge-cases) (shuffle original-training-set))))
     :else "NOO"))
 
 (defn run-best-on-all-cases
   "Runs the program best on all generated cases, and returns a list of the
   behaviors/results of the program on those cases."
   [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
-  (doall (for [[input correct-output] all-cases]
+  (doall (for [[[input] [correct-output]] all-cases]
            (let [inputs (if (or single-vector-input
                                 (not (coll? input)))
                           (list input)
@@ -164,7 +182,7 @@
                                      (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))
                                      (reverse inputs))
                  final-state (clojush.interpreter/run-push (:program best)
-                                       start-state)]
+                                                           start-state)]
                                         ; Need to handle it this way for problems with more than one output.
                                         ; Note: will break if problem requires multiple outputs from the same stack.
              (if (coll? output-stacks)
@@ -217,6 +235,12 @@
     (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff)
     (getting-inputs num-of-cases-added-from-branch-coverage sorted-indices random-cases)))
 
+(defn getting-input-outside-the-vector
+  [a-input]
+  (if (vector? a-input)
+    (first a-input)
+    a-input))
+
 (defn measure-output-difference
   "Gives a value that states the difference between the current training set 
    and the new generated input. The larger the value is, the more different two outputs are
@@ -228,21 +252,36 @@
    string difference: Levenshtein distance, with 0 indicating identity and 1 indicating no similarity
    vectorof difference: depends on the data type inside the vector"
   [current-training-set-output new-output-seq output-type]
-  (let [output-type-1 (nth output-type 0)] 
+  (let [output-type-1 (nth output-type 0)]
     (cond (or (= output-type-1 :integer) (= output-type-1 :float))
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (- training-set-output new-output))) current-training-set-output)) new-output-seq)
-          
+                        (let [training-output (getting-input-outside-the-vector training-set-output)
+                              new-new-output (getting-input-outside-the-vector new-output)]
+                         (if (keyword? new-new-output)
+                           1000
+                           (Math/abs (-' training-output new-new-output))))) 
+                      current-training-set-output)) new-output-seq)
+
           (= output-type-1 :boolean)
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (- (if training-set-output 1 0) (if new-output 1 0)))) current-training-set-output)) new-output-seq)
+                        (let [training-output (getting-input-outside-the-vector training-set-output)
+                              new-new-output (getting-input-outside-the-vector new-output)]
+                         (if (keyword? new-new-output) 
+                           1000
+                           (Math/abs (-' (if (identity training-output) 1 0)
+                                         (if (identity new-new-output) 1 0)))))) 
+                      current-training-set-output)) new-output-seq)
 
           (or (= output-type-1 :string) (= output-type-1 :output))
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (util/levenshtein-distance training-set-output new-output)) current-training-set-output)) new-output-seq)
+                        (let [checked-new (getting-input-outside-the-vector new-output)
+                              checked-training (getting-input-outside-the-vector training-set-output)]
+                         (if (keyword? checked-new)
+                           1000
+                           (util/levenshtein-distance checked-training checked-new)))) current-training-set-output)) new-output-seq)
 
           :else
           (map (fn [new-output]
@@ -291,10 +330,10 @@
   (let [random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
         best-results-on-all-cases (map first (run-best-on-all-cases best random-cases argmap))
         input-for-output-anlysis (output-analysis (map second sub-training-cases)
-                                                               best-results-on-all-cases
-                                                               random-cases
-                                                               (first output-stacks)
-                                                               num-of-cases-added-from-output-selection)]
+                                                  best-results-on-all-cases
+                                                  random-cases
+                                                  (first output-stacks)
+                                                  num-of-cases-added-from-output-selection)]
     input-for-output-anlysis))
 
 

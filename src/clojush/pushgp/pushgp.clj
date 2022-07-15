@@ -330,11 +330,16 @@
               (take (:counterexample-driven-number-of-initial-training-cases @push-argmap)
                     (lshuffle (:training-cases @push-argmap)))))
 
-     (when (and (= :simulated-human (:counterexample-driven-case-checker @push-argmap)) (empty? (:sub-training-cases @push-argmap)))
-       (swap! push-argmap assoc :sub-training-cases 
-              (interesting/selecting-sub-training-cases (:sub-training-cases-selection @push-argmap) 
-                                                        (:num-of-cases-in-sub-training-cases @push-argmap) 
-                                                        (:training-cases @push-argmap))))
+     (when (and (= :simulated-human (:counterexample-driven-case-checker @push-argmap))
+                (empty? (:sub-training-cases @push-argmap)))
+       (swap! push-argmap assoc :sub-training-cases
+              (interesting/selecting-sub-training-cases (:sub-training-cases-selection @push-argmap)
+                                                        (:num-of-cases-in-sub-training-set @push-argmap)
+                                                        (:training-cases @push-argmap)
+                                                        (:input-parameterization @push-argmap)
+                                                        (:num-of-edge-cases-in-sub-training-set @push-argmap)
+                                                        (:oracle-function @push-argmap)
+                                                        (:input-constrains @push-argmap))))
      (initial-report @push-argmap) ;; Print the inital report
      (r/uuid! (:run-uuid @push-argmap))
      (print-params (r/config-data! [:argmap] (dissoc @push-argmap :run-uuid)))

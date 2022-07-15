@@ -157,17 +157,25 @@
 
          :input-parameterization []
           ;; Information about inputs. Format: Vector containing maps, one per input
+         
+         :problem-specific-input-constraints nil
+          ;; Needs to be set if problem's inputs have specific constraints. For example,
+          ;; Last Index of Zero inputs must be vectors that contain at least one 0.
+          ;; See clojush.pushgp.selecting-interesting-cases for more info.
 
          :oracle-function nil
           ;; Oracle function used for simulating human-driven GP
-         
+
          :sub-training-cases-selection :random
           ;; the trick used to select initial sub training cases from the full training set 
           ;; :random, shuffle the whole training cases and take n cases
           ;; :intelligent, use output-analysis and edge cases generator from selecting-interesting-cases.clj to come up with a fairly good initial sub training set
 
-         :num-of-cases-in-sub-training-cases 5
+         :num-of-cases-in-sub-training-set 5
           ;; Number of cases in the initial sub training set
+
+         :num-of-edge-cases-in-sub-training-set 0
+          ;; Number of edge cases in the initial sub training set
 
          :num-of-cases-added-from-random 0
           ;; Number of random cases checked by user 
