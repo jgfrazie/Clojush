@@ -107,15 +107,15 @@
      @return a list of vectors where each vector contains a input-output pair(fake output is [])"
   [vector-of-inputs max-num-of-cases-added-from-edge]
   (take max-num-of-cases-added-from-edge
-        (map #(vector % [])
-             (let [edge (apply mapv
-                               vector
-                               (generate-edge-cases vector-of-inputs))
-                   edge-1 (get edge 0)
-                   edge-2 (get edge 1)
-                   cols (count (first edge))
-                   subsets (combo/subsets (range cols))]
-               (map #(swap-it edge-1 edge-2 %) subsets)))))
+        (shuffle (map #(vector % [])
+                      (let [edge (apply mapv
+                                        vector
+                                        (generate-edge-cases vector-of-inputs))
+                            edge-1 (get edge 0)
+                            edge-2 (get edge 1)
+                            cols (count (first edge))
+                            subsets (combo/subsets (range cols))]
+                        (map #(swap-it edge-1 edge-2 %) subsets))))))
 
 (comment
   ;; edge-cases test
@@ -249,21 +249,32 @@
     (cond (or (= output-type-1 :integer) (= output-type-1 :float))
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (-' (getting-input-outside-the-vector training-set-output)
-                                     (getting-input-outside-the-vector new-output)))) current-training-set-output)) new-output-seq)
+                        (let [training-output (getting-input-outside-the-vector training-set-output)
+                              new-new-output (getting-input-outside-the-vector new-output)]
+                         (if (keyword? new-new-output)
+                           1000
+                           (Math/abs (-' training-output new-new-output))))) 
+                      current-training-set-output)) new-output-seq)
 
           (= output-type-1 :boolean)
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (-' (if (getting-input-outside-the-vector training-set-output) 1 0) 
-                                     (if (getting-input-outside-the-vector new-output) 1 0)))) current-training-set-output)) new-output-seq)
+                        (let [training-output (getting-input-outside-the-vector training-set-output)
+                              new-new-output (getting-input-outside-the-vector new-output)]
+                         (if (keyword? new-new-output) 
+                           1000
+                           (Math/abs (-' (if (identity training-output) 1 0)
+                                         (if (identity new-new-output) 1 0)))))) 
+                      current-training-set-output)) new-output-seq)
 
           (or (= output-type-1 :string) (= output-type-1 :output))
           (map (fn [new-output]
                  (map (fn [training-set-output]
                         (let [checked-new (getting-input-outside-the-vector new-output)
                               checked-training (getting-input-outside-the-vector training-set-output)]
-                         (util/levenshtein-distance checked-training checked-new))) current-training-set-output)) new-output-seq)
+                         (if (keyword? checked-new)
+                           1000
+                           (util/levenshtein-distance checked-training checked-new)))) current-training-set-output)) new-output-seq)
 
           :else
           (map (fn [new-output]
