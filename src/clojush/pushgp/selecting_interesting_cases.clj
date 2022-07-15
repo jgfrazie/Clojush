@@ -136,7 +136,7 @@
 (defn adding-zero-to-input-vector
   [input-output-pairs]
   (map (fn [pair]
-         (vector (vector (conj (first (first pair)) 0))
+         (vector (vector (shuffle (conj (first (first pair)) 0)))
                  [])) input-output-pairs))
 
 (defn check-for-input-constraints
