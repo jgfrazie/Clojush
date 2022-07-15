@@ -12,7 +12,7 @@ problems = [#"number-io",
             #  "last-index-of-zero",
             # "vector-average",
             # "count-odds",
-            # "mirror-image",
+            "mirror-image",
             # "super-anagrams",
             # "sum-of-squares",
             # "vectors-summed",
@@ -23,7 +23,7 @@ problems = [#"number-io",
             # "digits",
             # "grade",
             # "median",
-            "smallest",
+            # "smallest",
             # "syllables"
 ]
 
