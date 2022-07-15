@@ -163,16 +163,8 @@
    :training-cases (first last-index-of-zero-train-and-test-cases)
    :problem-specific-input-constraints :last-index-of-zero
    :atom-generators last-index-of-zero-atom-generators
-   :max-points 1200
-   :max-genome-size-in-initial-program 150
-   :evalpush-limit 600
-   :population-size 1000
-   :max-generations 300
-   :parent-selection :lexicase
-   :genetic-operator-probabilities {:alternation 0.2
-                                    :uniform-mutation 0.2
-                                    :uniform-close-mutation 0.1
-                                    [:alternation :uniform-mutation] 0.5}
+
+
    :oracle-function last-index-of-zero-getter
    ;;need to add 0 to the vector or it will break
    :input-parameterization [(cag/create-new-parameter :vector_integer 1 50 (cag/create-new-parameter :integer -50 50))]
@@ -190,16 +182,21 @@
    ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
 
-   :max-num-of-cases-added-from-edge 5
-   :num-of-cases-added-from-random 5
+   :max-num-of-cases-added-from-edge 2
+   :num-of-cases-added-from-random 8
    :num-of-cases-used-for-output-selection 1000
    :num-of-cases-added-from-output-selection 5
    :num-of-cases-used-for-branch-coverage 1000
    :num-of-cases-added-from-branch-coverage 5
 
-   :alternation-rate 0.01
-   :alignment-deviation 10
-   :uniform-mutation-rate 0.01
+   :max-points 2000
+   :max-genome-size-in-initial-program 250
+   :evalpush-limit 2000
+   :population-size 1000
+   :max-generations 300
+   :parent-selection :lexicase
+   :genetic-operator-probabilities {:uniform-addition-and-deletion 1.0}
+   :uniform-addition-and-deletion-rate 0.09
    :problem-specific-report last-index-of-zero-report
    :problem-specific-initial-report last-index-of-zero-initial-report
    :report-simplifications 0

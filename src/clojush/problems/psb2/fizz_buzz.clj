@@ -179,12 +179,12 @@
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
    :oracle-function fizz-buzz-solver
-   :input-parameterization [(cag/create-new-parameter :vector_integer 1 999 (cag/create-new-parameter :integer 1 999999999))]
+   :input-parameterization [(cag/create-new-parameter :integer 1 1000000)]
    :output-stacks [:string]
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
-   :num-of-cases-in-sub-training-set 10
-   :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
+   :num-of-cases-in-sub-training-set 5
+   :num-of-edge-cases-in-sub-training-set 2 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
 
     ;; Human-driven counterexamples
@@ -194,8 +194,8 @@
    ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)
 
-   :max-num-of-cases-added-from-edge 5
-   :num-of-cases-added-from-random 5
+   :max-num-of-cases-added-from-edge 2
+   :num-of-cases-added-from-random 8
    :num-of-cases-used-for-output-selection 1000
    :num-of-cases-added-from-output-selection 5
    :num-of-cases-used-for-branch-coverage 1000
