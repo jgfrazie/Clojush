@@ -131,13 +131,21 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets training-set 2))
+  (forming-input-output-sets training-set 2)
+  
+  )
 
 (defn adding-zero-to-input-vector
   [input-output-pairs]
   (map (fn [pair]
-         (vector (vector (conj (first (first pair)) 0))
-                 [])) input-output-pairs))
+         (let [c (count (first (first pair)))]
+           (-> pair
+               first
+               first
+               (assoc (rand-int c) 0)
+               vector
+               (vector []))))
+       input-output-pairs))
 
 (defn check-for-input-constraints
   [input-constrains cases]
