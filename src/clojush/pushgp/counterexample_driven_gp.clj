@@ -33,7 +33,7 @@
         (if (empty? wrong-cases-besides-those-already-added)
           :passes-all-cases-besides-those-in-sub-training-cases
           (let [counterexample-cases-to-add (take counterexample-driven-number-cases-to-add
-                                                 (lshuffle wrong-cases-besides-those-already-added))]
+                                                  (lshuffle wrong-cases-besides-those-already-added))]
             ; add case to sub-training-cases
             (println "Adding case(s) to sub-training-cases:" (pr-str counterexample-cases-to-add))
             ;(print "Press enter to continue...") (flush) (read-line)
@@ -52,9 +52,9 @@
             (loop [index 0
                    right-answers []]
               (if (< index (count wrong-cases))
-                (do (println "What is the right answer for case" (nth wrong-cases index) 
-                             "with input" (first (nth counterexample-cases-to-add index)) 
-                             "? Separate by spaces if it's a vector!" output-types)
+                (do (println "What is the right answer for case" (nth wrong-cases index)
+                             "with input" (pr-str (first (nth counterexample-cases-to-add index)))
+                             "? [Separate by spaces if it's a vector!]" output-types)
                     (recur (inc index) (apply conj right-answers (loop [outputs []
                                                                         index 0]
                                                                    (if (< index (count output-types))
@@ -74,7 +74,7 @@
                                                                                                                                        boolean-outputs))))))
                                                                             (inc index))
                                                                      outputs)))))
-                right-answers))))) 
+                right-answers)))))
 
 (defn counterexample-check-results-human
   "Checks if the best program passed all generated cases, returning true
@@ -90,20 +90,21 @@
   (doseq [[i x] (map-indexed vector
                              (map vector random-cases best-results-on-all-cases))]
     (println "Case" i ": Generated random input: " (pr-str (first (first x))) "; Output from best program:" (pr-str (second x)) "; Case" i))
-  (prn "Are all these correct? Y for Yes, N for No, any other character to continue evolving: ")
+  (println "\nAre all these correct? Y for Yes, N for No, any other character to continue evolving: ")
   (let [answer (read-line)] answer
        (cond
          (or (= "Y" answer) (= "y" answer)) :passes-all-cases ; program passes all randomly generated cases
-         (or (= "N" answer) (= "n" answer)) (do (prn "Which cases are wrong? Enter the numbers separated by a space: ")
-                            (flush)
-                            (let [str-wrong (read-line)]
-                              (let [wrong-cases (filter #(and (< % (count random-cases)) (>= % 0))
-                                                        (vec (map #(Integer/parseInt %)
-                                                                  (re-seq #"\d+" str-wrong))))]
-                                (let [counterexample-cases-to-add (for [case-num wrong-cases]
-                                                                    (nth random-cases case-num))]
-                                  
-                                  (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases output-types))))))))
+         (or (= "N" answer) (= "n" answer))
+         (do (println "\nWhich cases are wrong? Enter the numbers separated by a space: ")
+             (flush)
+
+             (let [str-wrong (read-line)
+                   wrong-cases (filter #(and (< % (count random-cases)) (>= % 0))
+                                       (vec (map #(Integer/parseInt %)
+                                                 (re-seq #"\d+" str-wrong))))
+                   counterexample-cases-to-add (for [case-num wrong-cases]
+                                                 (nth random-cases case-num))]
+               (finish-adding-cases-to-training-set counterexample-cases-to-add wrong-cases output-types))))))
 
 (defn counterexample-check-results-simulated-human
   "Simulated human interaction to decide whether the best program 
@@ -287,17 +288,17 @@
   "Adds one case that best program doesn't pass to sub-training-cases.
   Returns nil."
   [best population {:keys [counterexample-driven-case-generators training-cases
-                counterexample-driven-case-checker] :as argmap}]
+                           counterexample-driven-case-checker] :as argmap}]
   (let [all-cases (case counterexample-driven-case-generators
                     :hard-coded training-cases
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generators: "
                                       counterexample-driven-case-generators)))
         best-results-on-all-cases (map first (interesting/run-best-on-all-cases best all-cases argmap))
         counterexample-cases (case counterexample-driven-case-checker
-                              :automatic (counterexample-check-results-automatic
-                                          all-cases best-results-on-all-cases argmap)
-                              :human (counterexample-check-results-human
-                                      all-cases best-results-on-all-cases))]
+                               :automatic (counterexample-check-results-automatic
+                                           all-cases best-results-on-all-cases argmap)
+                               :human (counterexample-check-results-human
+                                       all-cases best-results-on-all-cases))]
     (cond
       ; This shouldn't happen, but could
       (= counterexample-cases :passes-all-cases)
@@ -328,7 +329,7 @@
   If not individuals pass all cases, check if need to add a generational case."
   [sorted-pop {:keys [error-threshold counterexample-driven-add-case-every-X-generations
                       counterexample-driven-fitness-threshold-for-new-case] :as argmap}]
-  
+
   (swap! generations-since-last-case-addition inc)
   (if (if (>= counterexample-driven-fitness-threshold-for-new-case 1.0)
         (> (:total-error (first sorted-pop)) error-threshold)

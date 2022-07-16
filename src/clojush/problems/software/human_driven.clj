@@ -35,10 +35,6 @@
 (def output-types (cag/acquire-outputs-from-user))
 
 ;; Atom generators
-;; This needs tons of work
-;; For example, the user should be able to specify the stacks to use for registered-for-stacks,
-;;   the number of inputs, and any constants (or ERCs?) to include.
-;; Also, if there are multiple outputs, need to have output instructions.
 (def human-driven-atom-generators
   (let [requested-stacks (cag/acquire-atom-generator-push-stacks)]
     (concat (cag/acquire-input-instructions input-parameterization)
@@ -118,15 +114,15 @@
 
    :sub-training-cases initial-training-cases ;; These are the cases given by the user.
    :atom-generators human-driven-atom-generators
-   :oracle-function (fn string-soln
-                      [integer string]
-                      (if (< integer (count string))
-                        (subs string 0 integer)
-                        string))
+  ;;  :oracle-function (fn string-soln
+  ;;                     [integer string]
+  ;;                     (if (< integer (count string))
+  ;;                       (subs string 0 integer)
+  ;;                       string))
 
    ;; Human-driven counterexamples
    :counterexample-driven true
-   :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
+   :counterexample-driven-case-checker :human ; :automatic ; :human ; :simulated-human
 
    ;; Options, as a list: :hard-coded ; :randomly-generated ; :edge-cases ; :selecting-new-cases-based-on-outputs
    :counterexample-driven-case-generators '(:edge-cases :branch-coverage-test :selecting-new-cases-based-on-outputs :randomly-generated)

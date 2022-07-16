@@ -698,11 +698,11 @@ ERROR: " invalid-stack " is not a recognized stack. Please correct this input
    @return A list of symbols in numerical order
            i.e. ('in1 'in2 ... 'inn)"
   [input]
-  (into () (vec (loop [input-instructions ()
-                       input-index 0]
-                  (if (< input-index (count input))
-                    (recur (conj input-instructions (symbol (str "in" (inc input-index)))) (inc input-index))
-                    input-instructions)))))
+  (loop [input-instructions ()
+         input-index 0]
+    (if (< input-index (count input))
+      (recur (conj input-instructions (symbol (str "in" (inc input-index)))) (inc input-index))
+      input-instructions)))
 
 (defn acquire-atom-generator-constants
   "Prompts the user to enter any constants the atom generator may use.

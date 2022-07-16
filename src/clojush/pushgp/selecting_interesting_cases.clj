@@ -169,7 +169,7 @@
                                         (not (coll? input)))
                                   (list input)
                                   input)
-                 aaaaa (prn "HERE IS INPUT:" inputs)
+                 ;aaaaa (prn "HERE IS INPUT:" inputs)
                  start-state (reduce (fn [push-state in]
                                        (clojush.pushstate/push-item in :input push-state))
                                      (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))
@@ -211,7 +211,8 @@
 
 (defn sort-cases-by-trace-the-second-whole
   [best {:keys [input-parameterization num-of-cases-used-for-branch-coverage
-                sub-training-cases num-of-cases-added-from-branch-coverage] :as argmap}]
+                sub-training-cases num-of-cases-added-from-branch-coverage
+                counterexample-driven-case-checker] :as argmap}]
   (let [training-set-traces (map second (run-best-on-all-cases best sub-training-cases argmap))
         random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-branch-coverage)
         best-results-on-new-cases (run-best-on-all-cases best random-cases argmap)
@@ -225,7 +226,8 @@
                              (count (filter #(identity %) the-list))) bool-results)
         sorted-indices (map first (sort-by second (map-indexed vector count-results)))
         sorted-diff (map second (sort-by second (map-indexed vector count-results)))]
-    (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff)
+    (when (= counterexample-driven-case-checker :simulated-human)
+      (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff))
     (getting-inputs num-of-cases-added-from-branch-coverage sorted-indices random-cases)))
 
 (defn getting-input-outside-the-vector
