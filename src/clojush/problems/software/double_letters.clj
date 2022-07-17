@@ -191,7 +191,7 @@
    :num-of-cases-used-for-branch-coverage 1000
    :num-of-cases-added-from-branch-coverage 5
    :input-parameterization [(cag/create-new-parameter :string 0 20 [:digits :lower-case :upper-case :specials] [])]
-   :output-stacks [:string]
+   :output-stacks [:output]
    :oracle-function double-letters-solver
 
    :max-points 2000

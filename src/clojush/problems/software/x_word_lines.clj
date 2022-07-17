@@ -229,7 +229,7 @@
    :oracle-function x-word-lines-solver
    :input-parameterization [(cag/create-new-parameter :string 0 100 [:digits :lower-case] (repeat 8 \space))
                             (cag/create-new-parameter :integer 1 10)]
-   :output-stacks [:string]
+   :output-stacks [:output]
   ;; Human-driven counterexamples
    :counterexample-driven true
    :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
