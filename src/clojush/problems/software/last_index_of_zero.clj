@@ -171,8 +171,8 @@
    :output-stacks [:integer]
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
-   :num-of-cases-in-sub-training-set 1
-   :num-of-edge-cases-in-sub-training-set 0 ; 5 and 2 ##TMH: Not adding zeros to added cases for some reason
+   :num-of-cases-in-sub-training-set 5
+   :num-of-edge-cases-in-sub-training-set 2 ; ##TMH: Not adding zeros to added cases for some reason
    :sub-training-cases '()
 
        ;; Human-driven counterexamples

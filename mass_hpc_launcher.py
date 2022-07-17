@@ -28,17 +28,14 @@ problems = [
             # "software.smallest",
             # "software.syllables"
 
-    ###### NOTE: Need to check at aaaaa in interesting
-    ###### NOTE: GO CHECK THE num-of-cases-in-sub-training-set and num-of-edge-cases-in-sub-training-set for all problems when done
-
             ### PSB2
-            "psb2.fuel-cost",
+            "psb2.fuel-cost", #DONE
             "psb2.fizz-buzz", #DONE
             "psb2.gcd", #DONE
-            "psb2.paired-digits",
+            "psb2.paired-digits", #DONE
             "psb2.snow-day", #DONE
-            "psb2.camel-case",
-            # "psb2.find-pair",
+            "psb2.camel-case", #DONE
+            # "psb2.find-pair", ## Broken -- haven't figured out how to handle multiple outputs
 ]
 
 with open('hpc_launcher.template', 'r') as hpc_template:

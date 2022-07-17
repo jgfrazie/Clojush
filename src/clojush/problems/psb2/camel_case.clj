@@ -88,17 +88,6 @@
        inputs))
 
 (defn camel-case-solver
-  [inputs]
-  (apply (fn [& pairs]
-           (for [pair pairs]
-             (second pair))) (map (fn [in]
-         (vector in
-                 (if (or (= (str in) "") (every? #{\-} (str in))) ""
-                     (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
-                       (apply str (str/lower-case (first full-string)) (drop 1 full-string))))))
-       inputs)))
-
-(defn violet's-solver
   [in]
   (if (or (= (str in) "") (every? #{\-} (str in))) ""
       (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
@@ -185,7 +174,8 @@
                                                    (second train-and-test-cases))
    :training-cases (first train-and-test-cases)
    :oracle-function camel-case-solver
-   :input-parameterization [(cag/create-new-parameter :string 1 20 [:lower-case] ["-" "_"])]
+   :input-parameterization [(cag/create-new-parameter :string 1 20 [:lower-case] (concat (repeat 8 \-)
+                                                                                         (repeat 4 \space)))]
    :output-stacks [:string]
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent

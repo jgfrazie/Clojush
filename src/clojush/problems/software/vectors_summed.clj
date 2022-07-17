@@ -167,8 +167,8 @@
    :training-cases (first vectors-summed-train-and-test-cases)
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
-   :num-of-cases-in-sub-training-set 10
-   :num-of-edge-cases-in-sub-training-set 5 ; probably not 5 since there's only 1 input
+   :num-of-cases-in-sub-training-set 5
+   :num-of-edge-cases-in-sub-training-set 2
    :sub-training-cases '()
 
    :atom-generators vectors-summed-atom-generators
