@@ -174,7 +174,7 @@
                                                                       (cag/generate-random-cases input-parameterization num-of-cases-added-from-random)))
     :edge-cases (map #(with-meta % {:counterexample-type :edge-cases})
                      (interesting/check-for-input-constraints input-constrains
-                                                              (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge)))
+                                                              (interesting/create-combinations-of-edge-cases input-parameterization max-num-of-cases-added-from-edge)))
     :selecting-new-cases-based-on-outputs (map #(with-meta % {:counterexample-type :selecting-new-cases-based-on-outputs})
                                                (interesting/check-for-input-constraints input-constrains
                                                                                         (interesting/choose-inputs-based-on-output-analysis best argmap)))

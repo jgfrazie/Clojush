@@ -101,13 +101,13 @@
            (nth edge-1 index)))
        (range (count edge-1))))
 
-(defn forming-input-output-sets
+(defn create-combinations-of-edge-cases
   "Return all the combinations of edge cases and format them so that they have fake outputs
      @param vector-of-inputs a vector of two edge cases
      @return a list of vectors where each vector contains a input-output pair(fake output is [])"
   [vector-of-inputs max-num-of-cases-added-from-edge]
   (take max-num-of-cases-added-from-edge
-        (shuffle (map #(vector % [])
+        (shuffle (map #(vector (vec %) [])
                       (let [edge (apply mapv
                                         vector
                                         (generate-edge-cases vector-of-inputs))
@@ -131,7 +131,7 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets training-set 2))
+  (create-combinations-of-edge-cases training-set 2))
 
 (defn adding-zero-to-input-vector
   [input-output-pairs]
@@ -151,7 +151,7 @@
    oracle-function input-constrains]
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
-    :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
+    :intelligent (let [edge-cases (create-combinations-of-edge-cases input-parameterization num-of-edge-cases-in-sub-training-set)
                        edited-edge-case (check-for-input-constraints input-constrains edge-cases)
                        num-edge-cases (count edge-cases)]
                    (concat (map (fn [pair]
@@ -169,7 +169,7 @@
                                         (not (coll? input)))
                                   (list input)
                                   input)
-                 ;aaaaa (prn "HERE IS INPUT:" inputs)
+                 ;TMH aaaaa (prn "HERE IS INPUT:" inputs)
                  start-state (reduce (fn [push-state in]
                                        (clojush.pushstate/push-item in :input push-state))
                                      (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))
