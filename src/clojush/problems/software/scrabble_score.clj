@@ -199,7 +199,7 @@
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
    :num-of-cases-in-sub-training-set 5
-   :num-of-edge-cases-in-sub-training-set 2 ; probably not 5 since there's only 1 input
+   :num-of-edge-cases-in-sub-training-set 2
    :sub-training-cases '()
    :oracle-function scrabble-score-calculator
    :input-parameterization [(cag/create-new-parameter :string 0 20 [:digits :lower-case :upper-case :specials] [])]
@@ -226,7 +226,7 @@
    :parent-selection :lexicase
    :genetic-operator-probabilities {:uniform-addition-and-deletion 1.0}
    :uniform-addition-and-deletion-rate 0.09
-   
+
    :problem-specific-report scrabble-score-report
    :problem-specific-initial-report scrabble-score-initial-report
    :report-simplifications 0

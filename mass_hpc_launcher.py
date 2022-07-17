@@ -12,8 +12,8 @@ problems = [
             "software.double-letters", #DONE-printing checked
             "software.x-word-lines", #DONE-printing checked
             "software.negative-to-zero", #DONE
-            "software.scrabble-score",
-            "software.count-odds",
+            "software.scrabble-score", #DONE
+            "software.count-odds", #DONE
             #  "software.replace-space-with-newline",
             #  "software.string-lengths-backwards",
             # "software.vector-average",
@@ -30,7 +30,6 @@ problems = [
 
     ###### NOTE: Need to check at aaaaa in interesting
     ###### NOTE: GO CHECK THE num-of-cases-in-sub-training-set and num-of-edge-cases-in-sub-training-set for all problems when done
-    ###### NOTE: After done, check PSB1 problems that print, making sure they use the output stack
 
             ### PSB2
             "psb2.fuel-cost",

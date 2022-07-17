@@ -106,16 +106,17 @@
      @param vector-of-inputs a vector of two edge cases
      @return a list of vectors where each vector contains a input-output pair(fake output is [])"
   [vector-of-inputs max-num-of-cases-added-from-edge]
-  (take max-num-of-cases-added-from-edge
-        (shuffle (map #(vector (vec %) [])
-                      (let [edge (apply mapv
-                                        vector
-                                        (generate-edge-cases vector-of-inputs))
-                            edge-1 (get edge 0)
-                            edge-2 (get edge 1)
-                            cols (count (first edge))
-                            subsets (combo/subsets (range cols))]
-                        (map #(swap-it edge-1 edge-2 %) subsets))))))
+  (sort
+   (take max-num-of-cases-added-from-edge
+         (shuffle (map #(vector (vec %) [])
+                       (let [edge (apply mapv
+                                         vector
+                                         (generate-edge-cases vector-of-inputs))
+                             edge-1 (get edge 0)
+                             edge-2 (get edge 1)
+                             cols (count (first edge))
+                             subsets (combo/subsets (range cols))]
+                         (map #(swap-it edge-1 edge-2 %) subsets)))))))
 
 (comment
   ;; edge-cases test
