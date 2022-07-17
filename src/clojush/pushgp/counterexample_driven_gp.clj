@@ -142,15 +142,16 @@
                               1
                               [right-answer]))
                  (inc index))))
-      (do (println "Number of cases to add are: " (count cases-to-add))
-          (doseq [the-case cases-to-add]
-            (println "Adding case of type"
-                     (:counterexample-type (meta the-case))
-                     ":"
-                     (pr-str the-case)))
-          (if (= (count cases-to-add) 0)
-            :passes-all-cases ; program passes all randomly generated cases
-            cases-to-add)))))
+      (let [cases-to-add (distinct cases-to-add)]
+        (println "Number of cases to add are: " (count cases-to-add))
+        (doseq [the-case cases-to-add]
+          (println "Adding case of type"
+                   (:counterexample-type (meta the-case))
+                   ":"
+                   (pr-str the-case)))
+        (if (= (count cases-to-add) 0)
+          :passes-all-cases ; program passes all randomly generated cases
+          cases-to-add)))))
 
 
 (defn proportion-of-passed-cases
@@ -362,5 +363,11 @@
           (add-cases-to-sub-training-cases sorted-pop best-or-new-cases argmap)
           false)))))
 
-(count [false false true])
+(comment
+  (count [false false true])
+
+  (distinct [(with-meta [1 2 3] {:a :b})
+             (with-meta [1 2 3] {:c :d})])
+
+  )
 
