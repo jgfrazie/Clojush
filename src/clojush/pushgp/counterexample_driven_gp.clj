@@ -55,25 +55,31 @@
                 (do (println "What is the right answer for case" (nth wrong-cases index)
                              "with input" (pr-str (first (nth counterexample-cases-to-add index)))
                              "? [Separate by spaces if it's a vector!]" output-types)
-                    (recur (inc index) (apply conj right-answers (loop [outputs []
-                                                                        index 0]
-                                                                   (if (< index (count output-types))
-                                                                     (recur (conj outputs
-                                                                                  (cond
-                                                                                    (= (nth output-types index) :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" ")))
-                                                                                    (= (nth output-types index) :float) (vec (map #(Float/parseFloat %) (clojure.string/split (read-line) #" ")))
-                                                                                    (= (nth output-types index) :string) (clojure.string/split (read-line) #" ")
-                                                                                    (= (nth output-types index) :boolean) (do (println "Type in 0 for false or 1 for true:")
-                                                                                                                              (vec (loop [zeros-and-onex (map #(Integer/parseInt %) (clojure.string/split (read-line) #" "))
-                                                                                                                                          boolean-outputs []
-                                                                                                                                          index 0]
-                                                                                                                                     (if (< index (count zeros-and-onex))
-                                                                                                                                       (if (= (nth zeros-and-onex index) 0)
-                                                                                                                                         (recur zeros-and-onex (conj boolean-outputs false) (inc index))
-                                                                                                                                         (recur zeros-and-onex (conj boolean-outputs true) (inc index)))
-                                                                                                                                       boolean-outputs))))))
-                                                                            (inc index))
-                                                                     outputs)))))
+                    (recur
+                     (inc index)
+                     (apply conj
+                            right-answers
+                            (loop [outputs []
+                                   index 0]
+                              (if (< index (count output-types))
+                                (recur
+                                 (conj
+                                  outputs
+                                  (cond
+                                    (= (nth output-types index) :integer) (vec (map #(Integer/parseInt %) (clojure.string/split (read-line) #" ")))
+                                    (= (nth output-types index) :float) (vec (map #(Float/parseFloat %) (clojure.string/split (read-line) #" ")))
+                                    (= (nth output-types index) :string) (clojure.string/split (read-line) #" ")
+                                    (= (nth output-types index) :boolean) (do (println "Type in 0 for false or 1 for true:")
+                                                                              (vec (loop [zeros-and-onex (map #(Integer/parseInt %) (clojure.string/split (read-line) #" "))
+                                                                                          boolean-outputs []
+                                                                                          index 0]
+                                                                                     (if (< index (count zeros-and-onex))
+                                                                                       (if (= (nth zeros-and-onex index) 0)
+                                                                                         (recur zeros-and-onex (conj boolean-outputs false) (inc index))
+                                                                                         (recur zeros-and-onex (conj boolean-outputs true) (inc index)))
+                                                                                       boolean-outputs))))))
+                                 (inc index))
+                                outputs)))))
                 right-answers)))))
 
 (defn counterexample-check-results-human
@@ -114,7 +120,7 @@
   [random-cases best-results-on-all-cases oracle-function]
 
   (println)
-  (println "*** The foolowing are the randomly generated test cases along  ***")
+  (println "*** The following are the randomly generated test cases along  ***")
   (println "*** with its corresponding output from the best program we have so far! ***")
   (println)
 
@@ -126,28 +132,26 @@
          output best-results-on-all-cases
          cases-to-add []
          index 0]
-    ;(println)
-    ;(pr-str "I am here!!!!!!!!!!!!!!!!!!!!!!" (first (nth input 0)))
-    ;(pr-str "I am here!!!!!!!!!!!!!!!!!!!!!!" (first (nth input 1)))
-    ;(pr-str "I am here!!!!!!!!!!!!!!!!!!!!!!" (first (nth input 3)))
-    ;(pr-str "I am here!!!!!!!!!!!!!!!!!!!!!!" (first (nth input 4)))
-    ;(println)
     (if (< index (count random-cases))
       (let [right-answer (apply oracle-function (first (nth random-cases index)))]
-        ;(println)
-        ;(println "The right answer is: " right-answer)
-        ;(println "The nth output is: " (nth output index))
-        ;(println)
         (if (= (vector right-answer) (nth output index))
           (recur random-cases best-results-on-all-cases cases-to-add (inc index))
           (recur random-cases best-results-on-all-cases
-                 (into cases-to-add
-                       (vec (map vector (vector (first (nth input index))) (vector (vector right-answer)))))
+                 (conj cases-to-add
+                       (assoc (nth input index)
+                              1
+                              [right-answer]))
                  (inc index))))
       (do (println "Number of cases to add are: " (count cases-to-add))
+          (doseq [the-case cases-to-add]
+            (println "Adding case of type"
+                     (:counterexample-type (meta the-case))
+                     ":"
+                     (pr-str the-case)))
           (if (= (count cases-to-add) 0)
             :passes-all-cases ; program passes all randomly generated cases
             cases-to-add)))))
+
 
 (defn proportion-of-passed-cases
   "Returns the proportion of cases with 0 error for this individual."
@@ -163,11 +167,20 @@
            num-of-cases-added-from-random max-num-of-cases-added-from-edge input-constrains]
     :as argmap}]
   (case counterexample-type
-    :hard-coded training-cases
-    :randomly-generated (interesting/check-for-input-constraints input-constrains (cag/generate-random-cases input-parameterization num-of-cases-added-from-random))
-    :edge-cases (interesting/check-for-input-constraints input-constrains (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge))
-    :selecting-new-cases-based-on-outputs (interesting/check-for-input-constraints input-constrains (interesting/choose-inputs-based-on-output-analysis best argmap))
-    :branch-coverage-test (interesting/check-for-input-constraints input-constrains (interesting/sort-cases-by-trace-the-second-whole best argmap))
+    :hard-coded (map #(with-meta % {:counterexample-type :hard-coded})
+                     training-cases)
+    :randomly-generated (map #(with-meta % {:counterexample-type :randomly-generated})
+                             (interesting/check-for-input-constraints input-constrains
+                                                                      (cag/generate-random-cases input-parameterization num-of-cases-added-from-random)))
+    :edge-cases (map #(with-meta % {:counterexample-type :edge-cases})
+                     (interesting/check-for-input-constraints input-constrains
+                                                              (interesting/forming-input-output-sets input-parameterization max-num-of-cases-added-from-edge)))
+    :selecting-new-cases-based-on-outputs (map #(with-meta % {:counterexample-type :selecting-new-cases-based-on-outputs})
+                                               (interesting/check-for-input-constraints input-constrains
+                                                                                        (interesting/choose-inputs-based-on-output-analysis best argmap)))
+    :branch-coverage-test (map #(with-meta % {:counterexample-type :branch-coverage-test})
+                               (interesting/check-for-input-constraints input-constrains
+                                                                        (interesting/sort-cases-by-trace-the-second-whole best argmap)))
     :else (throw (str "Unrecognized option for :counterexample-driven-case-generators: "
                       counterexample-type))))
 

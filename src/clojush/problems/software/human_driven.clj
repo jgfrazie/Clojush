@@ -146,7 +146,7 @@
    :final-report-simplifications 5000})
 
 
-;; TMH NOTE: Testing problem
+;; NOTE: Testing problem
 ;; Given in1 = Integer [0, 20]
 ;; and   in2 = String length [0, 20], all chars
 ;;      out1 = String
