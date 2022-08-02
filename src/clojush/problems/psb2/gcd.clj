@@ -50,7 +50,7 @@
    [[input1 input2] output]."
   [inputs]
   (map (fn [[in1 in2]]
-         (vector [[in1 in2]]
+         (vector [in1 in2]
                  (vector  (loop [a in1 b in2]
                             (if (zero? b) a
                                 (recur b (mod a b)))))))
