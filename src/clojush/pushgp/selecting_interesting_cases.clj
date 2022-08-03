@@ -4,7 +4,8 @@
             [clojush.pushgp.case-auto-generation :as cag]
             [clojure.set :as cset]
             [clojure.math.combinatorics :as combo]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.math.numeric-tower :as nt]))
 
 (defn add-edge-number-cases
   "Helper functions to added a new edge case with int/float data type
@@ -253,7 +254,7 @@
                             (keyword? new-new-output) 1000
                             (and (nil? training-output) (nil? new-new-output)) 0
                             (or (nil? training-output) (nil? new-new-output)) 1000
-                            :else (Math/abs (-' training-output new-new-output)))))
+                            :else (nt/abs (-' training-output new-new-output)))))
                       current-training-set-output)) 
                new-output-seq)
 
@@ -264,7 +265,7 @@
                               new-new-output (getting-input-outside-the-vector new-output)]
                           (if (keyword? new-new-output)
                             1000
-                            (Math/abs (-' (if (identity training-output) 1 0)
+                            (nt/abs (-' (if (identity training-output) 1 0)
                                           (if (identity new-new-output) 1 0))))))
                       current-training-set-output)) new-output-seq)
 
@@ -286,7 +287,7 @@
                                                item2-size (count new-output)
                                                item1-set (set item1)
                                                item2-set (set new-output)
-                                               size-difference (Math/abs (- item1-size item2-size))
+                                               size-difference (nt/abs (- item1-size item2-size))
                                                result-difference (measure-output-difference item1 new-output (vector (nth output-type 1)))
                                                num-of-distinct-elements (count (into (cset/difference item1-set item2-set)
                                                                                      (cset/difference item2-set item1-set)))]
