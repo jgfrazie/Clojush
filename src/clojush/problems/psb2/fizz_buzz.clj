@@ -65,13 +65,13 @@
    [input output]."
   [inputs]
   (map (fn [in]
-         (vector [[in]]
-                 [[(cond
-                   (and (= (mod in 3) 0)
-                        (= (mod in 5) 0)) "FizzBuzz"
-                   (= (mod in 3) 0) "Fizz"
-                   (= (mod in 5) 0) "Buzz"
-                   :else (str in))]]))
+         (vector [in]
+                 [(cond
+                    (and (= (mod in 3) 0)
+                         (= (mod in 5) 0)) "FizzBuzz"
+                    (= (mod in 3) 0) "Fizz"
+                    (= (mod in 5) 0) "Buzz"
+                    :else (str in))]))
        inputs))
 
 ; Oracle function
@@ -118,7 +118,7 @@
                        (swap! behavior conj result)
                          ; Error is Levenshtein distance
                        (if (string? result)
-                         (levenshtein-distance correct-output (str result))
+                         (levenshtein-distance correct-output result)
                          10000) ; penalty for no return value
                        )))]
        (if (= data-cases :test)
