@@ -166,7 +166,7 @@
   "Runs the program best on all generated cases, and returns a list of the
   behaviors/results of the program on those cases."
   [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
-  (doall (for [[inputs [correct-output]] all-cases]
+  (doall (for [[inputs _] all-cases]
            (let [start-state (reduce (fn [push-state in]
                                        (clojush.pushstate/push-item in :input push-state))
                                      (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))
@@ -175,6 +175,7 @@
                                                            start-state)]
                                         ; Need to handle it this way for problems with more than one output.
                                         ; Note: will break if problem requires multiple outputs from the same stack.
+             
              (if (coll? output-stacks)
                (vector (vec (map #(clojush.pushstate/top-item % final-state)
                                  output-stacks))
