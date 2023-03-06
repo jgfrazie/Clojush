@@ -171,7 +171,7 @@
            (let [start-state (reduce (fn [push-state in]
                                        (clojush.pushstate/push-item in :input push-state))
                                      (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))
-                                     inputs)
+                                     (reverse inputs))
                  final-state (clojush.interpreter/run-push (:program best)
                                                            start-state)]
                                         ; Need to handle it this way for problems with more than one output.
