@@ -104,6 +104,12 @@
            :behaviors behaviors
            :errors errors)))
 
+(defn gcd-solver
+  [in1 in2]
+  (loop [a in1 b in2]
+    (if (zero? b) a
+        (recur b (mod a b)))))
+
 
 ; Define the argmap
 (def argmap
@@ -111,14 +117,18 @@
    :input-parameterization input-parameterization
    :output-stacks output-types
    :training-cases '() ;; These are ignored by human-driven GP
-
+   :sub-training-cases-selection :intelligent
    :sub-training-cases initial-training-cases ;; These are the cases given by the user.
    :atom-generators human-driven-atom-generators
-   :oracle-function (fn string-soln
-                      [integer string]
-                      (if (< integer (count string))
-                        (subs string 0 integer)
-                        string))
+  ;;  :oracle-function (fn string-soln
+  ;;                     [integer string]
+  ;;                     (if (< integer (count string))
+  ;;                       (subs string 0 integer)
+  ;;                       string))
+
+  ;;  :oracle-function gcd-solver
+   
+   :oracle-function #(- %1 %2)
 
    ;; Human-driven counterexamples
    :counterexample-driven true

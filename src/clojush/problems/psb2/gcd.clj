@@ -80,8 +80,8 @@
                                                                 data-cases)]
                      (let [final-state (run-push (:program individual)
                                                  (->> (make-push-state)
-                                                      (push-item input1 :input)
-                                                      (push-item input2 :input)))
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)))
                            result (top-item :integer final-state)]
                        (when print-outputs
                          (println (format "Correct output: %s | Program output: %s" (str correct-output) (str result))))

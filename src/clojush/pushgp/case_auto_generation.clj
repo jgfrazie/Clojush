@@ -746,3 +746,7 @@ quotes or add a \\ before the character respectively).")
                                                                         true
                                                                         false) (take (dec (count stack-constants)) stack-constants))
                                                        nil))))))))))
+
+(comment 
+  (= (acquire-parameters-from-user) [(create-new-parameter :integer 1 1000000) (create-new-parameter :integer 1 1000000)])
+  )
