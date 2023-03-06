@@ -5,7 +5,8 @@
             [clojure.set :as cset]
             [clojure.math.combinatorics :as combo]
             [clojure.string :as str]
-            [clojure.math.numeric-tower :as math]))
+            [clojure.math.numeric-tower :as nt]))
+
 
 (defn add-edge-number-cases
   "Helper functions to added a new edge case with int/float data type
@@ -102,21 +103,22 @@
            (nth edge-1 index)))
        (range (count edge-1))))
 
-(defn forming-input-output-sets
+(defn create-combinations-of-edge-cases
   "Return all the combinations of edge cases and format them so that they have fake outputs
      @param vector-of-inputs a vector of two edge cases
      @return a list of vectors where each vector contains a input-output pair(fake output is [])"
   [vector-of-inputs max-num-of-cases-added-from-edge]
-  (take max-num-of-cases-added-from-edge
-        (map #(vector % [])
-             (let [edge (apply mapv
-                               vector
-                               (generate-edge-cases vector-of-inputs))
-                   edge-1 (get edge 0)
-                   edge-2 (get edge 1)
-                   cols (count (first edge))
-                   subsets (combo/subsets (range cols))]
-               (map #(swap-it edge-1 edge-2 %) subsets)))))
+  (sort
+   (take max-num-of-cases-added-from-edge
+         (shuffle (map #(vector (vec %) [])
+                       (let [edge (apply mapv
+                                         vector
+                                         (generate-edge-cases vector-of-inputs))
+                             edge-1 (get edge 0)
+                             edge-2 (get edge 1)
+                             cols (count (first edge))
+                             subsets (combo/subsets (range cols))]
+                         (map #(swap-it edge-1 edge-2 %) subsets)))))))
 
 (comment
   ;; edge-cases test
@@ -132,12 +134,12 @@
                      {:type :float
                       :range {:lower 1.001
                               :upper 10.999}}])
-  (forming-input-output-sets training-set 2))
+  (create-combinations-of-edge-cases training-set 2))
 
 (defn adding-zero-to-input-vector
   [input-output-pairs]
   (map (fn [pair]
-         (vector (vector (conj (first (first pair)) 0))
+         (vector (vector (shuffle (conj (first (first pair)) 0)))
                  [])) input-output-pairs))
 
 (defn check-for-input-constraints
@@ -152,7 +154,7 @@
    oracle-function input-constrains]
   (case sub-training-cases-selection
     :random (take num-of-cases-in-sub-training-cases (shuffle original-training-set))
-    :intelligent (let [edge-cases (forming-input-output-sets input-parameterization num-of-edge-cases-in-sub-training-set)
+    :intelligent (let [edge-cases (create-combinations-of-edge-cases input-parameterization num-of-edge-cases-in-sub-training-set)
                        edited-edge-case (check-for-input-constraints input-constrains edge-cases)
                        num-edge-cases (count edge-cases)]
                    (concat (map (fn [pair]
@@ -165,12 +167,8 @@
   "Runs the program best on all generated cases, and returns a list of the
   behaviors/results of the program on those cases."
   [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
-  (doall (for [[[input] [correct-output]] all-cases]
-           (let [inputs (if (or single-vector-input
-                                (not (coll? input)))
-                          (list input)
-                          input)
-                 start-state (reduce (fn [push-state in]
+  (doall (for [[inputs _] all-cases]
+           (let [start-state (reduce (fn [push-state in]
                                        (clojush.pushstate/push-item in :input push-state))
                                      (clojush.pushstate/push-item "" :output (clojush.pushstate/make-push-state))
                                      inputs)
@@ -178,6 +176,7 @@
                                                            start-state)]
                                         ; Need to handle it this way for problems with more than one output.
                                         ; Note: will break if problem requires multiple outputs from the same stack.
+             
              (if (coll? output-stacks)
                (vector (vec (map #(clojush.pushstate/top-item % final-state)
                                  output-stacks))
@@ -211,7 +210,8 @@
 
 (defn sort-cases-by-trace-the-second-whole
   [best {:keys [input-parameterization num-of-cases-used-for-branch-coverage
-                sub-training-cases num-of-cases-added-from-branch-coverage] :as argmap}]
+                sub-training-cases num-of-cases-added-from-branch-coverage
+                counterexample-driven-case-checker] :as argmap}]
   (let [training-set-traces (map second (run-best-on-all-cases best sub-training-cases argmap))
         random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-branch-coverage)
         best-results-on-new-cases (run-best-on-all-cases best random-cases argmap)
@@ -225,7 +225,8 @@
                              (count (filter #(identity %) the-list))) bool-results)
         sorted-indices (map first (sort-by second (map-indexed vector count-results)))
         sorted-diff (map second (sort-by second (map-indexed vector count-results)))]
-    (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff)
+    (when (= counterexample-driven-case-checker :simulated-human)
+      (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff))
     (getting-inputs num-of-cases-added-from-branch-coverage sorted-indices random-cases)))
 
 (defn getting-input-outside-the-vector
@@ -249,13 +250,13 @@
     (cond (or (= output-type-1 :integer) (= output-type-1 :float))
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (math/abs (-' (getting-input-outside-the-vector training-set-output)
+                        (Math/abs (-' (getting-input-outside-the-vector training-set-output)
                                       (getting-input-outside-the-vector new-output)))) current-training-set-output)) new-output-seq)
 
           (= output-type-1 :boolean)
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (math/abs (-' (if (getting-input-outside-the-vector training-set-output) 1 0)
+                        (Math/abs (-' (if (getting-input-outside-the-vector training-set-output) 1 0)
                                       (if (getting-input-outside-the-vector new-output) 1 0)))) current-training-set-output)) new-output-seq)
 
           (or (= output-type-1 :string) (= output-type-1 :output))
@@ -263,7 +264,9 @@
                  (map (fn [training-set-output]
                         (let [checked-new (getting-input-outside-the-vector new-output)
                               checked-training (getting-input-outside-the-vector training-set-output)]
-                          (util/levenshtein-distance checked-training checked-new))) current-training-set-output)) new-output-seq)
+                          (if (keyword? checked-new)
+                            1000
+                            (util/levenshtein-distance checked-training checked-new)))) current-training-set-output)) new-output-seq)
 
           :else
           (map (fn [new-output]
@@ -272,7 +275,7 @@
                                              item2-size (count new-output)
                                              item1-set (set item1)
                                              item2-set (set new-output)
-                                             size-difference (math/abs (- item1-size item2-size))
+                                             size-difference (Math/abs (- item1-size item2-size))
                                              result-difference (measure-output-difference item1 new-output (vector (nth output-type 1)))
                                              num-of-distinct-elements (count (into (cset/difference item1-set item2-set)
                                                                                    (cset/difference item2-set item1-set)))]
