@@ -128,7 +128,7 @@
 
   ;;  :oracle-function gcd-solver
    
-   :oracle-function #(- %1 %2)
+   :oracle-function #(clojure.string/includes? % " ")
 
    ;; Human-driven counterexamples
    :counterexample-driven true
@@ -222,4 +222,24 @@
 
   (clojush.util/levenshtein-distance "1" 0)
 
+  )
+
+(comment
+  (defn element-rank
+    "Given a coll that is a list or vector of integers, will return a coll where each element at index
+     n corresponds to the element found at index of n in the given coll. The value of the element at
+     index n, call it k, in the returned coll states it is the kth lowest value in the given coll (elements
+     of the same value can have the same ranking).
+     
+     i.e.
+         [3 1 2] -> [2 0 1]
+         [6 1 1 1 4 7] -> [2 0 0 0 1 3]"
+    [coll]
+    (let [ranking (let [ranks (sort (set coll))]
+                    (reduce #(assoc %1 %2 (.indexOf ranks %2)) {} coll))]
+      (map #(ranking %) coll)))
+  
+  (element-rank [6 1 1 1 4 7])
+
+  (#(clojure.string/includes? % " ") "Heyo ")
   )
