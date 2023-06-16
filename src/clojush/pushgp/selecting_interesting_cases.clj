@@ -227,6 +227,7 @@
         sorted-diff (map second (sort-by second (map-indexed vector count-results)))]
     (when (= counterexample-driven-case-checker :simulated-human)
       (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff))
+    ;; LOOPING ISSUE BEGINS AFTER THIS POINT
     (getting-inputs num-of-cases-added-from-branch-coverage sorted-indices random-cases)))
 
 (defn getting-input-outside-the-vector

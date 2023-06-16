@@ -201,6 +201,7 @@
         all-cases (apply concat
                          (map #(generate-counterexample-type % best argmap)
                               counterexample-driven-case-generators))]
+    ;; BIG LOOP AREA THAT COULD CAUSE THE ISSUES
     (loop [best (first sorted-pop)
            pop (rest sorted-pop)
            new-cases '()]
