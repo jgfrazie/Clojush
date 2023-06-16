@@ -313,13 +313,15 @@
    those that have the outputs most different from the training set."
   [best {:keys [input-parameterization num-of-cases-used-for-output-selection
                 sub-training-cases output-stacks num-of-cases-added-from-output-selection] :as argmap}]
-  (let [random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
+  (let [p (println "ANALYZING OUTPUT")
+        random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
         best-results-on-all-cases (map first (run-best-on-all-cases best random-cases argmap))
         input-for-output-anlysis (output-analysis (map second sub-training-cases)
                                                   best-results-on-all-cases
                                                   random-cases
                                                   (first output-stacks)
                                                   num-of-cases-added-from-output-selection)]
+    (println "OUTPUT ANALYZED")
     input-for-output-anlysis))
 
 
