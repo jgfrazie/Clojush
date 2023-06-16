@@ -200,7 +200,8 @@
   (let [best (first sorted-pop)
         all-cases (apply concat
                          (map #(generate-counterexample-type % best argmap)
-                              counterexample-driven-case-generators))]
+                              counterexample-driven-case-generators))
+        p (println "\n\n\nI MADE IT HERE\n\n\n")]
     ;; BIG LOOP AREA THAT COULD CAUSE THE ISSUES
     (loop [best (first sorted-pop)
            pop (rest sorted-pop)
@@ -216,7 +217,8 @@
                                                      all-cases best-results-on-all-cases oracle-function))
             new-cases-with-new-case (if (keyword? counterexample-cases)
                                       new-cases
-                                      (concat counterexample-cases new-cases))]
+                                      (concat counterexample-cases new-cases))
+            p (println "\n\n\nNOW I MADE IT HERE\n\n\n")]
         (when (and (seq? counterexample-cases)
                    (some (set counterexample-cases) (:sub-training-cases @push-argmap)))
           (println "Houston, we have a problem. This case is already in the training cases, and has been passed by this program.")
