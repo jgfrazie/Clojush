@@ -177,9 +177,11 @@
     :edge-cases (map #(with-meta % {:counterexample-type :edge-cases})
                      (interesting/check-for-input-constraints input-constrains
                                                               (interesting/create-combinations-of-edge-cases input-parameterization max-num-of-cases-added-from-edge)))
+    ;; This is where most of the runs get stuck forever
     :selecting-new-cases-based-on-outputs (map #(with-meta % {:counterexample-type :selecting-new-cases-based-on-outputs})
                                                (interesting/check-for-input-constraints input-constrains
                                                                                         (interesting/choose-inputs-based-on-output-analysis best argmap)))
+    ;; This is where a few of the runs get stuck at random it seems
     :branch-coverage-test (map #(with-meta % {:counterexample-type :branch-coverage-test})
                                (interesting/check-for-input-constraints input-constrains
                                                                         (interesting/sort-cases-by-trace-the-second-whole best argmap)))
@@ -200,10 +202,8 @@
   (println)
   (let [best (first sorted-pop)
         all-cases (apply concat
-                         (map #(generate-counterexample-type % best argmap)
-                              counterexample-driven-case-generators))
-        p (println "\n\n\nI MADE IT HERE\n\n\n")]
-    ;; BIG LOOP AREA THAT COULD CAUSE THE ISSUES
+                         (map #(generate-counterexample-type % best argmap) ;; generate-counterexample-type is where issue is at
+                              counterexample-driven-case-generators))]
     (loop [best (first sorted-pop)
            pop (rest sorted-pop)
            new-cases '()]
@@ -218,8 +218,7 @@
                                                      all-cases best-results-on-all-cases oracle-function))
             new-cases-with-new-case (if (keyword? counterexample-cases)
                                       new-cases
-                                      (concat counterexample-cases new-cases))
-            p (println "\n\n\nNOW I MADE IT HERE\n\n\n")]
+                                      (concat counterexample-cases new-cases))]
         (when (and (seq? counterexample-cases)
                    (some (set counterexample-cases) (:sub-training-cases @push-argmap)))
           (println "Houston, we have a problem. This case is already in the training cases, and has been passed by this program.")
