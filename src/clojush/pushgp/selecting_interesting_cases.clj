@@ -214,29 +214,29 @@
                 sub-training-cases num-of-cases-added-from-branch-coverage
                 counterexample-driven-case-checker] :as argmap}]
   ;; LOOPING ISSUE BEGINS AFTER THIS POINT FOR BRANCH COVERAGE
-  ;; Adding doalls so there are no lazy sequences
+  ;; Adding doall and mapv so there are no lazy sequences
   (let [p (println "BEGINNING BRANCH COVERAGE")
-        training-set-traces (doall (map second (run-best-on-all-cases best sub-training-cases argmap)))
+        training-set-traces (doall (mapv second (run-best-on-all-cases best sub-training-cases argmap)))
         p (println "Ran training-set-traces")
         random-cases (doall (cag/generate-random-cases input-parameterization num-of-cases-used-for-branch-coverage))
         p (println "Generated Random Cases")
-        best-results-on-new-cases (doall (run-best-on-all-cases best random-cases argmap)) ;; CAN TAKE FOREVER
+        best-results-on-new-cases (doall (run-best-on-all-cases best random-cases argmap)) ;; CAN TAKE LONG TIME
         p (println "Ran best on all cases")
-        new-cases-traces (doall (map second best-results-on-new-cases))
+        new-cases-traces (doall (mapv second best-results-on-new-cases))
         p (println "Got new-cases-traces")
-        bool-results (doall (map (fn [the-new-case-traces]
-                            (map (fn [the-training-case]
-                                   (= the-new-case-traces the-training-case))
-                                 training-set-traces))
+        bool-results (doall (mapv (fn [the-new-case-traces]              ;; THIS CAN TAKE VERY LONG TO CALCULATE BUT DOES NOT HAPPEN ALL THE TIME 
+                                    (mapv (fn [the-training-case]
+                                            (= the-new-case-traces the-training-case))
+                                          training-set-traces))
                           new-cases-traces))
         p (println "Got bool-results")
-        count-results (doall (map (fn [the-list]
-                             (count (filter #(identity %) the-list))) bool-results)) ;; CAN TAKE FOREVER
+        count-results (doall (mapv (fn [the-list]
+                             (count (filterv #(identity %) the-list))) bool-results))
         p (println "Got count-results")
-        sorted-indices (doall (map first (sort-by second (map-indexed vector count-results))))
-        p (println "sortec-indices")
-        sorted-diff (doall (map second (sort-by second (map-indexed vector count-results))))
-        p (println "WE ARE DONE WITH BRANCH COVERAGE???")]
+        sorted-indices (doall (mapv first (sort-by second (map-indexed vector count-results))))
+        p (println "sorted-indices")
+        sorted-diff (doall (mapv second (sort-by second (map-indexed vector count-results))))
+        p (println "WE ARE DONE WITH BRANCH COVERAGE")]
     ;; LOOPING ISSUE IS ABOVE FOR BRANCH COVERAGE
     (when (= counterexample-driven-case-checker :simulated-human)
       (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff))
@@ -263,7 +263,7 @@
     (cond (or (= output-type-1 :integer) (= output-type-1 :float))
           (map (fn [new-output]
                  (map (fn [training-set-output]
-                        (Math/abs (-' (getting-input-outside-the-vector training-set-output)
+                        (nt/abs (-' (getting-input-outside-the-vector training-set-output)
                                       (getting-input-outside-the-vector new-output)))) current-training-set-output)) new-output-seq)
 
           (= output-type-1 :boolean)
@@ -329,7 +329,7 @@
   (let [p (println "ANALYZING OUTPUT") ;; For this countereample, this is where the issue starts
         random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
         p (println "Made Random Cases")
-        best-results-on-all-cases (mapv first (run-best-on-all-cases best random-cases argmap)) ;; CAN TAKE FOREVER
+        best-results-on-all-cases (mapv first (run-best-on-all-cases best random-cases argmap)) ;; CAN TAKE LONG TIMES
         p (println "Checked best on all cases")
         input-for-output-anlysis (output-analysis (mapv second sub-training-cases)
                                                   best-results-on-all-cases

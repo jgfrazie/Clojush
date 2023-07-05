@@ -149,7 +149,7 @@
    :output-stacks [:integer]
 
    :sub-training-cases-selection :intelligent ; :random ; :intelligent
-   :num-of-cases-in-sub-training-set 1
+   :num-of-cases-in-sub-training-set 5
    :num-of-edge-cases-in-sub-training-set 0 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
 

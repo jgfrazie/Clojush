@@ -133,8 +133,7 @@
          cases-to-add []
          index 0]
     (if (< index (count random-cases))
-      (let [right-answer (apply oracle-function (first (nth random-cases index)))
-            p (println "\n\n\nNOW I AM HERE CHECKING RIGHT ANSWERS ON BEST\n\n\n")]
+      (let [right-answer (apply oracle-function (first (nth random-cases index)))]
         (if (= (vector right-answer) (nth output index))
           (recur random-cases best-results-on-all-cases cases-to-add (inc index))
           (recur random-cases best-results-on-all-cases
