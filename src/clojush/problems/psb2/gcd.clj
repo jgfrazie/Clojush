@@ -162,9 +162,9 @@
 
    :max-num-of-cases-added-from-edge 4
    :num-of-cases-added-from-random 6
-   :num-of-cases-used-for-output-selection 1000
+   :num-of-cases-used-for-output-selection 100
    :num-of-cases-added-from-output-selection 5
-   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-used-for-branch-coverage 100
    :num-of-cases-added-from-branch-coverage 5
 
    :atom-generators atom-generators

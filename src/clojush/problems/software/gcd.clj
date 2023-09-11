@@ -136,27 +136,31 @@
 (def argmap
   "I literally have no idea what many of these things do. However, with the current settings, the first run I attempted did solve the problem to my satisfaction. YMMV."
   {:error-function (fn [individual]
-                        (gcd-error-function
-                          individual
-                          gcd-training-cases
-                          ))
-     :atom-generators gcd-atom-generators
-     :max-points 1000
-     :max-genome-size-in-initial-program 500
-     :evalpush-limit 1000
-     :population-size 400
-     :max-generations 5000
-     :parent-selection :lexicase
-     :genetic-operator-probabilities {:uniform-addition-and-deletion 0.5
-                                      :alternation 0.5}
-     :uniform-addition-and-deletion-rate [0.001 0.01 0.1]
-     :alternation-rate [0.001 0.01 0.1]
-     :alignment-deviation [0 1 10 100]
-     :report-simplifications 0
-     :final-report-simplifications 5000
-     :problem-specific-initial-report gcd-initial-report
+                     (gcd-error-function
+                      individual
+                      gcd-training-cases))
+   :atom-generators gcd-atom-generators
+   :max-points 1000
+   :max-genome-size-in-initial-program 500
+   :evalpush-limit 1000
 
-     })
+   :sub-training-cases-selection :intelligent ; :random ; :intelligent
+   :num-of-cases-used-for-output-selection 100
+   :num-of-cases-added-from-output-selection 5
+   :num-of-cases-used-for-branch-coverage 100
+   :num-of-cases-added-from-branch-coverage 5
+
+   :population-size 400
+   :max-generations 5000
+   :parent-selection :lexicase
+   :genetic-operator-probabilities {:uniform-addition-and-deletion 0.5
+                                    :alternation 0.5}
+   :uniform-addition-and-deletion-rate [0.001 0.01 0.1]
+   :alternation-rate [0.001 0.01 0.1]
+   :alignment-deviation [0 1 10 100]
+   :report-simplifications 0
+   :final-report-simplifications 5000
+   :problem-specific-initial-report gcd-initial-report})
 
 ;; Evolved solutions (not all simplified):
 
