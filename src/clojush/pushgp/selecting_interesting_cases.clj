@@ -2,6 +2,7 @@
   (:require [clojush.util :as util]
             [clojush pushstate interpreter]
             [clojush.pushgp.case-auto-generation :as cag]
+            [clojush.globals :as globals]
             [clojure.set :as cset]
             [clojure.math.combinatorics :as combo]
             [clojure.string :as str]
@@ -208,36 +209,27 @@
     (println sorted-diff)
     (getting-inputs num-of-cases sorted-indices inputs)))
 
-;; LOOPING ERROR LOCATION 2
 (defn sort-cases-by-trace-the-second-whole
   [best {:keys [input-parameterization num-of-cases-used-for-branch-coverage
                 sub-training-cases num-of-cases-added-from-branch-coverage
                 counterexample-driven-case-checker] :as argmap}]
-  ;; LOOPING ISSUE BEGINS AFTER THIS POINT FOR BRANCH COVERAGE
-  ;; Adding doall and mapv so there are no lazy sequences
-  (let [p (println "BEGINNING BRANCH COVERAGE")
-        training-set-traces (doall (mapv second (run-best-on-all-cases best sub-training-cases argmap)))
-        p (println "Ran training-set-traces")
-        random-cases (doall (cag/generate-random-cases input-parameterization num-of-cases-used-for-branch-coverage))
-        p (println "Generated Random Cases")
-        best-results-on-new-cases (doall (run-best-on-all-cases best random-cases argmap)) ;; CAN TAKE LONG TIME
-        p (println "Ran best on all cases")
-        new-cases-traces (doall (mapv second best-results-on-new-cases))
-        p (println "Got new-cases-traces")
-        bool-results (doall (mapv (fn [the-new-case-traces]              ;; THIS CAN TAKE VERY LONG TO CALCULATE BUT DOES NOT HAPPEN ALL THE TIME 
-                                    (mapv (fn [the-training-case]
-                                            (= the-new-case-traces the-training-case))
-                                          training-set-traces))
-                          new-cases-traces))
-        p (println "Got bool-results")
-        count-results (doall (mapv (fn [the-list]
-                             (count (filterv #(identity %) the-list))) bool-results))
-        p (println "Got count-results")
-        sorted-indices (doall (mapv first (sort-by second (map-indexed vector count-results))))
-        p (println "sorted-indices")
-        sorted-diff (doall (mapv second (sort-by second (map-indexed vector count-results))))
-        p (println "WE ARE DONE WITH BRANCH COVERAGE")]
-    ;; LOOPING ISSUE IS ABOVE FOR BRANCH COVERAGE
+  (reset! globals/global-evalpush-limit 100)
+  (let [training-set-traces (map second (run-best-on-all-cases best sub-training-cases argmap))
+        random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-branch-coverage)
+        best-results-on-new-cases (run-best-on-all-cases best random-cases argmap)
+        new-cases-traces (map second best-results-on-new-cases)
+        bool-results (map (fn [the-new-case-traces]
+                            (map (fn [the-training-case]
+                                   (= the-new-case-traces the-training-case))
+                                 training-set-traces))
+                          new-cases-traces)
+        count-results (map (fn [the-list]
+                             (count (filter #(identity %) the-list)))
+                           bool-results)
+        sorted-all (sort-by second (map-indexed vector count-results))
+        sorted-indices (mapv first sorted-all)
+        sorted-diff (mapv second sorted-all)]
+    (reset! globals/global-evalpush-limit 2000)
     (when (= counterexample-driven-case-checker :simulated-human)
       (println "Number of cases in the training set that has the same as the same stack traces: " sorted-diff))
     (getting-inputs num-of-cases-added-from-branch-coverage sorted-indices random-cases)))
@@ -320,25 +312,16 @@
         sorted-indices (map first (sort-by (comp #(apply min %) second) > (map-indexed vector result-difference)))]
     (getting-inputs num-of-cases-to-be-presented sorted-indices new-inputs)))
 
-;; LOOP ERROR LOCATION 1
 (defn choose-inputs-based-on-output-analysis
   "Takes argmap and produces set of random cases, then analyzes them to pick
    those that have the outputs most different from the training set."
   [best {:keys [input-parameterization num-of-cases-used-for-output-selection
                 sub-training-cases output-stacks num-of-cases-added-from-output-selection] :as argmap}]
-  (let [p (println "ANALYZING OUTPUT") ;; For this countereample, this is where the issue starts
-        random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
-        p (println "Made Random Cases")
+  (let [random-cases (cag/generate-random-cases input-parameterization num-of-cases-used-for-output-selection)
         best-results-on-all-cases (mapv first (run-best-on-all-cases best random-cases argmap)) ;; CAN TAKE LONG TIMES
-        p (println "Checked best on all cases")
         input-for-output-anlysis (output-analysis (mapv second sub-training-cases)
                                                   best-results-on-all-cases
                                                   random-cases
                                                   (first output-stacks)
                                                   num-of-cases-added-from-output-selection)]
-    ;; This is where the issue ends
-    (println "OUTPUT ANALYZED")
     input-for-output-anlysis))
-
-
-
