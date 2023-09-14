@@ -186,10 +186,12 @@
 
    :max-num-of-cases-added-from-edge 2
    :num-of-cases-added-from-random 8
-   :num-of-cases-used-for-output-selection 1000
+   
+   :num-of-cases-used-for-output-selection 100
    :num-of-cases-added-from-output-selection 5
-   :num-of-cases-used-for-branch-coverage 1000
+   :num-of-cases-used-for-branch-coverage 100
    :num-of-cases-added-from-branch-coverage 5
+
    :input-parameterization [(cag/create-new-parameter :string 0 20 [:digits :lower-case :upper-case :specials] [])]
    :output-stacks [:output]
    :oracle-function double-letters-solver
