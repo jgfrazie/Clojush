@@ -27,7 +27,7 @@ NAMESPACE="#namespace#"
 # your username (in my case, thelmuth).
 DIRECTORY="/usr/local/research/compsci/helmuth/thelmuth/Results/human-driven-simulation/random-initial-all-case-generators/$NAMESPACE"
 
-PUSHARGS=":genetic-operator-probabilities {:uniform-addition-and-deletion,1} :uniform-addition-and-deletion-rate 0.09 :print-timings true :max-program-executions 60000000 :max-generations 10e100"
+PUSHARGS=":genetic-operator-probabilities {:uniform-addition-and-deletion,1} :uniform-addition-and-deletion-rate 0.09 :print-timings true :max-program-executions 60000000 :max-generations 10e100 :counterexample-driven-case-generators '(:randomly-generated) :num-of-cases-added-from-random 20 :max-num-of-cases-added-from-edge 0"
 
 PROBLEM="clojush.problems.$NAMESPACE"
 

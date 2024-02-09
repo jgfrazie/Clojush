@@ -183,6 +183,7 @@
    :num-of-edge-cases-in-sub-training-set 2 ; probably not 5 since there's only 1 input
    :sub-training-cases '()
 
+
        ;; Human-driven counterexamples
    :counterexample-driven true
    :counterexample-driven-case-checker :simulated-human ; :automatic ; :human ; :simulated-human
